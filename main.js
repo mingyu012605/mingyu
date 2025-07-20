@@ -14,7 +14,7 @@ sendBtn.addEventListener('click', () => {
 function sendToAI(text) {
     addMessageToLog('User', text);
 
-    fetch('/api/ai', {
+    fetch('https://mingyu.onrender.com/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text })
@@ -27,7 +27,6 @@ function sendToAI(text) {
         } else if (data.action === 'error') {
             addMessageToLog('AI', data.value);
         } else {
-            // Placeholder for CAD commands like rotate/scale/etc
             addMessageToLog('system', `Received command: ${JSON.stringify(data)}`);
         }
     })
@@ -52,7 +51,6 @@ function speakText(text) {
     }
 }
 
-// Voice input
 if ('webkitSpeechRecognition' in window) {
     const recognition = new webkitSpeechRecognition();
     recognition.continuous = false;
