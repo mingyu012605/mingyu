@@ -1,5 +1,22 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const { Configuration, OpenAIApi } = require('openai');
+
+const app = express();
+const port = 10000;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
+
 app.post('/api/ai', async (req, res) => {
-  const userInput = req.body.message; // 👈 Fix: match with client
+  const userInput = req.body.message;
 
   const messages = [
     {
@@ -12,8 +29,7 @@ If user says:
 - "rotate the model 45 degrees" → {"action":"rotate", "value":45}
 - "scale it by 2.5" → {"action":"scale", "value":2.5}
 - "reset the view" → {"action":"resetView"}
-- "what part is this?" → {"action":"designInfo"}
-`
+- "what part is this?" → {"action":"designInfo"}`
     },
     { role: 'user', content: userInput }
   ];
@@ -26,9 +42,13 @@ If user says:
     });
 
     const reply = completion.choices[0].message.content;
-    res.json({ reply }); // 👈 Must send back JSON
+    res.json({ reply });
   } catch (err) {
     console.error("OpenAI error:", err);
     res.status(500).json({ reply: "AI error occurred. Try again." });
   }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
