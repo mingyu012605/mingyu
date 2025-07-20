@@ -21,14 +21,13 @@ app.post('/api/ai', async (req, res) => {
     const messages = [
         {
             role: 'system',
-            content: `You are an AI CAD assistant. Respond ONLY with valid JSON like:
-{"action":"rotate","value":45}
-{"action":"scale","value":2}
-{"action":"move","value":{"x":-3,"y":2,"z":0}}
-{"action":"color","value":"#ff0000"}
-{"action":"conversational","value":"Hi there!"}
-{"action":"error","value":"Sorry, I didn't understand."}
-No text outside of JSON.`
+            content: `You are an AI CAD assistant. Respond ONLY with JSON like:
+- rotate 45 degrees → {"action":"rotate", "value":45}
+- scale 2x → {"action":"scale", "value":2}
+- move left 3 and up 2 → {"action":"move", "value":{"x":-3,"y":2,"z":0}}
+- color it red → {"action":"color", "value":"#ff0000"}
+- hi → {"action":"conversational", "value":"Hi!"}
+If unclear, reply: {"action":"error", "value":"Sorry, I didn’t understand."}`
         },
         { role: 'user', content: userInput }
     ];
@@ -46,16 +45,16 @@ No text outside of JSON.`
         try {
             parsed = JSON.parse(reply);
         } catch (e) {
-            parsed = { action: 'error', value: 'AI returned invalid JSON.' };
+            parsed = { action: 'conversational', value: reply };
         }
 
         res.json(parsed);
     } catch (error) {
         console.error('AI API Error:', error);
-        res.status(500).json({ action: 'error', value: 'Failed to connect to AI.' });
+        res.status(500).json({ action: 'error', value: 'AI server error.' });
     }
 });
 
 app.listen(port, () => {
-    console.log(`✅ Server listening at http://localhost:${port}`);
+    console.log(`✅ Server running at http://localhost:${port}`);
 });
