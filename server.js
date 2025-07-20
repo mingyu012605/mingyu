@@ -1,6 +1,8 @@
-require('dotenv').config();
-const express = require('express');
-const { Configuration, OpenAIApi } = require('openai');
+import dotenv from 'dotenv';
+import express from 'express';
+import { Configuration, OpenAIApi } from 'openai';
+
+dotenv.config();
 const app = express();
 const port = 10000;
 
@@ -10,6 +12,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 app.use(express.json());
+
 app.post('/api/ai', async (req, res) => {
   const prompt = req.body.prompt;
   try {
