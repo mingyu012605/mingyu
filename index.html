@@ -1000,6 +1000,7 @@
                 });
 
                 const result = await response.json();
+                console.log("Raw AI response:", result); // *** NEW: Log the raw response ***
 
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
@@ -1021,10 +1022,12 @@
                     return parsedJson; // Return the structured command
                 } else {
                     console.error("Unexpected AI response structure:", result);
+                    // Return a structured error if response is malformed or empty
                     return { action: 'error', value: 'AI response was empty or malformed.' };
                 }
             } catch (error) {
                 console.error("Error calling Gemini API:", error);
+                // Return a structured error for API call failures
                 return { action: 'error', value: `Failed to communicate with AI: ${error.message}` };
             } finally {
                 // Re-enable input
