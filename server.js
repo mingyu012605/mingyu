@@ -4,7 +4,7 @@ import OpenAI from 'openai';
 
 dotenv.config();
 const app = express();
-const port = 10000;
+const port = process.env.PORT || 10000;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
