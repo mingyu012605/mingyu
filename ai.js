@@ -31,4 +31,4 @@ async function sendToAI(message) {
         // Return an error message or a specific error object
         return { action: "error", value: "Failed to communicate with the AI backend." };
     }
-}// AI helpers will go here later.
+}
