@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VR CAD Editor - STL Only</title>
+    <title>AI VR CAD Editor</title>
     <style>
         html, body {
             margin: 0;
@@ -173,7 +173,7 @@
                 background: linear-gradient(135deg, #2980b9, #1f5582);
             }
 
-            /* NEW CSS: Style for active AI button */
+            /* Style for active AI button */
             .tool-btn.active-voice-btn {
                 background: linear-gradient(135deg, #e74c3c, #c0392b); /* Red gradient */
             }
@@ -182,6 +182,93 @@
                     background: linear-gradient(135deg, #c0392b, #a52a22);
                 }
 
+        /* NEW: AI Interaction Panel Styles */
+        .ai-interaction-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 300px; /* Limit height for scrollable log */
+            background: rgba(30, 31, 38, 0.95); /* Darker, slightly transparent background */
+            color: white;
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            border-top: 2px solid #3498db;
+            z-index: 1000; /* Ensure it's on top */
+            transform: translateY(100%); /* Start hidden below screen */
+            transition: transform 0.3s ease-out; /* Smooth slide-in/out */
+        }
+
+            .ai-interaction-panel.active {
+                transform: translateY(0); /* Slide into view */
+            }
+
+            .ai-interaction-panel h3 {
+                margin-top: 0;
+                margin-bottom: 10px;
+                color: #00c3ff;
+                text-align: center;
+            }
+
+        .ai-log {
+            flex-grow: 1;
+            overflow-y: auto; /* Enable scrolling for history */
+            margin-bottom: 10px;
+            padding-right: 10px; /* Space for scrollbar */
+            font-size: 0.9em;
+        }
+
+            .ai-log p {
+                margin: 5px 0;
+                word-wrap: break-word; /* Prevent long words from breaking layout */
+            }
+
+            .ai-log .user-message {
+                color: #a0a0a0;
+                font-style: italic;
+            }
+
+            .ai-log .ai-response {
+                color: #00ff00;
+                font-weight: bold;
+            }
+
+            .ai-log .system-message {
+                color: #87ceeb; /* Light blue for system messages */
+                font-style: italic;
+            }
+
+        .ai-input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+            .ai-input-area input[type="text"] {
+                flex-grow: 1;
+                padding: 10px;
+                border-radius: 5px;
+                border: 1px solid #555;
+                background-color: #333;
+                color: white;
+                font-size: 1em;
+            }
+
+            .ai-input-area button {
+                padding: 10px 15px;
+                border-radius: 5px;
+                border: none;
+                background: linear-gradient(135deg, #3498db, #2980b9);
+                color: white;
+                cursor: pointer;
+                transition: background 0.3s ease;
+            }
+
+                .ai-input-area button:hover {
+                    background: linear-gradient(135deg, #2980b9, #1f5582);
+                }
 
         .loading {
             color: #0077ff;
@@ -197,17 +284,16 @@
 </head>
 <body>
     <header>
-        <!-- New SVG Logo -->
+        <!-- SVG Logo for AI VR CAD -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v6h-2zm0 8h2v2h-2zM7 10h2v2H7zm8 0h2v2h-2zM7 14h2v2H7zm8 0h2v2h-2z" />
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v6h-2zm0 8h2v2h-2zM7 10h2v2H7zm8 0h2v2h-2zM7 14h2v2H7zm8 0h2v2H7z" />
         </svg>
-        VR CAD Editor - STL Only
+        AI VR CAD Editor
     </header>
 
     <div class="content-wrapper">
         <div class="upload-section page-active" id="uploadPage">
             <div class="upload-content">
-                <!-- Wrapper for content -->
                 <h2>Insert Your STL File</h2>
                 <p>Supported format: **.stl only**</p>
                 <input type="file" id="fileInput" class="button" accept=".stl" style="display: none;" />
@@ -229,19 +315,27 @@
                 <button class="tool-btn" onclick="goBack()">🔙 Go Back</button>
             </div>
             <div id="loadingMsg" class="loading" style="display: none;">Loading STL file...</div>
-            <div id="voiceControlPanel" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 10px; display: none; z-index: 100;">
-                <p id="voiceStatus" style="margin: 0;">Listening...</p>
-                <p id="voiceOutput" style="margin: 5px 0 0; font-style: italic;"></p>
-                <p id="aiResponse" style="margin: 5px 0 0; color: #00ff00; font-weight: bold;"></p>
+
+            <!-- NEW: AI Interaction Panel -->
+            <div class="ai-interaction-panel" id="aiInteractionPanel">
+                <h3>AI Assistant</h3>
+                <div class="ai-log" id="aiLog">
+                    <p class="ai-response">AI: Hi there! How can I help you with your CAD model today?</p>
+                </div>
+                <div class="ai-input-area">
+                    <input type="text" id="textCommandInput" placeholder="Type your command or question..." />
+                    <button id="sendTextCommandBtn">Send</button>
+                </div>
             </div>
+            <!-- End NEW: AI Interaction Panel -->
+
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <!-- Link to your local ai.js file -->
-    <script src="./ai.js"></script>
+
     <script>
         let uploadedFile = null, scene, camera, renderer, mesh, controls;
         let recognition;
@@ -258,14 +352,16 @@
         const uploadPage = document.getElementById('uploadPage');
         const editorPage = document.getElementById('editorPage');
         const voiceAssistBtn = document.getElementById('voiceAssistBtn');
-        const voiceControlPanel = document.getElementById('voiceControlPanel');
-        const voiceStatus = document.getElementById('voiceStatus');
-        const voiceOutput = document.getElementById('voiceOutput');
-        const aiResponseDisplay = document.getElementById('aiResponse');
+
+        // New AI Panel Elements
+        const aiInteractionPanel = document.getElementById('aiInteractionPanel');
+        const aiLog = document.getElementById('aiLog');
+        const textCommandInput = document.getElementById('textCommandInput');
+        const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
 
 
         dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.textContent = 'Drag your .stl file here'; });
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.textContent = 'Drop your .stl file here'; }); // Changed text
         dropZone.addEventListener('dragleave', () => dropZone.textContent = 'Drag and Drop your .stl file here');
         dropZone.addEventListener('drop', e => {
             e.preventDefault();
@@ -283,13 +379,17 @@
                 dropZone.textContent = `✅ File received: ${file.name}`;
             } else {
                 dropZone.style.borderColor = 'red';
-                dropZone.textContent = '❌ Unsupported file type!';
+                dropZone.textContent = '❌ Unsupported file type! Please upload a .stl file.'; // More specific error
                 uploadedFile = null;
             }
         }
 
         function goToEditor() {
-            if (!uploadedFile) return alert("Please upload a valid .STL file before continuing.");
+            if (!uploadedFile) {
+                // Use custom message box instead of alert
+                addMessageToLog('System', "Please upload a valid .STL file before continuing.");
+                return;
+            }
 
             uploadPage.classList.remove('page-active');
             uploadPage.classList.add('page-inactive');
@@ -297,13 +397,13 @@
             editorPage.classList.remove('page-inactive');
             editorPage.classList.add('page-active');
 
-
             loadingMsg.style.display = 'block';
 
             loadSTLModel(uploadedFile);
         }
 
         function loadSTLModel(file) {
+            // Dispose of existing Three.js objects to prevent memory leaks
             if (scene) {
                 scene.traverse(function (object) {
                     if (object.isMesh) {
@@ -328,6 +428,12 @@
                 controls = null;
             }
             window.removeEventListener('resize', onWindowResize, false);
+            // Remove canvas click listener if it was added
+            const existingCanvas = document.getElementById('cadCanvas');
+            if (existingCanvas) {
+                existingCanvas.removeEventListener('mousedown', onCanvasClick, false);
+                existingCanvas.removeEventListener('touchstart', onCanvasClick, false);
+            }
 
 
             const reader = new FileReader();
@@ -337,7 +443,8 @@
                 const geometry = loader.parse(contents);
 
                 scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x1e1f26);
+                scene.background = new THREE.Color(0x1e1f26); // Dark background for better contrast
+
                 const canvas = document.getElementById('cadCanvas');
                 const viewerDiv = canvas.parentElement;
 
@@ -357,20 +464,28 @@
 
                 window.addEventListener('resize', onWindowResize, false);
 
+                // Add lights
+                const light1 = new THREE.DirectionalLight(0xffffff, 0.8);
+                light1.position.set(1, 1, 1).normalize();
+                scene.add(light1);
 
-                const light = new THREE.DirectionalLight(0xffffff, 1);
-                light.position.set(1, 1, 1);
-                scene.add(light);
-                scene.add(new THREE.AmbientLight(0x404040));
+                const light2 = new THREE.DirectionalLight(0xffffff, 0.5);
+                light2.position.set(-1, -1, -1).normalize();
+                scene.add(light2);
 
-                const material = new THREE.MeshLambertMaterial({ color: 0x0077ff });
+                scene.add(new THREE.AmbientLight(0x404040)); // Soft ambient light
+
+                const material = new THREE.MeshLambertMaterial({ color: 0x0077ff }); // Default model color
                 mesh = new THREE.Mesh(geometry, material);
+
+                // Center the model
                 geometry.computeBoundingBox();
                 const box = geometry.boundingBox;
                 const center = box.getCenter(new THREE.Vector3());
                 mesh.position.sub(center);
                 scene.add(mesh);
 
+                // Adjust camera to fit the model
                 const size = new THREE.Vector3();
                 box.getSize(size);
                 const maxDim = Math.max(size.x, size.y, size.z);
@@ -387,6 +502,7 @@
                 loadingMsg.style.display = 'none';
                 animate();
 
+                // Setup for object selection
                 raycaster = new THREE.Raycaster();
                 mouse = new THREE.Vector2();
                 renderer.domElement.addEventListener('mousedown', onCanvasClick, false);
@@ -423,15 +539,17 @@
             if (mesh) {
                 scene.remove(mesh);
                 mesh = null;
+                addMessageToLog('AI', "Object removed.");
                 speakResponse("Object removed.");
                 clearSelection();
             } else {
+                addMessageToLog('AI', "No object to remove.");
                 speakResponse("No object to remove.");
             }
         }
 
         function resetView() {
-            if (mesh) mesh.rotation.set(0, 0, 0);
+            if (mesh) mesh.rotation.set(0, 0, 0); // Reset rotation
             if (camera && mesh) {
                 const box = new THREE.Box3().setFromObject(mesh);
                 const size = new THREE.Vector3();
@@ -440,9 +558,10 @@
                 camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5);
                 camera.lookAt(0, 0, 0);
                 controls.update();
+                addMessageToLog('AI', "View reset.");
                 speakResponse("View reset.");
-                clearSelection();
             } else {
+                addMessageToLog('AI', "No object to reset view for.");
                 speakResponse("No object to reset view for.");
             }
         }
@@ -454,8 +573,9 @@
             uploadPage.classList.remove('page-inactive');
             uploadPage.classList.add('page-active');
 
-            stopVoiceAssist();
+            stopVoiceAssist(); // Ensure voice assist is stopped when going back
 
+            // Dispose of Three.js resources when navigating back
             if (scene) {
                 scene.traverse(function (object) {
                     if (object.isMesh) {
@@ -480,20 +600,28 @@
                 controls = null;
             }
             window.removeEventListener('resize', onWindowResize, false);
-            clearSelection();
+            clearSelection(); // Clear any active selection
             if (renderer && renderer.domElement) {
                 renderer.domElement.removeEventListener('mousedown', onCanvasClick, false);
                 renderer.domElement.removeEventListener('touchstart', onCanvasClick, false);
             }
+            uploadedFile = null; // Clear the uploaded file
+            dropZone.style.borderColor = '#aaa'; // Reset drop zone style
+            dropZone.textContent = 'Drag and Drop your .stl file here'; // Reset drop zone text
         }
 
         function showDesignInfo() {
-            if (!mesh) return alert("No design loaded.");
+            if (!mesh) {
+                addMessageToLog('AI', "No design loaded.");
+                speakResponse("No design loaded.");
+                return;
+            }
             const box = new THREE.Box3().setFromObject(mesh);
             const size = new THREE.Vector3();
             box.getSize(size);
-            alert(`Width: ${size.x.toFixed(2)}\nHeight: ${size.y.toFixed(2)}\nDepth: ${size.z.toFixed(2)}`);
-            speakResponse(`Width: ${size.x.toFixed(2)}, Height: ${size.y.toFixed(2)}, Depth: ${size.z.toFixed(2)}`);
+            const info = `Width: ${size.x.toFixed(2)}\nHeight: ${size.y.toFixed(2)}\nDepth: ${size.z.toFixed(2)}`;
+            addMessageToLog('AI', info.replace(/\n/g, ', ')); // Log to AI panel
+            speakResponse(info); // Speak the info
         }
 
         /* Raycasting and Selection */
@@ -503,10 +631,10 @@
             const canvas = renderer.domElement;
             const rect = canvas.getBoundingClientRect();
 
-            if (event.changedTouches) {
+            if (event.changedTouches) { // Handle touch events
                 mouse.x = ((event.changedTouches[0].clientX - rect.left) / rect.width) * 2 - 1;
                 mouse.y = -((event.changedTouches[0].clientY - rect.top) / rect.height) * 2 + 1;
-            } else {
+            } else { // Handle mouse events
                 mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
                 mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
             }
@@ -518,8 +646,9 @@
             if (intersects.length > 0) {
                 const intersected = intersects[0].object;
 
-                if (intersected === mesh) {
+                if (intersected === mesh) { // Only allow selection of the main loaded mesh
                     if (selectedObject && selectedObject.material) {
+                        // Restore original color of previously selected object
                         if (Array.isArray(selectedObject.material)) {
                             selectedObject.material.forEach(m => m.color.copy(originalMaterialColor));
                         } else {
@@ -530,20 +659,22 @@
                     selectedObject = intersected;
                     if (Array.isArray(selectedObject.material)) {
                         originalMaterialColor = selectedObject.material[0].color.clone();
-                        selectedObject.material.forEach(m => m.color.set(0xffff00));
+                        selectedObject.material.forEach(m => m.color.set(0xffff00)); // Highlight in yellow
                     } else {
                         originalMaterialColor = selectedObject.material.color.clone();
-                        selectedObject.material.color.set(0xffff00);
+                        selectedObject.material.color.set(0xffff00); // Highlight in yellow
                     }
 
                     console.log("Object selected:", selectedObject.name || selectedObject.uuid);
+                    addMessageToLog('System', "Object selected.");
                     speakResponse("Object selected.");
                 } else {
-                    clearSelection();
+                    clearSelection(); // Clicked on something else, clear selection
                 }
             } else {
-                clearSelection();
+                clearSelection(); // Clicked on empty space, clear selection
             }
+            // Ensure render is called after selection change
             if (renderer && scene && camera) {
                 renderer.render(scene, camera);
             }
@@ -559,11 +690,37 @@
                 selectedObject = null;
                 originalMaterialColor = null;
                 console.log("Selection cleared.");
+                addMessageToLog('System', "Selection cleared.");
             }
             if (renderer && scene && camera) {
                 renderer.render(scene, camera);
             }
         }
+
+        /* AI Interaction Panel Functions */
+        function addMessageToLog(sender, message) {
+            const p = document.createElement('p');
+            p.textContent = `${sender}: ${message}`;
+            p.classList.add(sender === 'User' ? 'user-message' : (sender === 'AI' ? 'ai-response' : 'system-message'));
+            aiLog.appendChild(p);
+            aiLog.scrollTop = aiLog.scrollHeight; // Scroll to bottom
+        }
+
+        // Handle text input for AI commands
+        sendTextCommandBtn.addEventListener('click', () => {
+            const command = textCommandInput.value.trim();
+            if (command) {
+                addMessageToLog('User', command);
+                processAICommand(command); // Use a new function name to avoid confusion with voice
+                textCommandInput.value = '';
+            }
+        });
+
+        textCommandInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendTextCommandBtn.click();
+            }
+        });
 
 
         /* AI Voice Assist Functions */
@@ -571,20 +728,19 @@
 
         function initializeSpeechRecognition() {
             if (!('webkitSpeechRecognition' in window)) {
-                alert("Speech recognition not supported in this browser. Please use Google Chrome.");
-                aiResponseDisplay.textContent = "Speech recognition not supported.";
+                addMessageToLog('System', "Speech recognition not supported in this browser. Please use Google Chrome.");
                 return null;
             }
             const newRecognition = new webkitSpeechRecognition();
-            newRecognition.continuous = true;
-            newRecognition.interimResults = false;
+            newRecognition.continuous = true; // Keep listening
+            newRecognition.interimResults = false; // Only return final results
             newRecognition.lang = 'en-US';
             return newRecognition;
         }
 
         function initializeSpeechSynthesis() {
             if (!('speechSynthesis' in window)) {
-                alert("Speech synthesis not supported in this browser.");
+                addMessageToLog('System', "Speech synthesis not supported in this browser.");
                 return null;
             }
             return window.speechSynthesis;
@@ -595,29 +751,28 @@
                 synth = initializeSpeechSynthesis();
                 if (!synth) return;
             }
-            synth.cancel();
+            synth.cancel(); // Stop any ongoing speech
 
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
             utterance.onend = () => {
-                if (isVoiceAssistActive && recognition) {
-                    voiceStatus.textContent = "Listening...";
-                    voiceOutput.textContent = "";
-                    aiResponseDisplay.textContent = "";
+                console.log('Speech synthesis ended');
+                // Only restart recognition if voice assist is still active and synth is not speaking
+                if (isVoiceAssistActive && recognition && !synth.speaking) {
+                    addMessageToLog('System', "Listening...");
                     recognition.start();
                 }
             };
             utterance.onerror = (event) => {
                 console.error('Speech synthesis error:', event);
-                aiResponseDisplay.textContent = "Error speaking response.";
+                addMessageToLog('System', "Error speaking response.");
             };
             synth.speak(utterance);
-            aiResponseDisplay.textContent = text;
         }
 
         function toggleVoiceAssist() {
             if (!mesh) {
-                aiResponseDisplay.textContent = "Please load an STL model first.";
+                addMessageToLog('AI', "Please load an STL model first.");
                 speakResponse("Please load an STL model first.");
                 return;
             }
@@ -637,45 +792,48 @@
             } else {
                 isVoiceAssistActive = true;
                 voiceAssistBtn.classList.add('active-voice-btn');
-                voiceAssistBtn.innerHTML = '❌ Stop AI';
-                voiceControlPanel.style.display = 'block';
-                voiceStatus.textContent = "Starting...";
-                voiceOutput.textContent = "";
-                aiResponseDisplay.textContent = "";
+                voiceAssistBtn.innerHTML = '❌ Stop AI Voice'; // Updated button text
+                aiInteractionPanel.classList.add('active'); // Show AI panel
+                addMessageToLog('System', "Starting voice assist...");
 
                 speakResponse("Hi, what can I help you with?");
             }
 
             recognition.onstart = function () {
-                voiceStatus.textContent = "Listening...";
-                voiceOutput.textContent = "";
-                aiResponseDisplay.textContent = "";
+                addMessageToLog('System', "Listening...");
                 console.log('Speech recognition started');
             };
 
             recognition.onresult = function (event) {
                 const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-                voiceOutput.textContent = `You said: "${transcript}"`;
-                voiceStatus.textContent = "Processing...";
+                addMessageToLog('User', transcript); // Log user's spoken command
+                addMessageToLog('System', "Processing voice command...");
                 console.log('Speech recognized:', transcript);
 
-                recognition.stop();
-                processVoiceCommand(transcript);
+                recognition.stop(); // Stop listening while processing
+                processAICommand(transcript); // Process the command
             };
 
             recognition.onerror = function (event) {
                 console.error('Speech recognition error:', event);
-                voiceStatus.textContent = `Error: ${event.error}`;
-                aiResponseDisplay.textContent = "Speech error. Try again.";
-                stopVoiceAssist();
+                let errorMessage = "An unknown speech recognition error occurred.";
+                if (event.error === 'not-allowed') {
+                    errorMessage = "Microphone access denied. Please allow microphone access in your browser settings.";
+                } else if (event.error === 'no-speech') {
+                    errorMessage = "No speech detected. Please try speaking louder or clearer.";
+                } else if (event.error) {
+                    errorMessage = `Speech error: ${event.error}. Please try again.`;
+                }
+                addMessageToLog('System', errorMessage);
+                speakResponse(errorMessage); // Speak the error message
+                stopVoiceAssist(); // Stop voice assist on error
             };
 
             recognition.onend = function () {
                 console.log('Speech recognition ended');
+                // If voice assist is still active and synth is not speaking, restart recognition
                 if (isVoiceAssistActive && !synth.speaking) {
-                    voiceStatus.textContent = "Listening...";
-                    voiceOutput.textContent = "";
-                    aiResponseDisplay.textContent = "";
+                    addMessageToLog('System', "Listening...");
                     recognition.start();
                 }
             };
@@ -689,19 +847,14 @@
             if (synth && typeof synth.cancel === 'function') {
                 synth.cancel();
             }
-            voiceControlPanel.style.display = 'none';
+            aiInteractionPanel.classList.remove('active'); // Hide AI panel
             voiceAssistBtn.classList.remove('active-voice-btn');
             voiceAssistBtn.innerHTML = '🧠 AI Voice Assist';
-            voiceStatus.textContent = "Ready.";
-            voiceOutput.textContent = "";
-            aiResponseDisplay.textContent = "";
+            addMessageToLog('System', "Voice assist stopped.");
         }
 
-
-        async function processVoiceCommand(command) {
-            voiceStatus.textContent = "Talking to AI...";
-            aiResponseDisplay.textContent = "";
-
+        // This function handles both voice and text commands
+        async function processAICommand(command) {
             // Handle selection-related commands directly in frontend
             if (command.includes("select object")) {
                 if (selectedObject) {
@@ -711,38 +864,39 @@
                 } else {
                     speakResponse("No model loaded to select.");
                 }
-                voiceStatus.textContent = "Ready.";
-                return;
+                return; // Exit after handling
             } else if (command.includes("clear selection")) {
                 clearSelection();
                 speakResponse("Selection cleared.");
-                voiceStatus.textContent = "Ready.";
-                return;
+                return; // Exit after handling
             }
 
             try {
-                // Use the sendToAI function from ai.js
+                // Use the sendToAI function (now embedded)
                 const aiReply = await sendToAI(command);
 
                 console.log("AI replied:", aiReply);
 
-                // --- NEW LOGIC: Process AI's structured commands ---
                 if (aiReply && typeof aiReply === 'object' && aiReply.action) {
                     switch (aiReply.action) {
                         case 'rotate':
                             if (mesh && typeof aiReply.value === 'number') {
                                 // Convert degrees to radians for Three.js rotation
                                 mesh.rotation.y += THREE.MathUtils.degToRad(aiReply.value);
+                                addMessageToLog('AI', `Model rotated by ${aiReply.value} degrees.`);
                                 speakResponse(`Model rotated by ${aiReply.value} degrees.`);
                             } else {
+                                addMessageToLog('AI', "Sorry, I couldn't rotate the model. Please specify a valid degree value.");
                                 speakResponse("Sorry, I couldn't rotate the model. Please specify a valid degree value.");
                             }
                             break;
                         case 'scale':
                             if (mesh && typeof aiReply.value === 'number' && aiReply.value > 0) {
                                 mesh.scale.set(aiReply.value, aiReply.value, aiReply.value);
+                                addMessageToLog('AI', `Model scaled by a factor of ${aiReply.value}.`);
                                 speakResponse(`Model scaled by a factor of ${aiReply.value}.`);
                             } else {
+                                addMessageToLog('AI', "Sorry, I couldn't scale the model. Please specify a positive scale factor (e.g., 0.5, 2).");
                                 speakResponse("Sorry, I couldn't scale the model. Please specify a positive scale factor.");
                             }
                             break;
@@ -751,8 +905,10 @@
                                 mesh.position.x += aiReply.value.x;
                                 mesh.position.y += aiReply.value.y;
                                 mesh.position.z += aiReply.value.z;
+                                addMessageToLog('AI', `Model moved by X:${aiReply.value.x}, Y:${aiReply.value.y}, Z:${aiReply.value.z} units.`);
                                 speakResponse(`Model moved by X:${aiReply.value.x}, Y:${aiReply.value.y}, Z:${aiReply.value.z} units.`);
                             } else {
+                                addMessageToLog('AI', "Sorry, I couldn't move the model. Please specify valid X, Y, and Z values (e.g., move by X 10, Y -5, Z 0).");
                                 speakResponse("Sorry, I couldn't move the model. Please specify valid X, Y, and Z values.");
                             }
                             break;
@@ -763,42 +919,123 @@
                                 } else {
                                     mesh.material.color.set(aiReply.value);
                                 }
+                                addMessageToLog('AI', `Model color changed to ${aiReply.value}.`);
                                 speakResponse(`Model color changed to ${aiReply.value}.`);
                             } else {
+                                addMessageToLog('AI', "Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, like #FF0000 for red.");
                                 speakResponse("Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, like #FF0000 for red.");
                             }
                             break;
                         case 'conversational':
-                            speakResponse(aiReply.value);
+                            // Prefer 'value', fall back to 'message' for conversational responses
+                            let responseText = aiReply.value || aiReply.message;
+                            if (responseText) {
+                                addMessageToLog('AI', responseText);
+                                speakResponse(responseText);
+                            } else {
+                                addMessageToLog('AI', "I received a conversational response but it was empty.");
+                                speakResponse("I received a conversational response but it was empty.");
+                            }
                             break;
                         case 'error':
+                            addMessageToLog('AI', `An AI error occurred: ${aiReply.value}. Please try again.`);
                             speakResponse("An error occurred with the AI. Please try again.");
                             console.error("AI returned an error action:", aiReply.value);
                             break;
                         default:
+                            addMessageToLog('AI', "The AI sent an unrecognized command. Please try again.");
                             speakResponse("The AI sent an unrecognized command. Please try again.");
-                            console.warn("AI sent unknown action:", aiReply.action, aiReply.value);
+                            console.warn("AI sent unrecognized action:", aiReply.action);
                             break;
                     }
-                } else if (aiReply && typeof aiReply === 'string') {
-                    // Fallback for unexpected string response (though response_format should prevent this)
+                } else {
+                    // If aiReply is not a structured object or has no action, treat as direct conversational response
+                    addMessageToLog('AI', aiReply);
                     speakResponse(aiReply);
-                } else {
-                    speakResponse("I received an empty or unreadable response from the AI. Please try again.");
                 }
-
             } catch (error) {
-                console.error('Error processing voice command:', error);
-                speakResponse("I'm having trouble connecting to the AI. Please ensure the backend server is running.");
-            } finally {
-                if (isVoiceAssistActive && recognition) {
-                    // Restart recognition after AI response, unless it's stopped
-                    voiceStatus.textContent = "Listening...";
-                    voiceOutput.textContent = "";
-                    aiResponseDisplay.textContent = "";
-                    recognition.start();
+                console.error("Error processing AI command:", error);
+                addMessageToLog('AI', "I'm sorry, I encountered an error while processing your command. Please try again.");
+                speakResponse("I'm sorry, I encountered an error. Please try again.");
+            }
+        }
+
+        // Embedded AI function (formerly ai.js)
+        async function sendToAI(prompt) {
+            // Add a loading indicator or disable input while processing
+            sendTextCommandBtn.disabled = true;
+            textCommandInput.disabled = true;
+            addMessageToLog('System', 'AI is thinking...');
+
+            let chatHistory = [];
+            // Add a system instruction to guide the AI's behavior
+            chatHistory.push({
+                role: "user",
+                parts: [{ text: "You are an AI assistant for a 3D CAD editor. Your primary function is to interpret user commands to manipulate a 3D model (rotate, scale, move, color). If the user's input is not a CAD command, respond conversationally and politely. For conversational responses, set `action` to 'conversational' and place the conversational text in the `value` field. Always respond in JSON format according to the provided schema." }]
+            });
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "action": { "type": "STRING", "description": "The action to perform (e.g., 'rotate', 'scale', 'move', 'color', 'conversational', 'error')." },
+                            "value": { "type": ["STRING", "NUMBER", "OBJECT"], "description": "The value associated with the action. For 'rotate' it's degrees, for 'scale' it's a factor, for 'move' it's an object {x, y, z}, for 'color' it's a hex string, for 'conversational' it's a string message." },
+                            "message": { "type": "STRING", "description": "A conversational message to the user, used for 'conversational' action." }
+                        },
+                        "propertyOrdering": ["action", "value", "message"]
+                    }
+                }
+            };
+
+            const apiKey = ""; // Canvas will automatically provide this at runtime
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    let jsonString = result.candidates[0].content.parts[0].text;
+
+                    // Remove markdown code block fences if present
+                    if (jsonString.startsWith('```json\n') && jsonString.endsWith('\n```')) {
+                        jsonString = jsonString.substring(8, jsonString.length - 4);
+                    }
+
+                    const parsedJson = JSON.parse(jsonString);
+
+                    // If the AI provides a message, use it as the conversational response
+                    // This logic is for cases where AI might omit 'action' and just provide 'message'
+                    if (parsedJson.message && !parsedJson.action) {
+                        return { action: 'conversational', value: parsedJson.message };
+                    }
+                    return parsedJson; // Return the structured command
                 } else {
-                    voiceStatus.textContent = "Ready.";
+                    console.error("Unexpected AI response structure:", result);
+                    return { action: 'error', value: 'AI response was empty or malformed.' };
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                return { action: 'error', value: `Failed to communicate with AI: ${error.message}` };
+            } finally {
+                // Re-enable input
+                sendTextCommandBtn.disabled = false;
+                textCommandInput.disabled = false;
+                // Remove loading indicator (or update status)
+                const lastLogMessage = aiLog.lastChild;
+                if (lastLogMessage && lastLogMessage.textContent.includes('AI is thinking...')) {
+                    aiLog.removeChild(lastLogMessage);
                 }
             }
         }
