@@ -33,11 +33,11 @@
             box-sizing: border-box; /* Include padding in height */
         }
 
-            header svg { /* Styling for the new SVG logo */
-                height: 40px;
-                width: 40px;
-                fill: white; /* Make the icon white */
-            }
+        header svg { /* Styling for the new SVG logo */
+            height: 40px;
+            width: 40px;
+            fill: white; /* Make the icon white */
+        }
 
         /* Container for both upload and editor pages */
         .content-wrapper {
@@ -104,10 +104,10 @@
             cursor: pointer;
         }
 
-            .upload-box:hover {
-                border-color: #0077ff;
-                color: #0077ff;
-            }
+        .upload-box:hover {
+            border-color: #0077ff;
+            color: #0077ff;
+        }
 
         .button {
             background: linear-gradient(135deg, #0077ff, #00c3ff);
@@ -121,9 +121,9 @@
             transition: background 0.3s ease;
         }
 
-            .button:hover {
-                background: linear-gradient(135deg, #005fcc, #00aacc);
-            }
+        .button:hover {
+            background: linear-gradient(135deg, #005fcc, #00aacc);
+        }
 
         .viewer {
             flex: 1; /* Viewer takes all available space within editor-page */
@@ -169,18 +169,17 @@
             min-width: 100px;
         }
 
-            .tool-btn:hover {
-                background: linear-gradient(135deg, #2980b9, #1f5582);
-            }
+        .tool-btn:hover {
+            background: linear-gradient(135deg, #2980b9, #1f5582);
+        }
 
-            /* Style for active AI button */
-            .tool-btn.active-voice-btn {
-                background: linear-gradient(135deg, #e74c3c, #c0392b); /* Red gradient */
-            }
-
-                .tool-btn.active-voice-btn:hover {
-                    background: linear-gradient(135deg, #c0392b, #a52a22);
-                }
+        /* Style for active AI button */
+        .tool-btn.active-voice-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b); /* Red gradient */
+        }
+        .tool-btn.active-voice-btn:hover {
+            background: linear-gradient(135deg, #c0392b, #a52a22);
+        }
 
         /* NEW: AI Interaction Panel Styles */
         .ai-interaction-panel {
@@ -201,16 +200,16 @@
             transition: transform 0.3s ease-out; /* Smooth slide-in/out */
         }
 
-            .ai-interaction-panel.active {
-                transform: translateY(0); /* Slide into view */
-            }
+        .ai-interaction-panel.active {
+            transform: translateY(0); /* Slide into view */
+        }
 
-            .ai-interaction-panel h3 {
-                margin-top: 0;
-                margin-bottom: 10px;
-                color: #00c3ff;
-                text-align: center;
-            }
+        .ai-interaction-panel h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #00c3ff;
+            text-align: center;
+        }
 
         .ai-log {
             flex-grow: 1;
@@ -220,25 +219,24 @@
             font-size: 0.9em;
         }
 
-            .ai-log p {
-                margin: 5px 0;
-                word-wrap: break-word; /* Prevent long words from breaking layout */
-            }
+        .ai-log p {
+            margin: 5px 0;
+            word-wrap: break-word; /* Prevent long words from breaking layout */
+        }
 
-            .ai-log .user-message {
-                color: #a0a0a0;
-                font-style: italic;
-            }
+        .ai-log .user-message {
+            color: #a0a0a0;
+            font-style: italic;
+        }
 
-            .ai-log .ai-response {
-                color: #00ff00;
-                font-weight: bold;
-            }
-
-            .ai-log .system-message {
-                color: #87ceeb; /* Light blue for system messages */
-                font-style: italic;
-            }
+        .ai-log .ai-response {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        .ai-log .system-message {
+            color: #87ceeb; /* Light blue for system messages */
+            font-style: italic;
+        }
 
         .ai-input-area {
             display: flex;
@@ -246,29 +244,29 @@
             align-items: center;
         }
 
-            .ai-input-area input[type="text"] {
-                flex-grow: 1;
-                padding: 10px;
-                border-radius: 5px;
-                border: 1px solid #555;
-                background-color: #333;
-                color: white;
-                font-size: 1em;
-            }
+        .ai-input-area input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: white;
+            font-size: 1em;
+        }
 
-            .ai-input-area button {
-                padding: 10px 15px;
-                border-radius: 5px;
-                border: none;
-                background: linear-gradient(135deg, #3498db, #2980b9);
-                color: white;
-                cursor: pointer;
-                transition: background 0.3s ease;
-            }
+        .ai-input-area button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
 
-                .ai-input-area button:hover {
-                    background: linear-gradient(135deg, #2980b9, #1f5582);
-                }
+        .ai-input-area button:hover {
+            background: linear-gradient(135deg, #2980b9, #1f5582);
+        }
 
         .loading {
             color: #0077ff;
@@ -286,7 +284,7 @@
     <header>
         <!-- SVG Logo for AI VR CAD -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v6h-2zm0 8h2v2h-2zM7 10h2v2H7zm8 0h2v2h-2zM7 14h2v2H7zm8 0h2v2H7z" />
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v6h-2zm0 8h2v2h-2zM7 10h2v2H7zm8 0h2v2h-2zM7 14h2v2H7zm8 0h2v2H7z"/>
         </svg>
         AI VR CAD Editor
     </header>
@@ -315,7 +313,7 @@
                 <button class="tool-btn" onclick="goBack()">🔙 Go Back</button>
             </div>
             <div id="loadingMsg" class="loading" style="display: none;">Loading STL file...</div>
-
+            
             <!-- NEW: AI Interaction Panel -->
             <div class="ai-interaction-panel" id="aiInteractionPanel">
                 <h3>AI Assistant</h3>
@@ -335,7 +333,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
+    
     <script>
         let uploadedFile = null, scene, camera, renderer, mesh, controls;
         let recognition;
@@ -352,7 +350,7 @@
         const uploadPage = document.getElementById('uploadPage');
         const editorPage = document.getElementById('editorPage');
         const voiceAssistBtn = document.getElementById('voiceAssistBtn');
-
+        
         // New AI Panel Elements
         const aiInteractionPanel = document.getElementById('aiInteractionPanel');
         const aiLog = document.getElementById('aiLog');
@@ -444,7 +442,7 @@
 
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x1e1f26); // Dark background for better contrast
-
+                
                 const canvas = document.getElementById('cadCanvas');
                 const viewerDiv = canvas.parentElement;
 
@@ -477,7 +475,7 @@
 
                 const material = new THREE.MeshLambertMaterial({ color: 0x0077ff }); // Default model color
                 mesh = new THREE.Mesh(geometry, material);
-
+                
                 // Center the model
                 geometry.computeBoundingBox();
                 const box = geometry.boundingBox;
@@ -795,7 +793,7 @@
                 voiceAssistBtn.innerHTML = '❌ Stop AI Voice'; // Updated button text
                 aiInteractionPanel.classList.add('active'); // Show AI panel
                 addMessageToLog('System', "Starting voice assist...");
-
+                
                 speakResponse("Hi, what can I help you with?");
             }
 
@@ -1007,12 +1005,12 @@
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                     let jsonString = result.candidates[0].content.parts[0].text;
-
+                    
                     // Remove markdown code block fences if present
                     if (jsonString.startsWith('```json\n') && jsonString.endsWith('\n```')) {
                         jsonString = jsonString.substring(8, jsonString.length - 4);
                     }
-
+                    
                     const parsedJson = JSON.parse(jsonString);
 
                     // If the AI provides a message, use it as the conversational response
