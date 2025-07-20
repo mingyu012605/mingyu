@@ -757,8 +757,11 @@
                 console.log('Speech synthesis ended');
                 // Only restart recognition if voice assist is still active and synth is not speaking
                 if (isVoiceAssistActive && recognition && !synth.speaking) {
-                    addMessageToLog('System', "Listening...");
-                    recognition.start();
+                    // *** NEW: Add a delay before restarting recognition ***
+                    setTimeout(() => {
+                        addMessageToLog('System', "Listening...");
+                        recognition.start();
+                    }, 1500); // 1.5 second delay
                 }
             };
             utterance.onerror = (event) => {
@@ -830,10 +833,8 @@
             recognition.onend = function () {
                 console.log('Speech recognition ended');
                 // If voice assist is still active and synth is not speaking, restart recognition
-                if (isVoiceAssistActive && !synth.speaking) {
-                    addMessageToLog('System', "Listening...");
-                    recognition.start();
-                }
+                // The restart logic is now primarily handled within speakResponse.onend
+                // This ensures a delay after AI finishes speaking before listening resumes.
             };
         }
 
