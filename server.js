@@ -1,50 +1,29 @@
-import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
-import OpenAI from 'openai';
-
-dotenv.config();
-
+require('dotenv').config();
+const express = require('express');
+const { Configuration, OpenAIApi } = require('openai');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 10000;
 
-app.use(cors());
-app.use(bodyParser.json());
-
-// ✅ NEW OpenAI SDK Usage
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
+app.use(express.json());
 app.post('/api/ai', async (req, res) => {
-  const userInput = req.body.message;
-
-  const messages = [
-    {
-      role: 'system',
-      content: `You are an AI CAD assistant. Help with natural voice and JSON replies.`
-    },
-    {
-      role: 'user',
-      content: userInput
-    }
-  ];
-
+  const prompt = req.body.prompt;
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
     });
-
-    const reply = completion.choices[0].message.content;
-    res.json({ reply });
-  } catch (err) {
-    console.error('OpenAI error:', err);
-    res.status(500).json({ error: 'AI error' });
+    res.json(completion.data.choices[0].message);
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(500).json({ error: "OpenAI error" });
   }
 });
 
 app.listen(port, () => {
-  console.log(`✅ Server running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
