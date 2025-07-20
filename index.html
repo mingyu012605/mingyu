@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VR CAD Editor - STL Only</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', sans-serif;
+            background: #f2f4f8;
+            overflow: hidden; /* Prevent overall page scrolling */
+            display: flex; /* Make body a flex container */
+            flex-direction: column; /* Stack children vertically */
+        }
+
+        header {
+            background-color: #10131c;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-shrink: 0; /* Header should not shrink */
+            /* MODIFIED LINE: Added CSS variable for header height for consistency */
+            --header-height: 80px; /* Approximate header height (adjust if needed) */
+            height: var(--header-height); /* Set header height for consistent calc */
+            box-sizing: border-box; /* Include padding in height */
+        }
+
+            header img {
+                height: 40px;
+            }
+
+        /* Container for both upload and editor pages */
+        .content-wrapper {
+            flex: 1; /* Takes remaining vertical space */
+            display: flex; /* Allows pages to sit side-by-side or stack */
+            width: 100%;
+            height: 100%; /* Important: Takes full height of its parent (body) */
+            position: relative; /* For absolute positioning of pages inside */
+            overflow: hidden; /* Hide overflow of content pages */
+        }
+
+        .upload-section, .editor-page {
+            width: 100%;
+            height: 100%;
+            position: absolute; /* Position them on top of each other */
+            top: 0;
+            left: 0;
+            display: flex; /* Make them flex containers */
+            flex-direction: column; /* Stack their content vertically */
+            box-sizing: border-box;
+            background: #f2f4f8; /* Ensure background visibility */
+            transition: opacity 0.3s ease-in-out; /* Smooth transition when changing pages */
+            opacity: 1;
+            pointer-events: auto; /* Allow interaction */
+        }
+
+        .editor-page {
+            opacity: 0; /* Start hidden */
+            pointer-events: none; /* Disable interaction when hidden */
+        }
+
+        /* Special class for active page */
+        .page-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .page-inactive {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+
+        .upload-content { /* Wrapper for actual content in upload section for centering */
+            text-align: center;
+            margin: auto; /* Centers content vertically and horizontally */
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+
+        .upload-box {
+            margin: 30px auto;
+            border: 2px dashed #aaa;
+            border-radius: 12px;
+            width: 60%;
+            height: 200px;
+            line-height: 200px;
+            color: #aaa;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .upload-box:hover {
+                border-color: #0077ff;
+                color: #0077ff;
+            }
+
+        .button {
+            background: linear-gradient(135deg, #0077ff, #00c3ff);
+            color: white;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s ease;
+        }
+
+            .button:hover {
+                background: linear-gradient(135deg, #005fcc, #00aacc);
+            }
+
+        .viewer {
+            flex: 1; /* Viewer takes all available space within editor-page */
+            background-color: #1e1f26;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 100%;
+            overflow: hidden; /* Ensure Three.js content doesn't cause viewer scrollbars */
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .editor-pad {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            border-top: 2px solid #3498db;
+            flex-wrap: wrap;
+            flex-shrink: 0; /* Prevent the editor-pad from shrinking */
+            min-height: 60px; /* Guarantee space for buttons */
+            box-sizing: border-box;
+        }
+
+        .tool-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+            .tool-btn:hover {
+                background: linear-gradient(135deg, #2980b9, #1f5582);
+            }
+
+            /* NEW CSS: Style for active AI button */
+            .tool-btn.active-voice-btn {
+                background: linear-gradient(135deg, #e74c3c, #c0392b); /* Red gradient */
+            }
+
+                .tool-btn.active-voice-btn:hover {
+                    background: linear-gradient(135deg, #c0392b, #a52a22);
+                }
+
+
+        .loading {
+            color: #0077ff;
+            font-size: 16px;
+            margin-top: 20px;
+            position: absolute; /* Position loading message */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10; /* Ensure it's above canvas */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://img.icons8.com/external-flatart-icons-outline-flatarticons/64/ffffff/external-vr-artificial-intelligence-flatart-icons-outline-flatarticons.png" alt="logo" />
+        VR CAD Editor - STL Only
+    </header>
+
+    <div class="content-wrapper">
+        <div class="upload-section page-active" id="uploadPage">
+            <div class="upload-content">
+                <!-- Wrapper for content -->
+                <h2>Insert Your STL File</h2>
+                <p>Supported format: **.stl only**</p>
+                <input type="file" id="fileInput" class="button" accept=".stl" style="display: none;" />
+                <button class="button" onclick="document.getElementById('fileInput').click()">Choose STL File</button>
+                <div class="upload-box" id="dropZone">Drag and Drop your .stl file here</div>
+                <button class="button" onclick="goToEditor()">Continue to Edit</button>
+            </div>
+        </div>
+
+        <div class="editor-page page-inactive" id="editorPage">
+            <div class="viewer">
+                <canvas id="cadCanvas"></canvas>
+            </div>
+            <div class="editor-pad">
+                <!-- MODIFIED LINE: Added ID and REMOVED inline onclick to prevent conflict -->
+                <button class="tool-btn" id="voiceAssistBtn">🧠 AI Voice Assist</button>
+                <button class="tool-btn" onclick="removeObject()">❌ Remove Object</button>
+                <button class="tool-btn" onclick="resetView()">🔄 Reset View</button>
+                <button class="tool-btn" onclick="showDesignInfo()">📐 Design Info</button>
+                <button class="tool-btn" onclick="goBack()">🔙 Go Back</button>
+            </div>
+            <div id="loadingMsg" class="loading" style="display: none;">Loading STL file...</div>
+            <!-- NEW HTML: Add these new elements for voice UI and AI response -->
+            <div id="voiceControlPanel" style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 10px; display: none; z-index: 100;">
+                <p id="voiceStatus" style="margin: 0;">Listening...</p>
+                <p id="voiceOutput" style="margin: 5px 0 0; font-style: italic;"></p>
+                <p id="aiResponse" style="margin: 5px 0 0; color: #00ff00; font-weight: bold;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // NEW GLOBAL VARIABLES: Added synth and isVoiceAssistActive
+        let uploadedFile = null, scene, camera, renderer, mesh, controls;
+        let recognition; // Declare recognition variable globally
+        let synth; // NEW ADDITION: Declare speech synthesis variable globally
+        let isVoiceAssistActive = false; // NEW ADDITION: New state variable
+
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        // MODIFIED LINE: Fixed typo here. Was 'document = document.getElementById'
+        const loadingMsg = document.getElementById('loadingMsg');
+        const uploadPage = document.getElementById('uploadPage');
+        const editorPage = document.getElementById('editorPage');
+        // NEW DOM ELEMENT REFERENCES: Added references for voice UI elements
+        const voiceAssistBtn = document.getElementById('voiceAssistBtn'); // NEW ADDITION
+        const voiceControlPanel = document.getElementById('voiceControlPanel'); // NEW ADDITION
+        const voiceStatus = document.getElementById('voiceStatus'); // NEW ADDITION
+        const voiceOutput = document.getElementById('voiceOutput'); // NEW ADDITION
+        const aiResponseDisplay = document.getElementById('aiResponse'); // NEW ADDITION
+
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.textContent = 'Drag your .stl file here'; });
+        dropZone.addEventListener('dragleave', () => dropZone.textContent = 'Drag and Drop your .stl file here');
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadedFile = e.dataTransfer.files[0];
+            validateFile(uploadedFile);
+        });
+        fileInput.addEventListener('change', e => {
+            uploadedFile = e.target.files[0];
+            validateFile(uploadedFile);
+        });
+
+        function validateFile(file) {
+            if (file && file.name.toLowerCase().endsWith('.stl')) {
+                dropZone.style.borderColor = '#28a745';
+                dropZone.textContent = `✅ File received: ${file.name}`;
+            } else {
+                dropZone.style.borderColor = 'red';
+                dropZone.textContent = '❌ Unsupported file type!';
+                uploadedFile = null;
+            }
+        }
+
+        function goToEditor() {
+            if (!uploadedFile) return alert("Please upload a valid .STL file before continuing.");
+
+            uploadPage.classList.remove('page-active');
+            uploadPage.classList.add('page-inactive');
+
+            editorPage.classList.remove('page-inactive');
+            editorPage.classList.add('page-active');
+
+
+            loadingMsg.style.display = 'block';
+
+            // Ensure Three.js elements are re-initialized or resized
+            // It's safer to call loadSTLModel every time the editor is entered
+            // to ensure canvas dimensions are correctly picked up.
+            loadSTLModel(uploadedFile);
+        }
+
+        function loadSTLModel(file) {
+            // NEW ADDITION: Dispose of previous Three.js scene/renderer if they exist
+            if (scene) {
+                scene.traverse(function (object) {
+                    if (object.isMesh) {
+                        if (object.geometry) object.geometry.dispose();
+                        if (object.material) {
+                            if (Array.isArray(object.material)) {
+                                object.material.forEach(material => material.dispose());
+                            } else {
+                                object.material.dispose();
+                            }
+                        }
+                    }
+                });
+                scene = null;
+            }
+            // NEW ADDITION: Dispose of renderer
+            if (renderer) {
+                renderer.dispose();
+                renderer = null;
+            }
+            // NEW ADDITION: Dispose of controls
+            if (controls) {
+                controls.dispose();
+                controls = null;
+            }
+            // NEW ADDITION: Remove resize listener
+            window.removeEventListener('resize', onWindowResize, false);
+
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const contents = e.target.result;
+                const loader = new THREE.STLLoader();
+                const geometry = loader.parse(contents);
+
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x1e1f26);
+                const canvas = document.getElementById('cadCanvas');
+                const viewerDiv = canvas.parentElement;
+
+                // Crucial: Ensure viewerDiv has calculated dimensions before getting them
+                // This might be a slight delay from the opacity transition, but usually fine
+                const width = viewerDiv.clientWidth;
+                const height = viewerDiv.clientHeight;
+
+                // NEW ADDITION: Retry if dimensions are zero
+                if (width === 0 || height === 0) {
+                    console.warn("Viewer dimensions are 0, model might not render correctly. Retrying in 100ms...");
+                    setTimeout(() => loadSTLModel(file), 100); // Retry after short delay
+                    return;
+                }
+
+                camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                renderer.setSize(width, height);
+                // NEW ADDITION: Set pixel ratio for clarity
+                renderer.setPixelRatio(window.devicePixelRatio);
+
+                // NEW ADDITION: Add resize listener
+                window.addEventListener('resize', onWindowResize, false);
+
+
+                const light = new THREE.DirectionalLight(0xffffff, 1);
+                light.position.set(1, 1, 1);
+                scene.add(light);
+                scene.add(new THREE.AmbientLight(0x404040));
+
+                const material = new THREE.MeshLambertMaterial({ color: 0x0077ff });
+                mesh = new THREE.Mesh(geometry, material);
+                geometry.computeBoundingBox();
+                const box = geometry.boundingBox;
+                const center = box.getCenter(new THREE.Vector3());
+                mesh.position.sub(center);
+                scene.add(mesh);
+
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5);
+                camera.lookAt(0, 0, 0);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.1;
+                controls.screenSpacePanning = false;
+                controls.enableZoom = true;
+                controls.enablePan = true;
+
+                loadingMsg.style.display = 'none';
+                animate();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function onWindowResize() {
+            if (camera && renderer && controls) {
+                const canvas = document.getElementById('cadCanvas');
+                const viewerDiv = canvas.parentElement;
+                const width = viewerDiv.clientWidth;
+                const height = viewerDiv.clientHeight;
+
+                if (width > 0 && height > 0) { // Only resize if dimensions are valid
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(width, height);
+                    controls.update();
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) controls.update();
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function removeObject() {
+            if (mesh) {
+                scene.remove(mesh);
+                mesh = null;
+                // NEW ADDITION: Call speakResponse
+                speakResponse("Object removed.");
+            } else {
+                // NEW ADDITION: Call speakResponse
+                speakResponse("No object to remove.");
+            }
+        }
+
+        function resetView() {
+            if (mesh) mesh.rotation.set(0, 0, 0);
+            if (camera && mesh) {
+                const box = new THREE.Box3().setFromObject(mesh);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5);
+                camera.lookAt(0, 0, 0);
+                controls.update();
+                // NEW ADDITION: Call speakResponse
+                speakResponse("View reset.");
+            } else {
+                // NEW ADDITION: Call speakResponse
+                speakResponse("No object to reset view for.");
+            }
+        }
+
+        function goBack() {
+            editorPage.classList.remove('page-active');
+            editorPage.classList.add('page-inactive');
+
+            uploadPage.classList.remove('page-inactive');
+            uploadPage.classList.add('page-active');
+
+            // NEW ADDITION: Stop voice recognition and speech synthesis if active
+            stopVoiceAssist();
+
+            // NEW ADDITION: Dispose of Three.js resources when going back to prevent memory leaks
+            if (scene) {
+                scene.traverse(function (object) {
+                    if (object.isMesh) {
+                        if (object.geometry) object.geometry.dispose();
+                        if (object.material) {
+                            if (Array.isArray(object.material)) {
+                                object.material.forEach(material => material.dispose());
+                            } else {
+                                object.material.dispose();
+                            }
+                        }
+                    }
+                });
+                scene = null;
+            }
+            // NEW ADDITION: Dispose of renderer
+            if (renderer) {
+                renderer.dispose();
+                renderer = null;
+            }
+            // NEW ADDITION: Dispose of controls
+            if (controls) {
+                controls.dispose();
+                controls = null;
+            }
+            // NEW ADDITION: Remove resize listener
+            window.removeEventListener('resize', onWindowResize, false);
+        }
+
+        function showDesignInfo() {
+            if (!mesh) return alert("No design loaded.");
+            const box = new THREE.Box3().setFromObject(mesh);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            alert(`Width: ${size.x.toFixed(2)}\nHeight: ${size.y.toFixed(2)}\nDepth: ${size.z.toFixed(2)}`);
+            // NEW ADDITION: Call speakResponse
+            speakResponse(`Width: ${size.x.toFixed(2)}, Height: ${size.y.toFixed(2)}, Depth: ${size.z.toFixed(2)}`);
+        }
+
+        /* NEW JAVASCRIPT BLOCK START: AI Voice Assist Functions */
+        // NEW ADDITION: Event listener for the voice assist button
+        voiceAssistBtn.addEventListener('click', toggleVoiceAssist);
+
+        // NEW ADDITION: Function to initialize speech recognition
+        function initializeSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Speech recognition not supported in this browser. Please use Google Chrome.");
+                aiResponseDisplay.textContent = "Speech recognition not supported.";
+                return null;
+            }
+            const newRecognition = new webkitSpeechRecognition();
+            newRecognition.continuous = true; // Listen continuously
+            newRecognition.interimResults = false; // Only return final results
+            newRecognition.lang = 'en-US'; // Set language
+            return newRecognition;
+        }
+
+        // NEW ADDITION: Function to initialize speech synthesis
+        function initializeSpeechSynthesis() {
+            if (!('speechSynthesis' in window)) {
+                alert("Speech synthesis not supported in this browser.");
+                return null;
+            }
+            return window.speechSynthesis;
+        }
+
+        // NEW ADDITION: Function to speak AI responses
+        function speakResponse(text) {
+            if (!synth) {
+                synth = initializeSpeechSynthesis();
+                if (!synth) return;
+            }
+            // Cancel any ongoing speech
+            synth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.onend = () => {
+                // After speaking, if voice assist is still active, restart recognition
+                if (isVoiceAssistActive && recognition) {
+                    voiceStatus.textContent = "Listening...";
+                    voiceOutput.textContent = "";
+                    aiResponseDisplay.textContent = "";
+                    recognition.start();
+                }
+            };
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                aiResponseDisplay.textContent = "Error speaking response.";
+            };
+            synth.speak(utterance);
+            aiResponseDisplay.textContent = text; // Also display text in the panel
+        }
+
+        // NEW ADDITION: Function to toggle voice assist on/off
+        function toggleVoiceAssist() {
+            if (!mesh) {
+                aiResponseDisplay.textContent = "Please load an STL model first.";
+                speakResponse("Please load an STL model first.");
+                return;
+            }
+
+            if (!recognition) {
+                recognition = initializeSpeechRecognition();
+                if (!recognition) return;
+            }
+            if (!synth) {
+                synth = initializeSpeechSynthesis();
+                if (!synth) return;
+            }
+
+            if (isVoiceAssistActive) {
+                // Stop voice assist
+                stopVoiceAssist();
+                speakResponse("Voice assist stopped. Goodbye!");
+            } else {
+                // Start voice assist
+                isVoiceAssistActive = true;
+                voiceAssistBtn.classList.add('active-voice-btn');
+                voiceAssistBtn.innerHTML = '❌ Stop AI'; // Change button text to X
+                voiceControlPanel.style.display = 'block';
+                voiceStatus.textContent = "Starting...";
+                voiceOutput.textContent = "";
+                aiResponseDisplay.textContent = "";
+
+                speakResponse("Hi, what can I help you with?");
+                // Recognition will start after the greeting finishes speaking (in utterance.onend)
+            }
+
+            // NEW ADDITION: Event listeners for recognition state changes
+            recognition.onstart = function () {
+                voiceStatus.textContent = "Listening...";
+                voiceOutput.textContent = "";
+                aiResponseDisplay.textContent = "";
+                console.log('Speech recognition started');
+            };
+
+            recognition.onresult = function (event) {
+                const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase(); // Get the latest final transcript
+                voiceOutput.textContent = `You said: "${transcript}"`;
+                voiceStatus.textContent = "Processing...";
+                console.log('Speech recognized:', transcript);
+
+                // Stop recognition temporarily while processing and speaking
+                recognition.stop();
+                processVoiceCommand(transcript);
+            };
+
+            recognition.onerror = function (event) {
+                console.error('Speech recognition error:', event);
+                voiceStatus.textContent = `Error: ${event.error}`;
+                aiResponseDisplay.textContent = "Speech error. Try again.";
+                stopVoiceAssist(); // Stop on error
+            };
+
+            recognition.onend = function () {
+                console.log('Speech recognition ended');
+                if (isVoiceAssistActive && !synth.speaking) { // If still active and not speaking
+                    // This means recognition stopped unexpectedly or after processing,
+                    // and no new speech was queued. Restart it.
+                    voiceStatus.textContent = "Listening...";
+                    voiceOutput.textContent = "";
+                    aiResponseDisplay.textContent = "";
+                    recognition.start();
+                }
+            };
+        }
+
+        // NEW ADDITION: Function to stop voice assist cleanly
+        function stopVoiceAssist() {
+            isVoiceAssistActive = false;
+            if (recognition && typeof recognition.stop === 'function') {
+                recognition.stop();
+            }
+            if (synth && typeof synth.cancel === 'function') {
+                synth.cancel();
+            }
+            voiceControlPanel.style.display = 'none';
+            voiceAssistBtn.classList.remove('active-voice-btn');
+            voiceAssistBtn.innerHTML = '🧠 AI Voice Assist'; // Reset button text
+            voiceStatus.textContent = "Ready.";
+            voiceOutput.textContent = "";
+            aiResponseDisplay.textContent = "";
+        }
+
+
+        // NEW ADDITION: AI Command Processing (Simple Logic, with speakResponse calls)
+        function processVoiceCommand(command) {
+            let response = "I didn't understand that command. Please try again.";
+            let commandExecuted = false;
+
+            // Basic "scale" command
+            const scaleMatch = command.match(/(scale|resize) (it|model|object)?(?: by)? (\d+(\.\d+)?) ?percent/i);
+            if (scaleMatch && mesh) {
+                const percentage = parseFloat(scaleMatch[3]) / 100;
+                const scaleFactor = 1 + percentage; // To increase by X percent
+
+                mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                response = `Model scaled by ${scaleMatch[3]} percent.`;
+                commandExecuted = true;
+                console.log("Scaled model:", scaleFactor);
+            } else if (command.includes("remove object") || command.includes("delete object")) {
+                removeObject(); // This function will now call speakResponse internally
+                commandExecuted = true;
+            } else if (command.includes("reset view")) {
+                resetView(); // This function will now call speakResponse internally
+                commandExecuted = true;
+            } else if (command.includes("show design info") || command.includes("what are the dimensions")) {
+                showDesignInfo(); // This function will now call speakResponse internally
+                commandExecuted = true;
+            }
+
+            // If a command was executed and not handled by a specific function that speaks, speak the response.
+            // If not, speak the "didn't understand" message.
+            speakResponse(response);
+
+            // Re-render scene after changes
+            if (commandExecuted && renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+    </script>
+</body>
+</html>
