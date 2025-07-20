@@ -1,75 +1,75 @@
-const aiLog = document.getElementById('ai-log');
-const sendBtn = document.getElementById('send-btn');
-const inputBox = document.getElementById('input-box');
-const micBtn = document.getElementById('mic-btn');
+const assistantOutput = document.getElementById("assistant-output");
+const sendBtn = document.getElementById("send-btn");
+const userInputField = document.getElementById("user-input");
 
-sendBtn.addEventListener('click', () => {
-    const userInput = inputBox.value.trim();
-    if (userInput) {
-        sendToAI(userInput);
-        inputBox.value = '';
-    }
-});
-
-function sendToAI(text) {
-    addMessageToLog('User', text);
-
-    fetch('https://mingyu.onrender.com/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.action === 'conversational') {
-            speakText(data.value);
-            addMessageToLog('AI', data.value);
-        } else if (data.action === 'error') {
-            addMessageToLog('AI', data.value);
-        } else {
-            addMessageToLog('system', `Received command: ${JSON.stringify(data)}`);
-        }
-    })
-    .catch(err => {
-        console.error('AI error:', err);
-        addMessageToLog('system', '⚠️ Could not connect to AI.');
-    });
+function appendMessage(sender, text, color = 'white') {
+  assistantOutput.innerHTML += `<div style="color:${color}"><strong>${sender}:</strong> ${text}</div>`;
+  assistantOutput.scrollTop = assistantOutput.scrollHeight;
 }
 
-function addMessageToLog(sender, msg) {
-    const entry = document.createElement('p');
-    entry.className = sender === 'User' ? 'user-message' : sender === 'AI' ? 'ai-response' : 'system-message';
-    entry.textContent = `${sender}: ${msg}`;
-    aiLog.appendChild(entry);
-    aiLog.scrollTop = aiLog.scrollHeight;
+async function sendToAI(message) {
+  appendMessage("User", message, "#00ffff");
+
+  try {
+    const res = await fetch("https://mingyu.onrender.com/api/ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message }) // MUST MATCH server.js
+    });
+
+    const data = await res.json();
+
+    if (data.reply) {
+      appendMessage("AI", data.reply, "#00ff00");
+      speakText(data.reply);
+    } else {
+      appendMessage("AI", "AI error: Invalid response", "red");
+    }
+  } catch (err) {
+    console.error("Error:", err);
+    appendMessage("AI", "AI error occurred. Try again.", "red");
+  }
 }
 
 function speakText(text) {
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        speechSynthesis.speak(utterance);
-    }
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  speechSynthesis.speak(utterance);
 }
 
-if ('webkitSpeechRecognition' in window) {
-    const recognition = new webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
+// Send with Enter or button
+sendBtn.addEventListener("click", () => {
+  const msg = userInputField.value.trim();
+  if (msg !== "") {
+    sendToAI(msg);
+    userInputField.value = "";
+  }
+});
 
-    micBtn.addEventListener('click', () => {
-        recognition.start();
-        addMessageToLog('System', '🎙️ Listening...');
-    });
+userInputField.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    sendBtn.click();
+  }
+});
 
-    recognition.onresult = event => {
-        const voiceText = event.results[0][0].transcript;
-        addMessageToLog('User', voiceText);
-        sendToAI(voiceText);
-    };
+// Voice input
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = "en-US";
+recognition.continuous = false;
 
-    recognition.onerror = err => {
-        console.error('Speech recognition error:', err);
-        addMessageToLog('System', '🎤 Speech recognition failed.');
-    };
-}
+document.getElementById("mic-btn").addEventListener("click", () => {
+  appendMessage("System", "🎤 Listening...", "#9999ff");
+  recognition.start();
+});
+
+recognition.onresult = (event) => {
+  const speechToText = event.results[0][0].transcript;
+  userInputField.value = speechToText;
+  sendBtn.click();
+};
+
+recognition.onerror = (e) => {
+  appendMessage("System", `🎤 Mic error: ${e.error}`, "orange");
+};
