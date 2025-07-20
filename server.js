@@ -5,56 +5,56 @@ const bodyParser = require('body-parser');
 const { Configuration, OpenAIApi } = require('openai');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
 
 const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
 app.post('/api/ai', async (req, res) => {
-    const userInput = req.body.message;
+  const userInput = req.body.message;
 
-    const messages = [
+  try {
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-4o',
+      messages: [
         {
-            role: 'system',
-            content: `You are an AI CAD assistant. Respond ONLY with JSON like:
-- rotate 45 degrees → {"action":"rotate", "value":45}
-- scale 2x → {"action":"scale", "value":2}
-- move left 3 and up 2 → {"action":"move", "value":{"x":-3,"y":2,"z":0}}
-- color it red → {"action":"color", "value":"#ff0000"}
-- hi → {"action":"conversational", "value":"Hi!"}
-If unclear, reply: {"action":"error", "value":"Sorry, I didn’t understand."}`
+          role: 'system',
+          content: `You are an AI CAD assistant. 
+You can talk casually or respond with actions.
+
+If user says:
+- "hi" or "how are you?" → respond normally
+- "rotate 45 degrees" → {"action":"rotate", "value":45}
+- "scale it by 2" → {"action":"scale", "value":2}
+- "reset view" → {"action":"resetView"}
+
+Only return JSON for CAD commands. Otherwise, talk like a helpful assistant.`,
         },
-        { role: 'user', content: userInput }
-    ];
+        { role: 'user', content: userInput },
+      ],
+    });
 
+    const aiResponse = completion.data.choices[0].message.content.trim();
+
+    // If it's JSON, try to parse and send directly
     try {
-        const completion = await openai.createChatCompletion({
-            model: 'gpt-4',
-            messages,
-            temperature: 0.5
-        });
-
-        const reply = completion.data.choices[0].message.content;
-
-        let parsed;
-        try {
-            parsed = JSON.parse(reply);
-        } catch (e) {
-            parsed = { action: 'conversational', value: reply };
-        }
-
-        res.json(parsed);
-    } catch (error) {
-        console.error('AI API Error:', error);
-        res.status(500).json({ action: 'error', value: 'AI server error.' });
+      const parsed = JSON.parse(aiResponse);
+      res.json(parsed);
+    } catch (e) {
+      // Otherwise, treat it as a normal reply
+      res.json({ action: 'conversational', value: aiResponse });
     }
+  } catch (error) {
+    console.error('OpenAI Error:', error?.response?.data || error.message);
+    res.json({ action: 'error', value: 'AI error occurred. Please try again.' });
+  }
 });
 
 app.listen(port, () => {
-    console.log(`✅ Server running at http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
