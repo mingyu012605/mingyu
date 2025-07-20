@@ -1041,6 +1041,40 @@
                 }
             }
         }
+        sendTextCommandBtn.addEventListener('click', () => {
+    const userInput = textCommandInput.value.trim();
+    if (!userInput) return;
+
+    addMessageToLog('User', userInput);
+
+    fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userInput })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.action === 'conversational') {
+            addMessageToLog('AI', data.value || data.message);
+        } else {
+            addMessageToLog('System', `Received command: ${data.action}`);
+            // TODO: you can call performAction(data) here to act on the model
+        }
+    })
+    .catch(err => {
+        console.error('AI error:', err);
+        addMessageToLog('System', 'Failed to connect to AI.');
+    });
+});
+
+function addMessageToLog(sender, msg) {
+    const entry = document.createElement('p');
+    entry.className = sender === 'User' ? 'user-message' : sender === 'AI' ? 'ai-response' : 'system-message';
+    entry.textContent = `${sender}: ${msg}`;
+    aiLog.appendChild(entry);
+    aiLog.scrollTop = aiLog.scrollHeight;
+}
+
     </script>
 </body>
 </html>
