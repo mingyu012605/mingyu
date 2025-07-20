@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -7,7 +7,7 @@ const { Configuration, OpenAIApi } = require('openai');
 const app = express();
 const port = 3000;
 
-app.use(cors()); // Add origin if needed
+app.use(cors());
 app.use(bodyParser.json());
 
 const configuration = new Configuration({
@@ -16,19 +16,19 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 app.post('/api/ai', async (req, res) => {
-    const userInput = req.body.message; // FIXED
+    const userInput = req.body.message;
 
     const messages = [
         {
             role: 'system',
-            content: `You are an AI CAD assistant. Respond ONLY with JSON objects.
-If user says:
-- "rotate 45 degrees" → {"action":"rotate", "value":45}
-- "scale 2x" → {"action":"scale", "value":2}
-- "move left 3 and up 2" → {"action":"move", "value":{"x":-3,"y":2,"z":0}}
-- "color it red" → {"action":"color", "value":"#ff0000"}
-- "hi" → {"action":"conversational", "value":"Hi there!"}
-If invalid: {"action":"error", "value":"Sorry, I didn't understand."}`
+            content: `You are an AI CAD assistant. Respond ONLY with valid JSON like:
+{"action":"rotate","value":45}
+{"action":"scale","value":2}
+{"action":"move","value":{"x":-3,"y":2,"z":0}}
+{"action":"color","value":"#ff0000"}
+{"action":"conversational","value":"Hi there!"}
+{"action":"error","value":"Sorry, I didn't understand."}
+No text outside of JSON.`
         },
         { role: 'user', content: userInput }
     ];
@@ -37,8 +37,7 @@ If invalid: {"action":"error", "value":"Sorry, I didn't understand."}`
         const completion = await openai.createChatCompletion({
             model: 'gpt-4',
             messages,
-            temperature: 0.5,
-            response_format: { type: "json_object" } // NEW
+            temperature: 0.5
         });
 
         const reply = completion.data.choices[0].message.content;
@@ -47,7 +46,7 @@ If invalid: {"action":"error", "value":"Sorry, I didn't understand."}`
         try {
             parsed = JSON.parse(reply);
         } catch (e) {
-            parsed = { action: 'conversational', value: reply };
+            parsed = { action: 'error', value: 'AI returned invalid JSON.' };
         }
 
         res.json(parsed);
@@ -58,5 +57,5 @@ If invalid: {"action":"error", "value":"Sorry, I didn't understand."}`
 });
 
 app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`);
+    console.log(`✅ Server listening at http://localhost:${port}`);
 });
