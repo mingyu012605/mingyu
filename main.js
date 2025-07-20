@@ -1,37 +1,77 @@
-let scene, camera, renderer, cube;
+const aiLog = document.getElementById('ai-log');
+const sendBtn = document.getElementById('send-btn');
+const inputBox = document.getElementById('input-box');
+const micBtn = document.getElementById('mic-btn');
 
-function init() {
-    const canvas = document.getElementById('cadCanvas');
+sendBtn.addEventListener('click', () => {
+    const userInput = inputBox.value.trim();
+    if (userInput) {
+        sendToAI(userInput);
+        inputBox.value = '';
+    }
+});
 
-    // Scene setup
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
+function sendToAI(text) {
+    addMessageToLog('User', text);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 2;
-
-    renderer = new THREE.WebGLRenderer({ canvas: canvas });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // Add a cube
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshStandardMaterial({ color: 0x0077ff });
-    cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-
-    // Lighting
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(2, 2, 5).normalize();
-    scene.add(light);
-
-    animate();
+    fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.action === 'conversational') {
+            speakText(data.value);
+            addMessageToLog('AI', data.value);
+        } else if (data.action === 'error') {
+            addMessageToLog('AI', data.value);
+        } else {
+            // Placeholder for CAD commands like rotate/scale/etc
+            addMessageToLog('system', `Received command: ${JSON.stringify(data)}`);
+        }
+    })
+    .catch(err => {
+        console.error('AI error:', err);
+        addMessageToLog('system', '⚠️ Could not connect to AI.');
+    });
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-    renderer.render(scene, camera);
+function addMessageToLog(sender, msg) {
+    const entry = document.createElement('p');
+    entry.className = sender === 'User' ? 'user-message' : sender === 'AI' ? 'ai-response' : 'system-message';
+    entry.textContent = `${sender}: ${msg}`;
+    aiLog.appendChild(entry);
+    aiLog.scrollTop = aiLog.scrollHeight;
 }
 
-document.getElementById('loadBtn').addEventListener('click', init);
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        speechSynthesis.speak(utterance);
+    }
+}
+
+// Voice input
+if ('webkitSpeechRecognition' in window) {
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    micBtn.addEventListener('click', () => {
+        recognition.start();
+        addMessageToLog('System', '🎙️ Listening...');
+    });
+
+    recognition.onresult = event => {
+        const voiceText = event.results[0][0].transcript;
+        addMessageToLog('User', voiceText);
+        sendToAI(voiceText);
+    };
+
+    recognition.onerror = err => {
+        console.error('Speech recognition error:', err);
+        addMessageToLog('System', '🎤 Speech recognition failed.');
+    };
+}
