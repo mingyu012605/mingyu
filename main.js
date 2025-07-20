@@ -16,14 +16,14 @@ async function sendToAI(message) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ message }) // MUST MATCH server.js
+      body: JSON.stringify({ prompt: message }) // ✅ FIXED: use "prompt" instead of "message"
     });
 
     const data = await res.json();
 
-    if (data.reply) {
-      appendMessage("AI", data.reply, "#00ff00");
-      speakText(data.reply);
+    if (data.content) {
+      appendMessage("AI", data.content, "#00ff00");
+      speakText(data.content);
     } else {
       appendMessage("AI", "AI error: Invalid response", "red");
     }
