@@ -1,65 +1,62 @@
-﻿// Load environment variables
-require('dotenv').config();
-console.log("🔐 Loaded API Key:", process.env.OPENAI_API_KEY); // Debug line
-
-// Imports
+﻿require('dotenv').config();
 const express = require('express');
-const { OpenAI } = require('openai');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const { Configuration, OpenAIApi } = require('openai');
 
-// Setup app
 const app = express();
 const port = 3000;
 
-app.use(cors());
+app.use(cors()); // Add origin if needed
 app.use(bodyParser.json());
 
-// OpenAI setup
-const openai = new OpenAI();
-
-// Server log
-app.listen(port, () => {
-    console.log(`🚀 GPT CAD Assistant running at http://localhost:${port}`);
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY
 });
+const openai = new OpenAIApi(configuration);
 
-// POST endpoint to process voice input
-app.post('/ai', async (req, res) => {
-    const { message } = req.body;
+app.post('/api/ai', async (req, res) => {
+    const userInput = req.body.message; // FIXED
 
-    if (!message) {
-        return res.status(400).json({ error: 'Missing message' });
-    }
+    const messages = [
+        {
+            role: 'system',
+            content: `You are an AI CAD assistant. Respond ONLY with JSON objects.
+If user says:
+- "rotate 45 degrees" → {"action":"rotate", "value":45}
+- "scale 2x" → {"action":"scale", "value":2}
+- "move left 3 and up 2" → {"action":"move", "value":{"x":-3,"y":2,"z":0}}
+- "color it red" → {"action":"color", "value":"#ff0000"}
+- "hi" → {"action":"conversational", "value":"Hi there!"}
+If invalid: {"action":"error", "value":"Sorry, I didn't understand."}`
+        },
+        { role: 'user', content: userInput }
+    ];
 
     try {
-        const chatCompletion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: [
-                {
-                    role: 'system',
-                    content: `You are a voice command assistant for a 3D CAD viewer. Respond ONLY with one of the following function names:
-                    - resetView
-                    - removeObject
-                    - showDesignInfo
-                    - goBack
-                    - stopAI
-
-                    If none match, respond with "unknown".`
-                },
-                {
-                    role: 'user',
-                    content: message
-                }
-            ],
-            temperature: 0.1
+        const completion = await openai.createChatCompletion({
+            model: 'gpt-4',
+            messages,
+            temperature: 0.5,
+            response_format: { type: "json_object" } // NEW
         });
 
-        const reply = chatCompletion.choices?.[0]?.message?.content?.trim();
-        console.log("🤖 AI Response:", reply);
+        const reply = completion.data.choices[0].message.content;
 
-        res.json({ reply });
+        let parsed;
+        try {
+            parsed = JSON.parse(reply);
+        } catch (e) {
+            parsed = { action: 'conversational', value: reply };
+        }
+
+        res.json(parsed);
     } catch (error) {
-        console.error('❌ OpenAI error:', error);
-        res.status(500).json({ error: 'OpenAI failed' });
+        console.error('AI API Error:', error);
+        res.status(500).json({ action: 'error', value: 'Failed to connect to AI.' });
     }
+});
+
+app.listen(port, () => {
+    console.log(`Server listening at http://localhost:${port}`);
 });

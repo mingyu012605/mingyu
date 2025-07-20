@@ -1,34 +1,46 @@
-// ai.js - Handles communication with the AI backend server
-
-// Function to send a message to the AI backend and get a response
-async function sendToAI(message) {
+async function sendToAI(userCommand) {
     try {
-        // Make a POST request to your backend server's /chat endpoint
-        const response = await fetch('http://localhost:3000/chat', {
+        const response = await fetch('/api/ai', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json' // Indicate that we're sending JSON
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ message: message }) // Send the user's message as JSON
+            body: JSON.stringify({ command: userCommand })
         });
 
-        // Check if the HTTP response was successful
-        if (!response.ok) {
-            // If not successful, throw an error with the status
-            throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+
+        if (!result || !result.reply) {
+            console.error("No reply from server.");
+            return { action: "error", value: "No reply from AI." };
         }
 
-        // Parse the JSON response from the backend
-        const data = await response.json();
+        // Try to extract JSON from the AI's message
+        let actionData = null;
 
-        // The backend sends back an object with a 'reply' property
-        // This 'reply' can be a structured JSON object (for commands) or a simple string (for conversational replies)
-        return data.reply;
+        // Extract JSON block from reply using regex
+        const match = result.reply.match(/{[\s\S]*}/);
+        if (match) {
+            try {
+                actionData = JSON.parse(match[0]);
+            } catch (err) {
+                console.error("JSON parsing failed:", err);
+                return { action: "error", value: "Could not parse AI response." };
+            }
+        } else {
+            console.warn("No JSON structure found in AI reply. Fallback to plain message.");
+            return { action: "conversational", value: result.reply.trim() };
+        }
+
+        // Ensure response has required keys
+        if (!actionData.action) {
+            return { action: "conversational", value: result.reply.trim() };
+        }
+
+        return actionData;
 
     } catch (error) {
-        // Log any errors during the fetch operation
-        console.error('Error sending message to AI:', error);
-        // Return an error message or a specific error object
-        return { action: "error", value: "Failed to communicate with the AI backend." };
+        console.error("Error communicating with AI backend:", error);
+        return { action: "error", value: error.message };
     }
 }
