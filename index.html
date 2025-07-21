@@ -1488,169 +1488,225 @@
         let loadingMessageElement = null; // Declare here to be accessible in catch and finally
 
         try {
-            // Updated payload for AI to include new commands
-            const payloadCommands = [ // Define the commands array here
-                    {
+            // Define the tools/functions for OpenAI's API
+            const tools = [
+                {
+                    type: "function",
+                    function: {
                         name: "rotate",
                         description: "Rotates the entire loaded 3D model around its Y-axis by a specified degree. Use for general model rotation.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                value: { type: "NUMBER", description: "Degrees to rotate (e.g., 90, -45)." }
+                                value: { type: "number", description: "Degrees to rotate (e.g., 90, -45)." }
                             },
                             required: ["value"]
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
                         name: "rotateSelected",
                         description: "Rotates the currently selected 3D part around its Y-axis by a specified degree. Use for rotating individual parts.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                value: { type: "NUMBER", description: "Degrees to rotate (e.g., 90, -45)." }
+                                value: { type: "number", description: "Degrees to rotate (e.g., 90, -45)." }
                             },
                             required: ["value"]
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
                         name: "scale",
                         description: "Scales the entire loaded 3D model by a specified factor. Use for general model resizing.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                value: { type: "NUMBER", description: "Scale factor (e.g., 0.5 for half, 2 for double). Must be positive." }
+                                value: { type: "number", description: "Scale factor (e.g., 0.5 for half, 2 for double). Must be positive)." }
                             },
                             required: ["value"]
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
                         name: "scaleSelected",
                         description: "Scales the currently selected 3D part by a specified factor. Use for resizing individual parts.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                value: { type: "NUMBER", description: "Scale factor (e.g., 0.5 for half, 2 for double). Must be positive." }
+                                value: { type: "number", description: "Scale factor (e.g., 0.5 for half, 2 for double). Must be positive)." }
                             },
                             required: ["value"]
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
                         name: "translate",
                         description: "Moves the entire loaded 3D model by specified X, Y, Z offsets. Use for general model positioning.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                x: { type: "NUMBER", description: "X-axis offset." },
-                                y: { type: "NUMBER", description: "Y-axis offset." },
-                                z: { type: "NUMBER", description: "Z-axis offset." }
+                                x: { type: "number", description: "X-axis offset." },
+                                y: { type: "number", description: "Y-axis offset." },
+                                z: { type: "number", description: "Z-axis offset." }
                             }
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
                         name: "translateSelected",
                         description: "Moves the currently selected 3D part by specified X, Y, Z offsets. Use for positioning individual parts.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                x: { type: "NUMBER", description: "X-axis offset." },
-                                y: { type: "NUMBER", description: "Y-axis offset." },
-                                z: { type: "NUMBER", description: "Z-axis offset." }
+                                x: { type: "number", description: "X-axis offset." },
+                                y: { type: "number", description: "Y-axis offset." },
+                                z: { type: "number", description: "Z-axis offset." }
                             }
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
                         name: "color",
                         description: "Changes the color of the entire loaded 3D model using a hexadecimal color code. Use for general model coloring.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                value: { type: "STRING", description: "Hexadecimal color code (e.g., #FF0000 for red)." }
+                                value: { type: "string", description: "Hexadecimal color code (e.g., #FF0000 for red)." }
                             },
                             required: ["value"]
                         }
-                    },
-                    {
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
                         name: "colorSelected",
                         description: "Changes the color of the currently selected 3D part using a hexadecimal color code. Use for coloring individual parts.",
                         parameters: {
-                            type: "OBJECT",
+                            type: "object",
                             properties: {
-                                value: { type: "STRING", description: "Hexadecimal color code (e.g., #00FF00 for green)." }
+                                value: { type: "string", description: "Hexadecimal color code (e.g., #00FF00 for green)." }
                             },
                             required: ["value"]
                         }
-                    },
-                    {
-                        name: "hide",
-                        description: "Hides the entire loaded 3D model. Use for toggling model visibility.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "hideSelected",
-                        description: "Hides the currently selected 3D part. Use for toggling individual part visibility.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "show",
-                        description: "Shows the entire loaded 3D model if it was hidden. Use for toggling model visibility.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "showSelected",
-                        description: "Shows the currently selected 3D part if it was hidden. Use for toggling individual part visibility.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "duplicate",
-                        description: "Duplicates the entire loaded 3D model. The duplicate will be slightly offset.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "duplicateSelected",
-                        description: "Duplicates the currently selected 3D part. The duplicate will be slightly offset.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "removeObject",
-                        description: "Removes the entire loaded 3D model from the scene.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "removeSelected",
-                        description: "Removes the currently selected 3D part from the scene.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "resetView",
-                        description: "Resets the camera view and model position/rotation to their initial state.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "designInfo",
-                        description: "Provides information about the loaded 3D model or selected part, such as dimensions and position.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "zoomIn",
-                        description: "Zooms the camera closer to the model.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    },
-                    {
-                        name: "zoomOut",
-                        description: "Zooms the camera further from the model.",
-                        parameters: { type: "OBJECT", properties: {} }
-                    }
-                ];
-
-            const payload = {
-                contents: [{ role: "user", parts: [{ text: command }] }],
-                toolConfig: {
-                    functionCallingConfig: {
-                        mode: "ANY",
-                        allowedFunctionNames: payloadCommands.map(cmd => cmd.name)
                     }
                 },
-                tools: [{ functionDeclarations: payloadCommands }]
+                {
+                    type: "function",
+                    function: {
+                        name: "hide",
+                        description: "Hides the entire loaded 3D model. Use for toggling model visibility.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "hideSelected",
+                        description: "Hides the currently selected 3D part. Use for toggling individual part visibility.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "show",
+                        description: "Shows the entire loaded 3D model if it was hidden. Use for toggling model visibility.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "showSelected",
+                        description: "Shows the currently selected 3D part if it was hidden. Use for toggling individual part visibility.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "duplicate",
+                        description: "Duplicates the entire loaded 3D model. The duplicate will be slightly offset.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "duplicateSelected",
+                        description: "Duplicates the currently selected 3D part. The duplicate will be slightly offset.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "removeObject",
+                        description: "Removes the entire loaded 3D model from the scene.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "removeSelected",
+                        description: "Removes the currently selected 3D part from the scene.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "resetView",
+                        description: "Resets the camera view and model position/rotation to their initial state.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "designInfo",
+                        description: "Provides information about the loaded 3D model or selected part, such as dimensions and position.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "zoomIn",
+                        description: "Zooms the camera closer to the model.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "zoomOut",
+                        description: "Zooms the camera further from the model.",
+                        parameters: { type: "object", properties: {} }
+                    }
+                }
+            ];
+
+            const payload = {
+                model: "gpt-3.5-turbo", // Using a common GPT model
+                messages: [{ role: "user", content: command }],
+                tools: tools,
+                tool_choice: "auto" // Allow the model to decide whether to call a tool
             };
 
             // Create and append the loading message element BEFORE the fetch
@@ -1660,11 +1716,24 @@
 
             let resultData;
             try {
-                resultData = JSON.parse(aiReply.content);
-                console.log("[AI Command Processing] Parsed AI command:", resultData);
+                // OpenAI responses for tool calls are structured differently
+                if (aiReply.content && aiReply.content.tool_calls && aiReply.content.tool_calls.length > 0) {
+                    const toolCall = aiReply.content.tool_calls[0]; // Assuming one tool call for simplicity
+                    resultData = {
+                        action: toolCall.function.name,
+                        value: JSON.parse(toolCall.function.arguments) // Arguments are a JSON string
+                    };
+                    console.log("[AI Command Processing] Parsed OpenAI tool call:", resultData);
+                } else if (aiReply.content && aiReply.content.content) {
+                    resultData = { action: 'conversational', value: aiReply.content.content };
+                    console.log("[AI Command Processing] Parsed OpenAI conversational response:", resultData);
+                } else {
+                    resultData = { action: 'conversational', value: "AI did not provide a valid response." };
+                    console.log("[AI Command Processing] Unexpected OpenAI response format:", aiReply);
+                }
             } catch (e) {
-                resultData = { action: 'conversational', value: aiReply.content };
-                console.log("[AI Command Processing] Parsed AI conversational response (JSON parse failed):", resultData);
+                resultData = { action: 'conversational', value: aiReply.content || "An error occurred parsing AI response." };
+                console.log("[AI Command Processing] Parsed AI conversational response (JSON parse failed or unexpected structure):", resultData);
             }
 
             if (resultData && typeof resultData === 'object' && resultData.action) {
@@ -1688,13 +1757,13 @@
                 switch (resultData.action) {
                     case 'rotate':
                     case 'rotateSelected':
-                        if (target && typeof resultData.value === 'number') {
+                        if (target && typeof resultData.value.value === 'number') {
                             console.log(`[Three.js Property Check] Before rotate: target.rotation.y = ${target.rotation.y}`);
                             // THREE.MathUtils.degToRad is now directly available via THREE
-                            target.rotation.y += THREE.MathUtils.degToRad(resultData.value);
+                            target.rotation.y += THREE.MathUtils.degToRad(resultData.value.value);
                             console.log(`[Three.js Property Check] After rotate: target.rotation.y = ${target.rotation.y}`);
-                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
-                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value.value} degrees.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value.value} degrees.`);
                         } else {
                             addMessageToLog('AI', "Sorry, I couldn't rotate. Please specify a valid degree value or ensure a model is loaded/selected.");
                             speakResponse("Sorry, I couldn't rotate.");
@@ -1702,13 +1771,13 @@
                         break;
                     case 'scale':
                     case 'scaleSelected':
-                        if (target && typeof resultData.value === 'number' && resultData.value > 0) {
+                        if (target && typeof resultData.value.value === 'number' && resultData.value.value > 0) {
                             console.log(`[Three.js Property Check] Before scale: target.scale.x = ${target.scale.x}`);
                             // Corrected to use setScalar for uniform scaling
-                            target.scale.setScalar(resultData.value);
+                            target.scale.setScalar(resultData.value.value);
                             console.log(`[Three.js Property Check] After scale: target.scale.x = ${target.scale.x}`);
-                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
-                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value.value}.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value.value}.`);
                         } else {
                             addMessageToLog('AI', "Sorry, I couldn't scale. Please specify a positive scale factor or ensure a model is loaded/selected.");
                             speakResponse("Sorry, I couldn't scale.");
@@ -1732,9 +1801,9 @@
                         break;
                     case 'color':
                     case 'colorSelected':
-                        if (target && typeof resultData.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value)) {
-                            const newColor = new THREE.Color(resultData.value);
-                            console.log(`[Action Execution] Attempting to change color of ${selectedObject ? 'selected part' : 'model'} to ${resultData.value}`);
+                        if (target && typeof resultData.value.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value.value)) {
+                            const newColor = new THREE.Color(resultData.value.value);
+                            console.log(`[Action Execution] Attempting to change color of ${selectedObject ? 'selected part' : 'model'} to ${resultData.value.value}`);
 
                             target.traverse((child) => {
                                 if (child.isMesh) {
@@ -1773,7 +1842,7 @@
                                 }
                             });
 
-                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} color changed to ${resultData.value}.`);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} color changed to ${resultData.value.value}.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} color changed.`);
                         } else {
                             addMessageToLog('AI', "Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, or ensure a model is loaded/selected.");
@@ -1894,51 +1963,61 @@
         textCommandInput.disabled = true;
 
         try {
-            const apiKey = ""; // Leave this as-is; Canvas will provide the key
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            // IMPORTANT: Replace "YOUR_OPENAI_API_KEY" with your actual OpenAI API key.
+            // You can get one from https://platform.openai.com/account/api-keys
+            const openaiApiKey = "YOUR_OPENAI_API_KEY"; // <--- REPLACE THIS WITH YOUR KEY
+
+            if (openaiApiKey === "YOUR_OPENAI_API_KEY" || !openaiApiKey) {
+                const errorMessage = "OpenAI API key is not set. Please replace 'YOUR_OPENAI_API_KEY' in the code with your actual key.";
+                console.error(errorMessage);
+                addMessageToLog('AI', errorMessage);
+                speakResponse(errorMessage);
+                return { content: null }; // Indicate failure
+            }
+
+            const apiUrl = "https://api.openai.com/v1/chat/completions";
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${openaiApiKey}`
+                },
                 body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                // More specific error message for 403
-                if (response.status === 403) {
-                    throw new Error(`API Access Denied (403). Please ensure your API key is valid and has permissions for Gemini 2.0 Flash.`);
-                } else {
-                    throw new Error(`Backend error: ${errorData.message || response.statusText}`);
+                let errorMessage = `OpenAI API Error: ${response.status} - ${errorData.error ? errorData.error.message : response.statusText}`;
+                if (response.status === 401) {
+                    errorMessage = `OpenAI API Error: Invalid API Key (401). Please check your key.`;
+                } else if (response.status === 429) {
+                    errorMessage = `OpenAI API Error: Rate Limit Exceeded (429). Please try again later.`;
                 }
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
-            console.log("[AI Response Raw] Full result object:", result); // Log the full result object
+            console.log("[AI Response Raw] Full result object from OpenAI:", result); // Log the full result object
 
-            // Process the AI response to extract content or tool calls
-            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content) {
-                const candidateContent = result.candidates[0].content;
-                if (candidateContent.parts && candidateContent.parts.length > 0) {
-                    // Check for tool calls first
-                    const toolCall = candidateContent.parts.find(part => part.functionCall);
-                    if (toolCall) {
-                        const functionCall = toolCall.functionCall;
-                        return {
-                            content: JSON.stringify({
-                                action: functionCall.name,
-                                value: functionCall.args
-                            })
-                        };
-                    }
-                    // If no tool call, return text content
-                    const textPart = candidateContent.parts.find(part => part.text);
-                    if (textPart) {
-                        return { content: textPart.text };
-                    }
+            // Process the OpenAI response to extract content or tool calls
+            if (result.choices && result.choices.length > 0) {
+                const message = result.choices[0].message;
+                if (message.tool_calls && message.tool_calls.length > 0) {
+                    // OpenAI tool calls are in message.tool_calls
+                    return { content: { tool_calls: message.tool_calls } };
+                } else if (message.content) {
+                    // Regular conversational response
+                    return { content: { content: message.content } };
                 }
             }
-            return { content: "AI did not provide a valid response." };
+            return { content: "OpenAI did not provide a valid response." };
 
+        } catch (error) {
+            console.error("Error communicating with OpenAI API:", error);
+            addMessageToLog('AI', `Error communicating with OpenAI: ${error.message}`);
+            speakResponse(`Error communicating with OpenAI: ${error.message}`);
+            return { content: null }; // Indicate failure
         } finally {
             sendTextCommandBtn.disabled = false;
             textCommandInput.disabled = false;
