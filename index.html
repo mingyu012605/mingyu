@@ -423,7 +423,7 @@
 
         #voiceAssistBtn:hover {
             background-color: #2d3748; /* Even darker on hover */
-            transform: translateY(-4px); /* More pronounced lift */
+            transform: translateY(-4px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
         }
 
@@ -530,7 +530,7 @@
     let raycaster;
     let mouse;
     let selectedObject = null; // This will hold the currently selected THREE.Mesh part
-    const originalColors = new Map(); // Map to store original colors (hex value) by object UUID
+    const originalMaterials = new Map(); // Map to store original materials by object UUID
 
     // Get references to HTML elements
     const fileInput = document.getElementById('fileInput');
@@ -568,19 +568,23 @@
         droppedFileBlobs.clear(); // Clear previous files
         let mainModelFile = null;
 
+        console.log("[Drop Handler] Drop event detected. Items:", e.dataTransfer.items);
+        console.log("[Drop Handler] Files:", e.dataTransfer.files);
+
         // Function to recursively read directory entries
         async function readDroppedFiles(entry, path) {
             if (entry.isFile) {
                 const file = await new Promise(resolve => entry.file(resolve));
                 const fullPath = path ? `${path}/${file.name}` : file.name;
                 droppedFileBlobs.set(fullPath, file);
-                console.log(`[Drop Handler] Stored file: ${fullPath}`); // Debugging
+                console.log(`[Drop Handler] Stored file: ${fullPath}, Type: ${file.type}, Size: ${file.size} bytes`); // Debugging
                 if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
                     mainModelFile = file;
                 }
             } else if (entry.isDirectory) {
                 const directoryReader = entry.createReader();
                 const entries = await new Promise(resolve => directoryReader.readEntries(resolve));
+                console.log(`[Drop Handler] Reading directory: ${path ? `${path}/${entry.name}` : entry.name}, Entries found: ${entries.length}`);
                 for (const subEntry of entries) {
                     await readDroppedFiles(subEntry, path ? `${path}/${entry.name}` : entry.name);
                 }
@@ -589,7 +593,7 @@
 
         // Check if DataTransferItem.webkitGetAsEntry is available (for folder drops)
         if (e.dataTransfer.items && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
-            console.log("[Drop Handler] Using webkitGetAsEntry for folder drop.");
+            console.log("[Drop Handler] Using webkitGetAsEntry for folder drop detection.");
             for (let i = 0; i < e.dataTransfer.items.length; i++) {
                 const item = e.dataTransfer.items[i];
                 const entry = item.webkitGetAsEntry();
@@ -603,7 +607,7 @@
             for (let i = 0; i < e.dataTransfer.files.length; i++) {
                 const file = e.dataTransfer.files[i];
                 droppedFileBlobs.set(file.name, file);
-                console.log(`[Drop Handler] Stored file (flat): ${file.name}`); // Debugging
+                console.log(`[Drop Handler] Stored file (flat): ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`); // Debugging
                 if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
                     mainModelFile = file;
                 }
@@ -622,9 +626,11 @@
             uploadedFile = null;
             console.error("[Drop Handler] No GLTF/GLB file found in dropped items.");
         }
+        console.log("[Drop Handler] uploadedFile after drop processing:", uploadedFile ? uploadedFile.name : "null");
     });
 
     fileInput.addEventListener('change', () => {
+        console.log("[File Input] Change event detected. Files:", fileInput.files);
         // For file input, we only get one file, so it's simpler
         if (fileInput.files.length > 0) {
             loadingMsg.textContent = 'Processing selected file...';
@@ -635,26 +641,37 @@
             const file = fileInput.files[0];
             droppedFileBlobs.set(file.name, file);
             uploadedFile = file;
-            console.log("[File Input] Selected file:", uploadedFile.name);
+            console.log("[File Input] Selected file:", uploadedFile.name, `Type: ${uploadedFile.type}, Size: ${uploadedFile.size} bytes`);
             validateFile(uploadedFile);
             console.log("[File Input] Dropped file (keys in map):", Array.from(droppedFileBlobs.keys()));
+        } else {
+            console.log("[File Input] No file selected via input.");
+            uploadedFile = null;
+            loadingMsg.textContent = 'No file selected. Please choose a .gltf or .glb file.';
+            loadingMsg.style.color = 'orange';
+            loadingMsg.style.display = 'block';
         }
+        console.log("[File Input] uploadedFile after change processing:", uploadedFile ? uploadedFile.name : "null");
     });
 
     // Attach event listener for the "Load Model & Go to Editor" button
     loadEditorButton.addEventListener('click', goToEditor); // Correctly attach event listener
 
     function validateFile(file) {
+        console.log("[Validation] Validating file:", file ? file.name : "null");
         if (file && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
+            console.log("[Validation] File is a valid GLTF/GLB.");
             loadingMsg.textContent = `File selected: ${file.name}. Click 'Load Model & Go to Editor' or drop more files if needed.`;
             loadingMsg.style.color = '#007bff';
             loadingMsg.style.display = 'block';
+            return true;
         } else {
+            console.error("[Validation] Unsupported file type detected for:", file ? file.name : "null");
             loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
             loadingMsg.style.color = 'red';
             loadingMsg.style.display = 'block';
-            uploadedFile = null;
-            console.error("[Validation] Unsupported file type detected.");
+            uploadedFile = null; // Ensure uploadedFile is null if validation fails
+            return false;
         }
     }
 
@@ -696,6 +713,7 @@
 
     function goToEditor() {
         console.log("[goToEditor] Attempting to go to editor.");
+        console.log("[goToEditor] Current uploadedFile:", uploadedFile ? uploadedFile.name : "null");
         if (!uploadedFile) {
             addMessageToLog('System', "Please upload a valid .gltf or .glb file before continuing.");
             loadingMsg.textContent = 'Please upload a valid .gltf or .glb file.';
@@ -741,7 +759,7 @@
 
         uploadedFile = null; // Clear the uploaded file
         droppedFileBlobs.clear(); // Clear the map of dropped files
-        originalColors.clear(); // Clear original colors map
+        originalMaterials.clear(); // Clear original materials map
         selectedObject = null; // Clear selected object
 
         dropZone.style.borderColor = '#a0aec0'; // Reset drop zone style
@@ -848,7 +866,7 @@
 
             // Normalize path separators for consistency (e.g., Windows vs. Unix paths)
             resolvedPath = resolvedPath.replace(/\\/g, '/');
-            console.log(`[URLModifier] Normalized resolvedPath: "${resolvedPath}"`);
+            console.log(`[URLModifier] Normalized resolvedPath: "${resolvedPath}`);
 
             // 2. Check if the exact resolvedPath exists in our dropped files
             if (droppedFileBlobs.has(resolvedPath)) {
@@ -894,6 +912,9 @@
                 const contents = event.target.result;
                 loader.parse(contents, '', (gltf) => {
                     console.log(`[GLTFLoader] .glb parsing successful.`);
+                    console.log(`[GLTFLoader] gltf.scene object:`, gltf.scene);
+                    console.log(`[GLTFLoader] gltf.scene children count:`, gltf.scene ? gltf.scene.children.length : 0);
+
                     // Remove existing model if any
                     if (mesh) {
                         scene.remove(mesh);
@@ -904,7 +925,7 @@
                                     if (Array.isArray(obj.material)) {
                                         obj.material.forEach(m => m.dispose());
                                     } else {
-                                        obj.material.dispose();
+                                        m.dispose();
                                     }
                                 }
                             }
@@ -912,31 +933,40 @@
                     }
                     clearSelection(); // Clear any previous selection
 
-                    mesh = gltf.scene; // The glTF scene is the main container for all objects
-                    scene.add(mesh);
+                    if (gltf.scene && gltf.scene.children.length > 0) {
+                        mesh = gltf.scene; // The glTF scene is the main container for all objects
+                        scene.add(mesh);
 
-                    // Center and scale the model
-                    const bbox = new THREE.Box3().setFromObject(mesh);
-                    const center = bbox.getCenter(new THREE.Vector3());
-                    mesh.position.sub(center); // Center the model's group
+                        // Center and scale the model
+                        const bbox = new THREE.Box3().setFromObject(mesh);
+                        const center = bbox.getCenter(new THREE.Vector3());
+                        mesh.position.sub(center); // Center the model's group
 
-                    const size = bbox.getSize(new THREE.Vector3());
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    const desiredMaxDim = 40; // Target size for the model in the scene
-                    const scaleFactor = desiredMaxDim / maxDim;
-                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                        const size = bbox.getSize(new THREE.Vector3());
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        const desiredMaxDim = 40; // Target size for the model in the scene
+                        const scaleFactor = desiredMaxDim / maxDim;
+                        mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-                    // Adjust camera to fit the new model
-                    const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
-                    const newSize = newBbox.getSize(new THREE.Vector3());
-                    const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
-                    camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
-                    camera.lookAt(0, 0, 0);
-                    controls.update(); // Update controls after camera change
+                        // Adjust camera to fit the new model
+                        const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
+                        const newSize = newBbox.getSize(new THREE.Vector3());
+                        const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
+                        camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+                        camera.lookAt(0, 0, 0);
+                        controls.update(); // Update controls after camera change
 
-                    loadingMsg.style.display = 'none';
-                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
-                    speakResponse(`Model loaded successfully.`);
+                        loadingMsg.style.display = 'none';
+                        addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                        speakResponse(`Model loaded successfully.`);
+                        console.log(`[loadModel] Model '${file.name}' successfully added to scene.`);
+                    } else {
+                        console.error(`[loadModel] GLB model '${file.name}' parsed successfully but contains no visible scene or objects.`);
+                        loadingMsg.textContent = `Error: GLB model '${file.name}' loaded but appears empty or invalid.`;
+                        loadingMsg.style.color = 'red';
+                        speakResponse(`GLB model loaded but appears empty or invalid.`);
+                        mesh = null; // Ensure mesh is null if the scene is empty
+                    }
 
                 }, (error) => {
                     clearTimeout(loadTimeout); // Clear timeout on error
@@ -962,6 +992,9 @@
             loader.load(blobUrl, (gltf) => {
                 clearTimeout(loadTimeout); // Clear timeout on successful load
                 console.log(`[GLTFLoader] .gltf loading successful.`);
+                console.log(`[GLTFLoader] gltf.scene object:`, gltf.scene);
+                console.log(`[GLTFLoader] gltf.scene children count:`, gltf.scene ? gltf.scene.children.length : 0);
+
                 // Remove existing model if any
                 if (mesh) {
                     scene.remove(mesh);
@@ -972,7 +1005,7 @@
                                 if (Array.isArray(obj.material)) {
                                     obj.material.forEach(m => m.dispose());
                                 } else {
-                                    obj.material.dispose();
+                                    m.dispose();
                                 }
                             }
                         }
@@ -980,31 +1013,40 @@
                 }
                 clearSelection(); // Clear any previous selection
 
-                mesh = gltf.scene; // The glTF scene is the main container for all objects
-                scene.add(mesh);
+                if (gltf.scene && gltf.scene.children.length > 0) {
+                    mesh = gltf.scene; // The glTF scene is the main container for all objects
+                    scene.add(mesh);
 
-                // Center and scale the model
-                const bbox = new THREE.Box3().setFromObject(mesh);
-                const center = bbox.getCenter(new THREE.Vector3());
-                mesh.position.sub(center); // Center the model's group
+                    // Center and scale the model
+                    const bbox = new THREE.Box3().setFromObject(mesh);
+                    const center = bbox.getCenter(new THREE.Vector3());
+                    mesh.position.sub(center); // Center the model's group
 
-                const size = bbox.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const desiredMaxDim = 40; // Target size for the model in the scene
-                const scaleFactor = desiredMaxDim / maxDim;
-                mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    const size = bbox.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const desiredMaxDim = 40; // Target size for the model in the scene
+                    const scaleFactor = desiredMaxDim / maxDim;
+                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-                // Adjust camera to fit the new model
-                const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
-                const newSize = newBbox.getSize(new THREE.Vector3());
-                const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
-                camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
-                camera.lookAt(0, 0, 0);
-                controls.update(); // Update controls after camera change
+                    // Adjust camera to fit the new model
+                    const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
+                    const newSize = newBbox.getSize(new THREE.Vector3());
+                    const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
+                    camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+                    camera.lookAt(0, 0, 0);
+                    controls.update(); // Update controls after camera change
 
-                loadingMsg.style.display = 'none';
-                addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
-                speakResponse(`Model loaded successfully.`);
+                    loadingMsg.style.display = 'none';
+                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                    speakResponse(`Model loaded successfully.`);
+                    console.log(`[loadModel] Model '${file.name}' successfully added to scene.`);
+                } else {
+                    console.error(`[loadModel] GLTF model '${file.name}' loaded but contains no visible scene or objects.`);
+                    loadingMsg.textContent = `Error: GLTF model '${file.name}' loaded but appears empty or invalid. Ensure all associated files (.bin, textures) are dropped together.`;
+                    loadingMsg.style.color = 'red';
+                    speakResponse(`GLTF model loaded but appears empty or invalid. Ensure all associated files are dropped together.`);
+                    mesh = null; // Ensure mesh is null if the scene is empty
+                }
 
                 URL.revokeObjectURL(blobUrl); // Clean up the Blob URL
 
@@ -1053,6 +1095,7 @@
     // --- CAD Editor Functions ---
     // Note: removeObject, resetView, showDesignInfo are updated to handle selectedObject or mesh
     function removeObject() {
+        console.log("[Control Button] Remove Object clicked.");
         let targetObject = selectedObject || mesh; // Target selected object, or the whole model
         if (targetObject) {
             scene.remove(targetObject);
@@ -1063,7 +1106,7 @@
                         if (Array.isArray(obj.material)) {
                             obj.material.forEach(m => m.dispose());
                         } else {
-                            obj.material.dispose();
+                            m.dispose();
                         }
                     }
                 }
@@ -1089,6 +1132,7 @@
 
 
     function resetView() {
+        console.log("[Control Button] Reset View clicked.");
         if (mesh) { // Resetting view always applies to the whole loaded model
             mesh.rotation.set(0, 0, 0); // Reset rotation of the main model
             mesh.position.set(0, 0, 0); // Reset position of the main model
@@ -1114,6 +1158,7 @@
     window.resetView = resetView;
 
     function showDesignInfo() {
+        console.log("[Control Button] Design Info clicked.");
         let targetObject = selectedObject || mesh; // Get info for selected object or whole model
         if (!targetObject) {
             addMessageToLog('AI', "No design loaded or part selected.");
@@ -1162,8 +1207,8 @@
 
             if (clickedObject) {
                 if (selectedObject && selectedObject !== clickedObject) {
-                    // Restore original color of previously selected object if it's different
-                    restoreOriginalColor(selectedObject);
+                    // Restore original material of previously selected object if it's different
+                    restoreOriginalMaterial(selectedObject);
                 }
 
                 if (selectedObject !== clickedObject) { // If a new object is selected
@@ -1181,37 +1226,64 @@
     }
 
     function storeAndHighlight(object) {
-        if (Array.isArray(object.material)) {
-            object.material.forEach((m, index) => {
-                originalColors.set(`${object.uuid}-${index}`, m.color.getHex());
-                m.color.set(0x00ff00); // Green highlight
-            });
-        } else if (object.material) {
-            originalColors.set(object.uuid, object.material.color.getHex());
-            object.material.color.set(0x00ff00); // Green highlight
-        }
+        object.traverse((child) => {
+            if (child.isMesh && child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material.forEach((m, index) => {
+                        const uuidKey = `${child.uuid}-${index}`;
+                        if (!originalMaterials.has(uuidKey)) {
+                            // Store a clone of the material to preserve its original state (including map)
+                            originalMaterials.set(uuidKey, m.clone());
+                        }
+                        // Create a new material for highlighting to avoid modifying the original
+                        const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                        child.material[index] = highlightMaterial;
+                        child.material[index].needsUpdate = true;
+                    });
+                } else {
+                    const uuidKey = child.uuid;
+                    if (!originalMaterials.has(uuidKey)) {
+                        // Store a clone of the material to preserve its original state (including map)
+                        originalMaterials.set(uuidKey, child.material.clone());
+                    }
+                    // Create a new material for highlighting to avoid modifying the original
+                    const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    child.material = highlightMaterial;
+                    child.material.needsUpdate = true;
+                }
+            }
+        });
     }
 
-    function restoreOriginalColor(object) {
-        if (Array.isArray(object.material)) {
-            object.material.forEach((m, index) => {
-                const oldOriginalColor = originalColors.get(`${object.uuid}-${index}`);
-                if (oldOriginalColor !== undefined) {
-                    m.color.set(oldOriginalColor);
+    function restoreOriginalMaterial(object) {
+        object.traverse((child) => {
+            if (child.isMesh && child.material) {
+                if (Array.isArray(child.material)) {
+                    child.material.forEach((m, index) => {
+                        const uuidKey = `${child.uuid}-${index}`;
+                        const originalMat = originalMaterials.get(uuidKey);
+                        if (originalMat) {
+                            child.material[index] = originalMat; // Restore the entire material
+                            originalMaterials.delete(uuidKey);
+                            child.material[index].needsUpdate = true;
+                        }
+                    });
+                } else {
+                    const uuidKey = child.uuid;
+                    const originalMat = originalMaterials.get(uuidKey);
+                    if (originalMat) {
+                        child.material = originalMat; // Restore the entire material
+                        originalMaterials.delete(uuidKey);
+                        child.material.needsUpdate = true;
+                    }
                 }
-            });
-        } else if (object.material) {
-            const oldOriginalColor = originalColors.get(object.uuid);
-            if (oldOriginalColor !== undefined) {
-                object.material.color.set(oldOriginalColor);
             }
-        }
-        originalColors.delete(object.uuid); // Clean up map entry
+        });
     }
 
     function clearSelection() {
         if (selectedObject) {
-            restoreOriginalColor(selectedObject);
+            restoreOriginalMaterial(selectedObject); // Use the new function
             selectedObject = null;
             addMessageToLog('System', 'Selection cleared.');
             speakResponse('Selection cleared.');
@@ -1225,6 +1297,7 @@
         p.classList.add(sender === 'User' ? 'user-message' : (sender === 'AI' ? 'ai-response' : 'system-message'));
         aiLog.appendChild(p);
         aiLog.scrollTop = aiLog.scrollHeight;
+        return p; // Return the created element
     }
 
     sendTextCommandBtn.addEventListener('click', () => {
@@ -1268,7 +1341,10 @@
     function speakResponse(text) {
         if (!synth) {
             synth = initializeSpeechSynthesis();
-            if (!synth) return;
+            if (!synth) {
+                console.warn("Speech synthesis not available or failed to initialize.");
+                return;
+            }
         }
         synth.cancel();
 
@@ -1285,7 +1361,9 @@
         };
         utterance.onerror = (event) => {
             console.error('Speech synthesis error:', event);
-            addMessageToLog('System', "Error speaking response.");
+            addMessageToLog('System', "Error speaking response. Attempting to reinitialize speech synthesis.");
+            // Invalidate the current synth object to force re-initialization next time
+            synth = null;
         };
         synth.speak(utterance);
     }
@@ -1321,21 +1399,22 @@
 
         recognition.onstart = function () {
             addMessageToLog('System', "Listening...");
-            console.log('Speech recognition started');
+            console.log('[Speech Recognition] Started listening.');
         };
 
         recognition.onresult = function (event) {
+            console.log('[Speech Recognition] onresult event received:', event); // Log the raw event
             const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
             addMessageToLog('User', transcript);
             addMessageToLog('System', "Processing voice command...");
-            console.log('Speech recognized:', transcript);
+            console.log('[Speech Recognition] Speech recognized:', transcript);
 
             recognition.stop();
             processAICommand(transcript);
         };
 
         recognition.onerror = function (event) {
-            console.error('Speech recognition error:', event);
+            console.error('[Speech Recognition] Error:', event); // Log the raw error event
             let errorMessage = "An unknown speech recognition error occurred.";
             if (event.error === 'not-allowed') {
                 errorMessage = "Microphone access denied. Please allow microphone access in your browser settings.";
@@ -1350,7 +1429,16 @@
         };
 
         recognition.onend = function () {
-            console.log('Speech recognition ended');
+            console.log('[Speech Recognition] Ended.');
+            // If voice assist is still active, restart listening after a brief delay
+            if (isVoiceAssistActive && !synth.speaking) {
+                setTimeout(() => {
+                    if (isVoiceAssistActive) {
+                        addMessageToLog('System', "Listening again...");
+                        recognition.start();
+                    }
+                }, 1000);
+            }
         };
     }
 
@@ -1370,6 +1458,17 @@
 
     // --- AI Command Processing (Core Logic) ---
     async function processAICommand(command) {
+        console.log(`[AI Command Processing] Received command: "${command}"`);
+
+        // Handle common greetings explicitly
+        const greetingKeywords = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening'];
+        if (greetingKeywords.some(keyword => command.includes(keyword))) {
+            addMessageToLog('AI', "Hello there! How can I help you with your 3D model today?");
+            speakResponse("Hello there! How can I help you with your 3D model today?");
+            console.log(`[AI Command Processing] Handling greeting: "${command}"`);
+            return;
+        }
+
         // Handle pre-defined UI commands first
         if (command.includes("select object") || command.includes("select part")) {
             if (selectedObject) {
@@ -1386,11 +1485,11 @@
             return;
         }
 
+        let loadingMessageElement = null; // Declare here to be accessible in catch and finally
+
         try {
             // Updated payload for AI to include new commands
-            const payload = {
-                prompt: command,
-                commands: [
+            const payloadCommands = [ // Define the commands array here
                     {
                         name: "rotate",
                         description: "Rotates the entire loaded 3D model around its Y-axis by a specified degree. Use for general model rotation.",
@@ -1541,29 +1640,48 @@
                         description: "Zooms the camera further from the model.",
                         parameters: { type: "OBJECT", properties: {} }
                     }
-                ]
+                ];
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: command }] }],
+                toolConfig: {
+                    functionCallingConfig: {
+                        mode: "ANY",
+                        allowedFunctionNames: payloadCommands.map(cmd => cmd.name)
+                    }
+                },
+                tools: [{ functionDeclarations: payloadCommands }]
             };
 
-            const aiReply = await sendToAI(prompt, payload); // Pass the updated payload
-            console.log("Raw AI response from backend:", aiReply);
+            // Create and append the loading message element BEFORE the fetch
+            loadingMessageElement = addMessageToLog('System', 'AI is thinking...'); // Use the helper function and get the element
+
+            const aiReply = await sendToAIInternal(payload); // Call the internal function
 
             let resultData;
             try {
                 resultData = JSON.parse(aiReply.content);
-                console.log("Parsed AI command:", resultData);
+                console.log("[AI Command Processing] Parsed AI command:", resultData);
             } catch (e) {
                 resultData = { action: 'conversational', value: aiReply.content };
-                console.log("Parsed AI conversational response:", resultData);
+                console.log("[AI Command Processing] Parsed AI conversational response (JSON parse failed):", resultData);
             }
 
             if (resultData && typeof resultData === 'object' && resultData.action) {
                 let target = selectedObject || mesh; // Target the selected object, or the whole model if nothing is selected
+
+                // Log the target object
+                console.log(`[Action Execution] Target object for action '${resultData.action}':`, target ? (target.name || target.uuid) : "None (mesh/selectedObject is null)");
 
                 // Handle cases where an action requires a selected object but none is present
                 const requiresSelection = ['rotateSelected', 'scaleSelected', 'translateSelected', 'colorSelected', 'hideSelected', 'showSelected', 'duplicateSelected', 'removeSelected'];
                 if (requiresSelection.includes(resultData.action) && !selectedObject) {
                     addMessageToLog('AI', "Please select a part of the model first to perform that action.");
                     speakResponse("Please select a part of the model first to perform that action.");
+                    // Remove loading message here if an early return happens
+                    if (loadingMessageElement && loadingMessageElement.parentNode === aiLog) {
+                        aiLog.removeChild(loadingMessageElement);
+                    }
                     return;
                 }
 
@@ -1571,8 +1689,10 @@
                     case 'rotate':
                     case 'rotateSelected':
                         if (target && typeof resultData.value === 'number') {
+                            console.log(`[Three.js Property Check] Before rotate: target.rotation.y = ${target.rotation.y}`);
                             // THREE.MathUtils.degToRad is now directly available via THREE
                             target.rotation.y += THREE.MathUtils.degToRad(resultData.value);
+                            console.log(`[Three.js Property Check] After rotate: target.rotation.y = ${target.rotation.y}`);
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
                         } else {
@@ -1583,8 +1703,10 @@
                     case 'scale':
                     case 'scaleSelected':
                         if (target && typeof resultData.value === 'number' && resultData.value > 0) {
+                            console.log(`[Three.js Property Check] Before scale: target.scale.x = ${target.scale.x}`);
                             // Corrected to use setScalar for uniform scaling
                             target.scale.setScalar(resultData.value);
+                            console.log(`[Three.js Property Check] After scale: target.scale.x = ${target.scale.x}`);
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
                         } else {
@@ -1596,9 +1718,11 @@
                     case 'translateSelected':
                         if (target && typeof resultData.value === 'object' &&
                             !isNaN(resultData.value.x) && !isNaN(resultData.value.y) && !isNaN(resultData.value.z)) {
+                            console.log(`[Three.js Property Check] Before translate: target.position = ${JSON.stringify(target.position)}`);
                             target.position.x += resultData.value.x || 0;
                             target.position.y += resultData.value.y || 0;
                             target.position.z += resultData.value.z || 0;
+                            console.log(`[Three.js Property Check] After translate: target.position = ${JSON.stringify(target.position)}`);
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} moved by X:${resultData.value.x || 0}, Y:${resultData.value.y || 0}, Z:${resultData.value.z || 0} units.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} moved.`);
                         } else {
@@ -1609,11 +1733,46 @@
                     case 'color':
                     case 'colorSelected':
                         if (target && typeof resultData.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value)) {
-                            if (Array.isArray(target.material)) {
-                                target.material.forEach(m => m.color.set(resultData.value));
-                            } else if (target.material) {
-                                target.material.color.set(resultData.value);
-                            }
+                            const newColor = new THREE.Color(resultData.value);
+                            console.log(`[Action Execution] Attempting to change color of ${selectedObject ? 'selected part' : 'model'} to ${resultData.value}`);
+
+                            target.traverse((child) => {
+                                if (child.isMesh) {
+                                    if (Array.isArray(child.material)) {
+                                        child.material.forEach(m => {
+                                            if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshBasicMaterial) {
+                                                // Store original material state if not already stored (for selected object)
+                                                // This part is handled by storeAndHighlight for selection.
+                                                // For direct color change, we apply the color directly.
+                                                m.color.set(newColor);
+                                                // If a texture map exists, remove it to make the solid color visible
+                                                if (m.map) {
+                                                    console.log(`[Three.js Property Check] Material had a map, setting map to null for visibility.`);
+                                                    m.map = null;
+                                                    m.needsUpdate = true; // Important for material changes to take effect
+                                                }
+                                                console.log(`[Three.js Property Check] Material color set to: ${m.color.getHexString()}`);
+                                            }
+                                        });
+                                    } else if (child.material) {
+                                        const m = child.material;
+                                        if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshBasicMaterial) {
+                                            // Store original material state if not already stored (for selected object)
+                                            // This part is handled by storeAndHighlight for selection.
+                                            // For direct color change, we apply the color directly.
+                                            m.color.set(newColor);
+                                            // If a texture map exists, remove it to make the solid color visible
+                                            if (m.map) {
+                                                console.log(`[Three.js Property Check] Material had a map, setting map to null for visibility.`);
+                                                m.map = null;
+                                                m.needsUpdate = true; // Important for material changes to take effect
+                                            }
+                                            console.log(`[Three.js Property Check] Material color set to: ${m.color.getHexString()}`);
+                                        }
+                                    }
+                                }
+                            });
+
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} color changed to ${resultData.value}.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} color changed.`);
                         } else {
@@ -1722,25 +1881,17 @@
             console.error("Error processing AI command:", error);
             addMessageToLog('AI', "I'm sorry, I encountered an error while processing your command. Please try again.");
             speakResponse("I'm sorry, I encountered an error. Please try again.");
+        } finally { // Ensure loading message is removed in all cases
+            if (loadingMessageElement && loadingMessageElement.parentNode === aiLog) {
+                aiLog.removeChild(loadingMessageElement);
+            }
         }
     }
 
-    async function sendToAI(prompt, commandsPayload = {}) { // Added commandsPayload parameter
+    // Renamed sendToAI to sendToAIInternal to avoid confusion with the outer processAICommand flow
+    async function sendToAIInternal(payload) {
         sendTextCommandBtn.disabled = true;
         textCommandInput.disabled = true;
-        addMessageToLog('System', 'AI is thinking...');
-
-        // Construct the payload for the AI API call
-        const payload = {
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            toolConfig: {
-                functionCallingConfig: {
-                    mode: "ANY",
-                    allowedFunctionNames: commandsPayload.commands ? commandsPayload.commands.map(cmd => cmd.name) : []
-                }
-            },
-            tools: commandsPayload.commands ? [{ functionDeclarations: commandsPayload.commands }] : []
-        };
 
         try {
             const apiKey = ""; // Leave this as-is; Canvas will provide the key
@@ -1753,10 +1904,17 @@
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(`Backend error: ${errorData.message || response.statusText}`);
+                // More specific error message for 403
+                if (response.status === 403) {
+                    throw new Error(`API Access Denied (403). Please ensure your API key is valid and has permissions for Gemini 2.0 Flash.`);
+                } else {
+                    throw new Error(`Backend error: ${errorData.message || response.statusText}`);
+                }
             }
 
             const result = await response.json();
+            console.log("[AI Response Raw] Full result object:", result); // Log the full result object
+
             // Process the AI response to extract content or tool calls
             if (result.candidates && result.candidates.length > 0 && result.candidates[0].content) {
                 const candidateContent = result.candidates[0].content;
@@ -1781,16 +1939,9 @@
             }
             return { content: "AI did not provide a valid response." };
 
-        } catch (error) {
-            console.error("Error communicating with backend AI:", error);
-            return { content: `Failed to communicate with AI: ${error.message}` };
         } finally {
             sendTextCommandBtn.disabled = false;
             textCommandInput.disabled = false;
-            const lastLogMessage = aiLog.lastChild;
-            if (lastLogMessage && lastLogMessage.textContent.includes('AI is thinking...')) {
-                aiLog.removeChild(lastLogMessage);
-            }
         }
     }
 </script>
