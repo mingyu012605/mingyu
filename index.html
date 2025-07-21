@@ -211,7 +211,7 @@
         .sidebar {
             width: 300px; /* Slightly wider sidebar */
             background-color: #1a202c; /* Darker sidebar background */
-            padding: 25px; /* More padding */
+            padding: 25px;
             display: flex;
             flex-direction: column;
             border-right: 1px solid #2d3748; /* Darker border */
@@ -289,7 +289,7 @@
             gap: 15px; /* Increased gap */
             flex-shrink: 0;
             height: auto;
-            max-height: 45%; /* Slightly more height for chat */
+            max-height: 70%; /* Increased vertical space for the panel */
             overflow: hidden;
             transition: all 0.4s ease-in-out; /* Smoother transition */
             position: absolute;
@@ -316,7 +316,8 @@
             padding: 15px;
             color: #e2e8f0; /* Light text for readability */
             overflow-y: auto;
-            height: 180px; /* Increased default height */
+            height: 400px; /* SIGNIFICANTLY INCREASED HEIGHT for chat log */
+            min-height: 250px; /* Ensure a minimum height */
             flex-shrink: 1;
             line-height: 1.5; /* Better line spacing */
         }
@@ -546,6 +547,14 @@
     const cadCanvas = document.getElementById('cadCanvas'); // Reference to the canvas element
     const loadEditorButton = document.getElementById('loadEditorButton'); // Reference to the new button ID
 
+    // --- Expose functions globally for HTML onclick attributes ---
+    window.removeObject = removeObject;
+    window.resetView = resetView;
+    window.showDesignInfo = showDesignInfo;
+    window.goBack = goBack;
+    window.selectPartByName = selectPartByName; // Ensure this is also globally accessible
+
+
     // --- File Input and Page Navigation ---
     // Removed the click listener from dropZone as fileInput will handle clicks directly
     dropZone.addEventListener('dragover', e => {
@@ -686,7 +695,7 @@
                         if (Array.isArray(object.material)) {
                             object.material.forEach(material => material.dispose());
                         } else {
-                            material.dispose(); // Fixed: 'material' was undefined, should be 'object.material'
+                            object.material.dispose();
                         }
                     }
                 }
@@ -900,7 +909,7 @@
                                 if (Array.isArray(obj.material)) {
                                     obj.material.forEach(m => m.dispose());
                                 } else {
-                                    obj.material.dispose();
+                                    m.dispose();
                                 }
                             }
                         }
@@ -985,8 +994,8 @@
         initializeSpeechSynthesis();
     };
 
-    // --- CAD Editor Functions ---
-    // Note: removeObject, resetView, showDesignInfo are updated to handle selectedObject or mesh
+    // --- CAD Editor Functions (Globally Exposed) ---
+
     function removeObject() {
         let targetObject = selectedObject || mesh; // Target selected object, or the whole model
         if (targetObject) {
@@ -1002,7 +1011,7 @@
                     targetObject.material.dispose();
                 }
             }
-            
+
             if (targetObject === mesh) { // If main model was removed
                 mesh = null;
                 addMessageToLog('AI', "Model removed.");
@@ -1032,7 +1041,7 @@
 
             const size = bbox.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5); // Corrected to maxDim
+            camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5); // Corrected to maxDim
             camera.lookAt(0, 0, 0);
             controls.update();
             addMessageToLog('AI', "View reset.");
@@ -1062,86 +1071,149 @@
 
     // --- Raycasting and Selection ---
     function onCanvasClick(event) {
+        console.log("Click event fired on canvas!"); // New: Confirm click event is registered
+        // Temporary visual feedback: Briefly change canvas background to yellow
+        const originalCanvasBg = cadCanvas.style.backgroundColor;
+        cadCanvas.style.backgroundColor = '#FFFF00'; // Yellow
+        setTimeout(() => {
+            cadCanvas.style.backgroundColor = originalCanvasBg; // Revert after a short delay
+        }, 100);
+
+        console.log("[onCanvasClick] Canvas click detected. Event type:", event.type);
         // Calculate mouse position in normalized device coordinates (-1 to +1)
         const rect = renderer.domElement.getBoundingClientRect();
         if (event.changedTouches) { // Handle touch events
             mouse.x = ((event.changedTouches[0].clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.changedTouches[0].clientY - rect.top) / rect.height) * 2 + 1;
+            console.log(`[onCanvasClick] Touch event. Mouse coords: X=${mouse.x.toFixed(2)}, Y=${mouse.y.toFixed(2)}`);
         } else { // Handle mouse events
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            console.log(`[onCanvasClick] Mouse event. Mouse coords: X=${mouse.x.toFixed(2)}, Y=${mouse.y.toFixed(2)}`);
         }
 
         raycaster.setFromCamera(mouse, camera);
 
-        // Intersect with all children of the main loaded glTF scene object (`mesh`)
-        // This allows selecting individual parts/meshes if the glTF has them
-        const intersects = raycaster.intersectObjects(mesh ? mesh.children : [], true); // Only intersect if mesh exists
+        if (!mesh) {
+            console.warn("[onCanvasClick] No mesh (model) loaded in scene. Cannot intersect objects.");
+            clearSelection(); // Ensure selection is cleared if no model is present
+            return;
+        }
+
+        // Intersect with the main loaded glTF scene object (`mesh`) and all its descendants recursively
+        // This is the most robust way to find all meshes within a complex GLTF hierarchy.
+        const intersects = raycaster.intersectObjects([mesh], true); // Pass [mesh] and true for recursive traversal
+        console.log(`[onCanvasClick] Intersects found: ${intersects.length}`);
+        if (intersects.length > 0) {
+            intersects.forEach((intersect, index) => {
+                console.log(`[onCanvasClick] Intersect ${index}: Object Name: '${intersect.object.name || 'unnamed'}', Is Mesh: ${intersect.object.isMesh}, Visible: ${intersect.object.visible}, Distance: ${intersect.distance.toFixed(2)}, Material Exists: ${!!intersect.object.material}`);
+                if (intersect.object.material) {
+                    if (Array.isArray(intersect.object.material)) {
+                        console.log(`  Material ${mIdx}: Name: ${mat.name || 'unnamed'}, Type: ${mat.type}`);
+                    } else {
+                        console.log(`  Material Name: ${intersect.object.material.name || 'unnamed'}, Type: ${intersect.object.material.type}`);
+                    }
+                }
+            });
+        }
+
 
         if (intersects.length > 0) {
             let clickedObject = null;
+            // Iterate through intersects to find the closest visible mesh with a material
             for (const intersect of intersects) {
-                // Ensure it's a visible mesh and not just a group or part of the background
                 if (intersect.object.isMesh && intersect.object.visible && intersect.object.material) {
                     clickedObject = intersect.object;
-                    break;
+                    console.log(`[onCanvasClick] Found clickable object (closest visible mesh): '${clickedObject.name || 'unnamed'}'`);
+                    break; // Take the first (closest) valid mesh
                 }
             }
 
             if (clickedObject) {
-                if (selectedObject && selectedObject !== clickedObject) {
+                if (selectedObject && selectedObject.uuid !== clickedObject.uuid) { // Check UUID for unique object
                     // Restore original material of previously selected object
+                    console.log(`[onCanvasClick] Deselecting previous object: '${selectedObject.name || 'unnamed'}' (UUID: ${selectedObject.uuid})`);
                     restoreOriginalMaterial(selectedObject);
                 }
 
-                if (selectedObject !== clickedObject) { // If a new object is selected
+                if (selectedObject && selectedObject.uuid === clickedObject.uuid) { // If the same object is clicked again, deselect it
+                    console.log(`[onCanvasClick] Clicking already selected object: '${clickedObject.name || 'unnamed'}' (UUID: ${clickedObject.uuid}). Deselecting.`);
+                    clearSelection();
+                } else { // If a new object is selected
                     selectedObject = clickedObject;
                     storeAndHighlight(selectedObject);
                     addMessageToLog('System', `Object '${selectedObject.name || 'unnamed object'}' selected.`);
                     speakResponse(`Object selected.`);
-                } else { // If the same object is clicked again, deselect it
-                    clearSelection();
+                    console.log(`[onCanvasClick] New object selected: '${selectedObject.name || 'unnamed object'}' (UUID: ${selectedObject.uuid})`);
                 }
+            } else {
+                console.log("[onCanvasClick] No clickable mesh found in intersects (after filtering). Clearing selection.");
+                clearSelection(); // If clicked outside or on non-mesh, clear selection
             }
         } else {
+            console.log("[onCanvasClick] No intersects found. Clearing selection.");
             clearSelection(); // If clicked outside, clear selection
         }
     }
 
     function storeAndHighlight(object) {
+        console.log(`[Selection] Storing and highlighting object: ${object.name || 'unnamed'} (UUID: ${object.uuid})`);
         // Store a clone of the original material(s)
         if (Array.isArray(object.material)) {
             const originalMats = object.material.map(m => m.clone());
             originalMaterials.set(object.uuid, originalMats);
-            object.material.forEach(m => m.color.set(0x00ff00)); // Green highlight
+            object.material.forEach(m => {
+                if (m && m.isMaterial) {
+                    m.color.set(0x00ff00); // Green highlight
+                    m.needsUpdate = true;
+                    console.log(`[Selection] Highlighted material for array item: ${m.name || 'unnamed material'}`);
+                }
+            });
         } else if (object.material) {
             originalMaterials.set(object.uuid, object.material.clone());
             object.material.color.set(0x00ff00); // Green highlight
+            object.material.needsUpdate = true;
+            console.log(`[Selection] Highlighted single material: ${object.material.name || 'unnamed material'}`);
+        } else {
+            console.warn(`[Selection] Object ${object.name || 'unnamed'} (UUID: ${object.uuid}) has no material to highlight.`);
         }
     }
 
     function restoreOriginalMaterial(object) {
+        console.log(`[Selection] Restoring material for object: ${object.name || 'unnamed'} (UUID: ${object.uuid})`);
         const storedMaterial = originalMaterials.get(object.uuid);
         if (storedMaterial) {
             if (Array.isArray(object.material) && Array.isArray(storedMaterial)) {
                 object.material.forEach((m, index) => {
-                    if (storedMaterial[index]) {
+                    if (m && m.isMaterial && storedMaterial[index]) {
                         m.copy(storedMaterial[index]); // Copy properties back
+                        m.needsUpdate = true;
+                        console.log(`[Selection] Restored material for array item: ${m.name || 'unnamed material'}`);
                     }
                 });
             } else if (object.material && !Array.isArray(object.material) && storedMaterial && !Array.isArray(storedMaterial)) {
-                object.material.copy(storedMaterial); // Copy properties back
+                if (object.material.isMaterial) {
+                    object.material.copy(storedMaterial); // Copy properties back
+                    object.material.needsUpdate = true;
+                    console.log(`[Selection] Restored single material: ${object.material.name || 'unnamed material'}`);
+                }
             }
             originalMaterials.delete(object.uuid); // Clean up map entry
+            console.log(`[Selection] Original material map entry deleted for ${object.name || 'unnamed'} (UUID: ${object.uuid}).`);
+        } else {
+            console.warn(`[Selection] No original material found for ${object.name || 'unnamed'} (UUID: ${object.uuid}).`);
         }
     }
 
     function clearSelection() {
         if (selectedObject) {
+            console.log(`[Selection] Clearing selection for: ${selectedObject.name || 'unnamed'}`);
             restoreOriginalMaterial(selectedObject);
             selectedObject = null;
             addMessageToLog('System', 'Selection cleared.');
             speakResponse('Selection cleared.');
+        } else {
+            console.log("[Selection] No object selected to clear.");
         }
     }
 
@@ -1295,6 +1367,54 @@
         addMessageToLog('System', "Voice assist stopped.");
     }
 
+    /**
+     * Attempts to select a specific part of the 3D model by its name.
+     * @param {string} partName The name of the mesh object to select.
+     */
+    function selectPartByName(partName) {
+        console.log(`[Select Part Debug] Attempting to select part: '${partName}'`);
+        if (!mesh) {
+            addMessageToLog('AI', "No model loaded to select parts from.");
+            speakResponse("No model loaded to select parts from.");
+            console.warn("[Select Part Debug] No mesh loaded.");
+            return;
+        }
+
+        // Clear any existing selection first
+        clearSelection();
+
+        let foundObject = null;
+        // Traverse the entire scene graph to find the object by name
+        mesh.traverse(function (object) {
+            if (object.isMesh) {
+                console.log(`[Select Part Debug] Checking object: '${object.name}' (isMesh: true)`);
+                if (object.name.toLowerCase() === partName.toLowerCase()) {
+                    foundObject = object;
+                    console.log(`[Select Part Debug] Match found for '${partName}':`, foundObject);
+                    // Do not return here, continue traversing to ensure all objects are checked if needed
+                    // For single selection, breaking here is fine.
+                }
+            } else {
+                console.log(`[Select Part Debug] Skipping non-mesh object: '${object.name}' (isMesh: false)`);
+            }
+        });
+
+        if (foundObject) {
+            selectedObject = foundObject;
+            storeAndHighlight(selectedObject);
+            addMessageToLog('AI', `Part '${selectedObject.name}' selected.`);
+            speakResponse(`Part ${selectedObject.name} selected.`);
+            // Optionally, focus camera on the selected object
+            // controls.target.copy(foundObject.position);
+            // controls.update();
+        } else {
+            addMessageToLog('AI', `Part with name '${partName}' not found.`);
+            speakResponse(`Part ${partName} not found.`);
+            console.warn(`[Select Part Debug] No object found matching name '${partName}'.`);
+        }
+    }
+
+
     // --- AI Command Processing (Core Logic) ---
     async function processAICommand(command) {
         // Handle pre-defined UI commands first
@@ -1316,6 +1436,7 @@
         try {
             const aiReply = await sendToAI(command);
             console.log("Raw AI response from backend:", aiReply);
+            console.log("Type of aiReply.content:", typeof aiReply.content); // Added for debugging
 
             let resultData;
             try {
@@ -1333,8 +1454,8 @@
                 let target = selectedObject || mesh; // Target the selected object, or the whole model if nothing is selected
 
                 // Handle cases where an action requires a selected object but none is present
-                const requiresSelection = ['rotateSelected', 'scaleSelected', 'translateSelected', 'colorSelected', 'hideSelected', 'showSelected', 'duplicateSelected', 'removeSelected'];
-                if (requiresSelection.includes(resultData.action) && !selectedObject) {
+                const requiresSelection = ['rotateSelected', 'scaleSelected', 'translateSelected', 'colorSelected', 'hideSelected', 'showSelected', 'duplicateSelected', 'removeSelected', 'setMaterialProperty', 'setEmissiveColor', 'resetMaterial', 'getDimensions', 'identifySelectedObject'];
+                if (requiresSelection.includes(resultData.action) && !selectedObject && resultData.action !== 'selectPart' && resultData.action !== 'listParts' && resultData.action !== 'createPrimitive' && resultData.action !== 'clearScene' && resultData.action !== 'setCameraPosition' && resultData.action !== 'lookAtObject' && resultData.action !== 'selectAll' && resultData.action !== 'selectNone' && resultData.action !== 'invertSelection' && resultData.action !== 'groupObjects' && resultData.action !== 'ungroupObjects' && resultData.action !== 'alignObjects' && resultData.action !== 'snapToGrid' && resultData.action !== 'measureDistance') { // Exclude selectPart itself from this check
                     addMessageToLog('AI', "Please select a part of the model first to perform that action.");
                     speakResponse("Please select a part of the model first to perform that action.");
                     return;
@@ -1344,7 +1465,6 @@
                     case 'rotate':
                     case 'rotateSelected':
                         if (target && typeof resultData.value === 'number') {
-                            // THREE.MathUtils.degToRad is now directly available via THREE
                             target.rotation.y += THREE.MathUtils.degToRad(resultData.value);
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
@@ -1353,10 +1473,28 @@
                             speakResponse("Sorry, I couldn't rotate.");
                         }
                         break;
+                    case 'rotateAxis':
+                        if (target && typeof resultData.value === 'object' && typeof resultData.value.axis === 'string' && typeof resultData.value.degrees === 'number') {
+                            const axis = resultData.value.axis.toLowerCase();
+                            const degrees = resultData.value.degrees;
+                            const radians = THREE.MathUtils.degToRad(degrees);
+                            if (axis === 'x') {
+                                target.rotation.x += radians;
+                            } else if (axis === 'y') {
+                                target.rotation.y += radians;
+                            } else if (axis === 'z') {
+                                target.rotation.z += radians;
+                            }
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${degrees} degrees around ${axis}-axis.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated.`);
+                        } else {
+                            addMessageToLog('AI', "Sorry, I couldn't rotate. Please specify a valid axis (x, y, or z) and degree value.");
+                            speakResponse("Sorry, I couldn't rotate.");
+                        }
+                        break;
                     case 'scale':
                     case 'scaleSelected':
                         if (target && typeof resultData.value === 'number' && resultData.value > 0) {
-                            // Apply scale to X, Y, Z consistently
                             target.scale.set(resultData.value, resultData.value, resultData.value);
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
@@ -1379,19 +1517,146 @@
                             speakResponse("Sorry, I couldn't move.");
                         }
                         break;
+                    case 'alignObjects':
+                        // This is a complex function. For simplicity, let's assume it aligns selected objects.
+                        // A full implementation would need to iterate through selected objects and adjust positions.
+                        if (selectedObject && typeof resultData.value === 'object' && resultData.value.axis && resultData.value.target) {
+                            addMessageToLog('AI', `Aligning selected objects along ${resultData.value.axis} axis to ${resultData.value.target}. (Note: Full alignment logic needs to be implemented)`);
+                            speakResponse("Aligning objects.");
+                        } else {
+                            addMessageToLog('AI', "Please select objects and specify an axis (x, y, z) and target (min, center, max) for alignment.");
+                            speakResponse("Could not align objects.");
+                        }
+                        break;
+                    case 'snapToGrid':
+                        if (target) {
+                            // Implement snapping logic here. For example, round positions to nearest grid unit.
+                            const gridSize = 1; // Define your grid size
+                            target.position.x = Math.round(target.position.x / gridSize) * gridSize;
+                            target.position.y = Math.round(target.position.y / gridSize) * gridSize;
+                            target.position.z = Math.round(target.position.z / gridSize) * gridSize;
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} snapped to grid.`);
+                            speakResponse("Object snapped to grid.");
+                        } else {
+                            addMessageToLog('AI', "No object to snap to grid.");
+                            speakResponse("No object to snap to grid.");
+                        }
+                        break;
                     case 'color':
                     case 'colorSelected':
+                        console.log("[Color Command Debug] Attempting to change color.");
+                        console.log("[Color Command Debug] Target object:", target);
+                        console.log("[Color Command Debug] Received color value:", resultData.value);
+
                         if (target && typeof resultData.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value)) {
                             if (Array.isArray(target.material)) {
-                                target.material.forEach(m => m.color.set(resultData.value));
-                            } else if (target.material) {
+                                console.log("[Color Command Debug] Target has multiple materials. Materials array:", target.material);
+                                target.material.forEach((m, index) => {
+                                    if (m && m.isMaterial) { // Ensure it's a valid material
+                                        m.color.set(resultData.value);
+                                        m.needsUpdate = true; // Important for some material changes
+                                        // Also try to set emissive to black to prevent glow from interfering
+                                        if (m.emissive) {
+                                            m.emissive.set(0x000000);
+                                            console.log(`[Color Command Debug] Material ${index} emissive set to black.`);
+                                        }
+                                        // If there's a map (texture), removing it might help
+                                        if (m.map) {
+                                            m.map = null;
+                                            console.log(`[Color Command Debug] Material ${index} texture map removed.`);
+                                        }
+                                        console.log(`[Color Command Debug] Material ${index} color set to ${resultData.value}.`);
+                                    } else {
+                                        console.warn(`[Color Command Debug] Material at index ${index} is not a valid Three.js material.`);
+                                    }
+                                });
+                            } else if (target.material && target.material.isMaterial) { // Ensure it's a valid material
+                                console.log("[Color Command Debug] Target has single material. Material:", target.material);
                                 target.material.color.set(resultData.value);
+                                target.material.needsUpdate = true; // Important for some material changes
+                                // Also try to set emissive to black to prevent glow from interfering
+                                if (target.material.emissive) {
+                                    target.material.emissive.set(0x000000);
+                                    console.log(`[Color Command Debug] Single material emissive set to black.`);
+                                }
+                                // If there's a map (texture), removing it might help
+                                if (target.material.map) {
+                                    target.material.map = null;
+                                    console.log(`[Color Command Debug] Single material texture map removed.`);
+                                }
+                                console.log(`[Color Command Debug] Single material color set to ${resultData.value}.`);
+                            } else {
+                                console.warn("[Color Command Debug] Target has no material or invalid material.");
                             }
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} color changed to ${resultData.value}.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} color changed.`);
                         } else {
                             addMessageToLog('AI', "Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, or ensure a model is loaded/selected.");
                             speakResponse("Sorry, I couldn't change the color.");
+                            console.warn("[Color Command Debug] Invalid color value or no target:", resultData.value, "Target:", target);
+                        }
+                        break;
+                    case 'setMaterialProperty':
+                        if (target && target.material && typeof resultData.value === 'object' && typeof resultData.value.property === 'string' && typeof resultData.value.value === 'number') {
+                            const prop = resultData.value.property;
+                            const val = resultData.value.value;
+                            const materials = Array.isArray(target.material) ? target.material : [target.material];
+                            materials.forEach(m => {
+                                if (m && m.isMaterial && m[prop] !== undefined) {
+                                    m[prop] = val;
+                                    m.needsUpdate = true;
+                                    addMessageToLog('AI', `Material property '${prop}' set to ${val} for ${target.name || 'selected object'}.`);
+                                    speakResponse(`Material property ${prop} set.`);
+                                }
+                            });
+                        } else {
+                            addMessageToLog('AI', "Could not set material property. Please specify property (roughness, metalness, opacity, shininess) and a numeric value.");
+                            speakResponse("Could not set material property.");
+                        }
+                        break;
+                    case 'setEmissiveColor':
+                        if (target && target.material && typeof resultData.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value)) {
+                            const materials = Array.isArray(target.material) ? target.material : [target.material];
+                            materials.forEach(m => {
+                                if (m && m.isMaterial && m.emissive) {
+                                    m.emissive.set(resultData.value);
+                                    m.needsUpdate = true;
+                                    addMessageToLog('AI', `Emissive color set to ${resultData.value} for ${target.name || 'selected object'}.`);
+                                    speakResponse(`Emissive color set.`);
+                                } else if (m && m.isMaterial && !m.emissive) {
+                                    addMessageToLog('AI', `Material for ${target.name || 'selected object'} does not support emissive color.`);
+                                    speakResponse(`Material does not support emissive color.`);
+                                }
+                            });
+                        } else {
+                            addMessageToLog('AI', "Could not set emissive color. Please provide a valid hex color code.");
+                            speakResponse("Could not set emissive color.");
+                        }
+                        break;
+                    case 'toggleWireframe':
+                        if (target && target.material) {
+                            const materials = Array.isArray(target.material) ? target.material : [target.material];
+                            materials.forEach(m => {
+                                if (m && m.isMaterial) {
+                                    m.wireframe = !m.wireframe;
+                                    m.needsUpdate = true;
+                                }
+                            });
+                            addMessageToLog('AI', `Wireframe toggled for ${target.name || 'selected object'}.`);
+                            speakResponse(`Wireframe toggled.`);
+                        } else {
+                            addMessageToLog('AI', "No object or material to toggle wireframe.");
+                            speakResponse("No object to toggle wireframe.");
+                        }
+                        break;
+                    case 'resetMaterial':
+                        if (selectedObject) {
+                            restoreOriginalMaterial(selectedObject); // This function already exists
+                            addMessageToLog('AI', `Material reset for ${selectedObject.name || 'selected object'}.`);
+                            speakResponse(`Material reset.`);
+                        } else {
+                            addMessageToLog('AI', "No object selected to reset material.");
+                            speakResponse("No object selected to reset material.");
                         }
                         break;
                     case 'hide':
@@ -1435,11 +1700,262 @@
                     case 'removeSelected': // AI might send this for selected object
                         removeObject(); // This function now handles selectedObject vs mesh
                         break;
+                    case 'clearScene':
+                        if (scene) {
+                            // Iterate over all children and remove them
+                            while(scene.children.length > 0){
+                                const object = scene.children[0];
+                                if(object.isMesh) { // Dispose of mesh resources
+                                    if(object.geometry) object.geometry.dispose();
+                                    if(object.material) {
+                                        if(Array.isArray(object.material)) object.material.forEach(m => m.dispose());
+                                        else object.material.dispose();
+                                    }
+                                }
+                                scene.remove(object);
+                            }
+                            mesh = null; // Clear the main model reference
+                            selectedObject = null; // Clear selection
+                            originalMaterials.clear(); // Clear stored materials
+                            addMessageToLog('AI', "Scene cleared. All objects removed.");
+                            speakResponse("Scene cleared.");
+                        } else {
+                            addMessageToLog('AI', "No scene to clear.");
+                            speakResponse("No scene to clear.");
+                        }
+                        break;
+                    case 'createPrimitive':
+                        if (typeof resultData.value === 'object' && resultData.value.type && typeof resultData.value.size === 'number' && typeof resultData.value.color === 'string') {
+                            let geometry;
+                            switch (resultData.value.type) {
+                                case 'cube':
+                                    geometry = new THREE.BoxGeometry(resultData.value.size, resultData.value.size, resultData.value.size);
+                                    break;
+                                case 'sphere':
+                                    geometry = new THREE.SphereGeometry(resultData.value.size, 32, 32);
+                                    break;
+                                case 'cylinder':
+                                    geometry = new THREE.CylinderGeometry(resultData.value.size, resultData.value.size, resultData.value.size * 2, 32);
+                                    break;
+                                case 'cone':
+                                    geometry = new THREE.ConeGeometry(resultData.value.size, resultData.value.size * 2, 32);
+                                    break;
+                                case 'plane':
+                                    geometry = new THREE.PlaneGeometry(resultData.value.size, resultData.value.size);
+                                    break;
+                                default:
+                                    addMessageToLog('AI', `Unsupported primitive type: ${resultData.value.type}.`);
+                                    speakResponse(`Unsupported primitive type.`);
+                                    return;
+                            }
+                            const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(resultData.value.color) });
+                            const newPrimitive = new THREE.Mesh(geometry, material);
+                            newPrimitive.position.set(0, 0, 0); // Place at origin initially
+                            scene.add(newPrimitive);
+                            addMessageToLog('AI', `Created a ${resultData.value.color} ${resultData.value.type} with size ${resultData.value.size}.`);
+                            speakResponse(`Created a ${resultData.value.type}.`);
+                        } else {
+                            addMessageToLog('AI', "Could not create primitive. Please specify type (cube, sphere, cylinder, cone, plane), size, and color.");
+                            speakResponse("Could not create primitive.");
+                        }
+                        break;
                     case 'resetView': // This command always applies to the whole scene
                         resetView();
                         break;
+                    case 'setCameraPosition':
+                        if (typeof resultData.value === 'object' && !isNaN(resultData.value.x) && !isNaN(resultData.value.y) && !isNaN(resultData.value.z)) {
+                            camera.position.set(resultData.value.x, resultData.value.y, resultData.value.z);
+                            controls.update();
+                            addMessageToLog('AI', `Camera position set to X:${resultData.value.x}, Y:${resultData.value.y}, Z:${resultData.value.z}.`);
+                            speakResponse("Camera position set.");
+                        } else {
+                            addMessageToLog('AI', "Could not set camera position. Please specify valid X, Y, and Z coordinates.");
+                            speakResponse("Could not set camera position.");
+                        }
+                        break;
+                    case 'lookAtObject':
+                        let targetLookAtObject = null;
+                        if (resultData.value && resultData.value.object_name) {
+                            mesh.traverse(function(object) {
+                                if (object.isMesh && object.name.toLowerCase() === resultData.value.object_name.toLowerCase()) {
+                                    targetLookAtObject = object;
+                                    return;
+                                }
+                            });
+                        } else if (selectedObject) {
+                            targetLookAtObject = selectedObject;
+                        } else if (mesh) {
+                            targetLookAtObject = mesh; // Look at whole model if nothing specified/selected
+                        }
+
+                        if (targetLookAtObject) {
+                            const bbox = new THREE.Box3().setFromObject(targetLookAtObject);
+                            const center = bbox.getCenter(new THREE.Vector3());
+                            camera.lookAt(center);
+                            controls.target.copy(center);
+                            controls.update();
+                            addMessageToLog('AI', `Camera looking at ${targetLookAtObject.name || 'object'}.`);
+                            speakResponse(`Camera looking at ${targetLookAtObject.name || 'object'}.`);
+                        } else {
+                            addMessageToLog('AI', "No object found to look at. Please specify a name or select an object.");
+                            speakResponse("No object found to look at.");
+                        }
+                        break;
+                    case 'selectPart': // New case for selecting a specific part by name
+                        if (typeof resultData.value === 'string' && resultData.value.trim() !== '') {
+                            selectPartByName(resultData.value.trim());
+                        } else {
+                            addMessageToLog('AI', "Please provide a valid part name to select.");
+                            speakResponse("Please provide a valid part name to select.");
+                        }
+                        break;
+                    case 'selectAll':
+                        clearSelection(); // Clear existing selection first
+                        if (mesh) {
+                            mesh.traverse(function(object) {
+                                if (object.isMesh) {
+                                    // For simplicity, we'll just highlight all meshes.
+                                    // A true "selectAll" might involve adding them to a list for multi-selection.
+                                    storeAndHighlight(object); // Re-use highlight logic
+                                }
+                            });
+                            addMessageToLog('AI', "All visible parts selected/highlighted.");
+                            speakResponse("All visible parts selected.");
+                            // Note: Multi-selection logic would need a list of selected objects, not just 'selectedObject'
+                        } else {
+                            addMessageToLog('AI', "No model loaded to select all parts.");
+                            speakResponse("No model loaded to select all parts.");
+                        }
+                        break;
+                    case 'selectNone':
+                        clearSelection(); // This function already clears selectedObject and restores material
+                        addMessageToLog('AI', "Selection cleared.");
+                        speakResponse("Selection cleared.");
+                        break;
+                    case 'invertSelection':
+                        if (mesh) {
+                            const allMeshes = [];
+                            mesh.traverse(function(object) {
+                                if (object.isMesh) {
+                                    allMeshes.push(object);
+                                }
+                            });
+
+                            const currentlySelectedUUID = selectedObject ? selectedObject.uuid : null;
+                            clearSelection(); // Clear current selection before inverting
+
+                            if (allMeshes.length > 0) {
+                                // For simplicity, if there was a single selected object, invert to all others.
+                                // A true invert for multi-selection would be more complex.
+                                if (currentlySelectedUUID) {
+                                    const newSelected = allMeshes.filter(obj => obj.uuid !== currentlySelectedUUID);
+                                    if (newSelected.length > 0) {
+                                        // For now, just highlight them without setting a single 'selectedObject'
+                                        newSelected.forEach(obj => storeAndHighlight(obj));
+                                        addMessageToLog('AI', "Selection inverted. Multiple objects highlighted.");
+                                        speakResponse("Selection inverted.");
+                                    } else {
+                                        addMessageToLog('AI', "No other objects to invert selection to.");
+                                        speakResponse("No other objects to invert selection to.");
+                                    }
+                                } else { // If nothing was selected, select all
+                                    allMeshes.forEach(obj => storeAndHighlight(obj));
+                                    addMessageToLog('AI', "No object was selected, so all parts are now highlighted.");
+                                    speakResponse("All parts highlighted.");
+                                }
+                            } else {
+                                addMessageToLog('AI', "No parts available to invert selection.");
+                                speakResponse("No parts available to invert selection.");
+                            }
+                        } else {
+                            addMessageToLog('AI', "No model loaded to invert selection.");
+                            speakResponse("No model loaded to invert selection.");
+                        }
+                        break;
+                    case 'groupObjects':
+                        if (selectedObject) { // Simplified: only groups if one object is selected for now
+                            addMessageToLog('AI', `Grouping selected object '${selectedObject.name || 'unnamed'}' into group '${resultData.value.group_name}'. (Note: Full grouping logic needs to be implemented)`);
+                            speakResponse(`Object grouped into ${resultData.value.group_name}.`);
+                            // Actual grouping in Three.js involves creating a new THREE.Group and adding children.
+                            // This would be complex if multiple objects are selected.
+                        } else {
+                            addMessageToLog('AI', "Please select objects to group.");
+                            speakResponse("Please select objects to group.");
+                        }
+                        break;
+                    case 'ungroupObjects':
+                        addMessageToLog('AI', `Ungrouping group '${resultData.value.group_name}'. (Note: Full ungrouping logic needs to be implemented)`);
+                        speakResponse(`Group ${resultData.value.group_name} ungrouped.`);
+                        // Actual ungrouping involves removing children from a group and adding them back to parent.
+                        break;
                     case 'designInfo': // This command always applies to selected or whole model
                         showDesignInfo();
+                        break;
+                    case 'listParts':
+                        if (mesh) {
+                            let partNames = [];
+                            mesh.traverse(function(object) {
+                                if (object.isMesh && object.name) {
+                                    partNames.push(object.name);
+                                }
+                            });
+                            if (partNames.length > 0) {
+                                const response = `Identifiable parts in the model: ${partNames.join(', ')}.`;
+                                addMessageToLog('AI', response);
+                                speakResponse(response);
+                            } else {
+                                addMessageToLog('AI', "No named mesh parts found in the model.");
+                                speakResponse("No named parts found.");
+                            }
+                        } else {
+                            addMessageToLog('AI', "No model loaded to list parts from.");
+                            speakResponse("No model loaded to list parts from.");
+                        }
+                        break;
+                    case 'getDimensions':
+                        if (target) {
+                            const bbox = new THREE.Box3().setFromObject(target);
+                            const size = new THREE.Vector3();
+                            bbox.getSize(size);
+                            const dimensions = `Dimensions of ${target.name || 'selected object'}: Width: ${size.x.toFixed(2)}, Height: ${size.y.toFixed(2)}, Depth: ${size.z.toFixed(2)}.`;
+                            addMessageToLog('AI', dimensions);
+                            speakResponse(dimensions);
+                        } else {
+                            addMessageToLog('AI', "No object selected to get dimensions from.");
+                            speakResponse("No object selected to get dimensions from.");
+                        }
+                        break;
+                    case 'measureDistance':
+                        if (resultData.value && resultData.value.object1_name && resultData.value.object2_name) {
+                            let obj1 = null, obj2 = null;
+                            mesh.traverse(function(object) {
+                                if (object.isMesh) {
+                                    if (object.name.toLowerCase() === resultData.value.object1_name.toLowerCase()) obj1 = object;
+                                    if (object.name.toLowerCase() === resultData.value.object2_name.toLowerCase()) obj2 = object;
+                                }
+                            });
+
+                            if (obj1 && obj2) {
+                                const dist = obj1.position.distanceTo(obj2.position);
+                                addMessageToLog('AI', `Distance between ${obj1.name} and ${obj2.name} is ${dist.toFixed(2)} units.`);
+                                speakResponse(`Distance is ${dist.toFixed(2)} units.`);
+                            } else {
+                                addMessageToLog('AI', "Could not measure distance. One or both specified objects not found.");
+                                speakResponse("Could not measure distance. Objects not found.");
+                            }
+                        } else {
+                            addMessageToLog('AI', "Please specify two object names to measure distance between.");
+                            speakResponse("Please specify two object names to measure distance.");
+                        }
+                        break;
+                    case 'identifySelectedObject':
+                        if (selectedObject) {
+                            addMessageToLog('AI', `The selected object is named: '${selectedObject.name || 'Unnamed Object'}'`);
+                            speakResponse(`The selected object is named ${selectedObject.name || 'unnamed object'}.`);
+                        } else {
+                            addMessageToLog('AI', "No object is currently selected. Please click on an object to select it first.");
+                            speakResponse("No object is currently selected.");
+                        }
                         break;
                     case 'conversational':
                         let responseText = resultData.value || resultData.message;
