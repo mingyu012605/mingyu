@@ -1,1373 +1,1255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI VR CAD Editor</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Global Styles */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            font-family: 'Inter', sans-serif; /* Changed font to Inter */
-            background: #f0f2f5; /* Lighter, subtle background for overall app */
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI VR CAD Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            /* Changed background to Fusion-like dark grid */
+            background-color: #1c1f26; /* Dark base color */
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px),
+                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
+            background-size: 20px 20px; /* Size of each grid cell */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
 
-        /* Header */
-        header {
-            background-color: #1a202c; /* Darker, more professional header */
-            padding: 15px 25px;
-            color: #e2e8f0; /* Lighter text for contrast */
-            text-align: center;
-            font-size: 2.2rem; /* Slightly smaller, more refined font size */
-            font-weight: 700; /* Bolder font weight */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            flex-shrink: 0;
-            height: 70px; /* Slightly reduced height */
-            box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
-        }
+        /* Header */
+        header {
+            background-color: #1a202c; /* Darker, more professional header */
+            padding: 15px 25px;
+            color: #e2e8f0; /* Lighter text for contrast */
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-shrink: 0;
+            height: 70px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
 
-        header svg {
-            height: 35px; /* Slightly smaller icon */
-            width: 35px;
-            fill: #007bff; /* Accent color for the logo */
-            transition: transform 0.3s ease; /* Smooth transition for hover effect */
-        }
+            header svg {
+                height: 35px;
+                width: 35px;
+                fill: #007bff;
+                transition: transform 0.3s ease;
+            }
 
-        header:hover svg {
-            transform: rotate(5deg) scale(1.05); /* Slight rotation and scale on hover */
-        }
+            header:hover svg {
+                transform: rotate(5deg) scale(1.05);
+            }
 
-        /* Page Container & Transitions */
-        .page-container {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            width: 100%;
-            position: relative;
-        }
+        /* Page Container & Transitions */
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            width: 100%;
+            position: relative;
+        }
 
-        .page {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out; /* Smoother transitions */
-            transform: translateX(0); /* Default position */
-        }
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+            transform: translateX(0);
+        }
 
-        .page-active {
-            opacity: 1;
-            pointer-events: auto;
-            z-index: 1;
-        }
+        .page-active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 1;
+        }
 
-        .page-inactive {
-            opacity: 0;
-            pointer-events: none;
-            z-index: 0;
-            transform: translateX(-100%); /* Slide out to the left */
-        }
+        .page-inactive {
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+            transform: translateX(-100%);
+        }
 
-        /* Upload Page */
-        #uploadPage {
-            background-color: #f0f2f5; /* Consistent with body background */
-            color: #333;
-            padding: 20px; /* Add some padding */
-            box-sizing: border-box;
-        }
+        /* Upload Page */
+        #uploadPage {
+            background-color: transparent; /* Changed to transparent to show body background */
+            color: #333;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-        .upload-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 25px; /* Increased gap for better spacing */
-            background: #ffffff;
-            padding: 50px 60px; /* More generous padding */
-            border-radius: 15px; /* More rounded corners */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); /* Stronger, softer shadow */
-            width: 90%; /* Responsive width */
-            max-width: 500px; /* Max width for larger screens */
-            text-align: center;
-        }
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            background: #ffffff;
+            padding: 50px 60px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
 
-        .upload-content h2 {
-            color: #1a202c;
-            margin-bottom: 15px; /* Adjusted margin */
-            font-size: 2.2em; /* Slightly larger heading */
-            font-weight: 700;
-        }
+            .upload-content h2 {
+                color: #1a202c;
+                margin-bottom: 15px;
+                font-size: 2.2em;
+                font-weight: 700;
+            }
 
-        #dropZone {
-            width: 100%; /* Full width within its container */
-            height: 180px; /* Taller drop zone */
-            border: 3px dashed #a0aec0; /* Thicker, slightly darker dashed border */
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: #4a5568; /* Darker text */
-            cursor: pointer;
-            transition: border-color 0.4s ease, background-color 0.4s ease, color 0.4s ease;
-            font-size: 1.2em; /* Larger font size */
-            background-color: #f7fafc; /* Slightly off-white background */
-            font-weight: 600;
-            position: relative; /* Needed for absolute positioning of fileInput */
-            overflow: hidden; /* Hide overflow of fileInput */
-        }
+        #dropZone {
+            width: 100%;
+            height: 180px;
+            border: 3px dashed #a0aec0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #4a5568;
+            cursor: pointer;
+            transition: border-color 0.4s ease, background-color 0.4s ease, color 0.4s ease;
+            font-size: 1.2em;
+            background-color: #f7fafc;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
 
-        #dropZone:hover {
-            border-color: #007bff; /* Accent color on hover */
-            background-color: #e6f0ff; /* Light blue background on hover */
-            color: #0056b3;
-        }
+            #dropZone:hover {
+                border-color: #007bff;
+                background-color: #e6f0ff;
+                color: #0056b3;
+            }
 
-        #fileInput {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0; /* Make it transparent */
-            cursor: pointer;
-            z-index: 2; /* Ensure it's above the dropZone text */
-        }
+        #fileInput {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
 
-        .button-group {
-            display: flex;
-            gap: 20px; /* Increased gap between buttons */
-            margin-top: 25px;
-        }
+        .button-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 25px;
+        }
 
-        .button {
-            padding: 14px 30px; /* Larger padding */
-            border: none;
-            border-radius: 8px; /* More rounded buttons */
-            cursor: pointer;
-            font-size: 1.1em; /* Slightly larger font */
-            font-weight: 600; /* Bolder text */
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle button shadow */
-        }
+        .button {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-        .button.primary {
-            background-color: #007bff;
-            color: white;
-        }
+            .button.primary {
+                background-color: #007bff;
+                color: white;
+            }
 
-        .button.primary:hover {
-            background-color: #0056b3;
-            transform: translateY(-3px); /* More pronounced lift */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
+                .button.primary:hover {
+                    background-color: #0056b3;
+                    transform: translateY(-3px);
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+                }
 
-        .button.secondary {
-            background-color: #6c757d;
-            color: white;
-        }
+            .button.secondary {
+                background-color: #6c757d;
+                color: white;
+            }
 
-        .button.secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
+                .button.secondary:hover {
+                    background-color: #5a6268;
+                    transform: translateY(-3px);
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+                }
 
-        #loadingMsg {
-            display: none;
-            margin-top: 25px; /* Adjusted margin */
-            color: #007bff;
-            font-size: 1.15em; /* Slightly larger font */
-            font-weight: 600;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Very subtle text shadow */
-        }
+        #loadingMsg {
+            display: none;
+            margin-top: 25px;
+            color: #007bff;
+            font-size: 1.15em;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
 
-        /* Editor Page */
-        #editorPage {
-            background-color: #2d3748; /* Darker, more immersive background for editor */
-            display: flex; /* Changed to flexbox */
-            flex-direction: row; /* Arrange children in a row */
-            justify-content: flex-start; /* Align items to the start */
-            align-items: stretch; /* Stretch items to fill container height */
-            padding: 0;
-            box-sizing: border-box;
-            position: relative;
-        }
+        /* Editor Page */
+        #editorPage {
+            background-color: #1c1f26; /* Matched to body background */
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: stretch;
+            padding: 0;
+            box-sizing: border-box;
+            position: relative;
+        }
 
-        /* NEW: Right Panel for Chat */
-        .right-panel {
-            width: 350px; /* Fixed width for the chat panel */
-            background-color: #1a202c; /* Background same as header/sidebar */
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid #2d3748; /* Border to separate from canvas */
-            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.3); /* Shadow for depth */
-            flex-shrink: 0; /* Prevent shrinking */
-            overflow-y: auto; /* Allow scrolling for chat log */
-            color: #e2e8f0; /* Light text color */
-        }
+        /* NEW: Right Panel for Chat */
+        .right-panel {
+            width: 350px;
+            background-color: #1a202c;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #2d3748;
+            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+            overflow-y: auto;
+            color: #e2e8f0;
+        }
 
-        .right-panel h2 {
-            color: #ffffff; /* White heading */
-            margin-bottom: 25px;
-            font-size: 1.9em;
-            border-bottom: 2px solid #007bff; /* Accent color border */
-            padding-bottom: 12px;
-            font-weight: 700;
-        }
+            .right-panel h2 {
+                color: #ffffff;
+                margin-bottom: 25px;
+                font-size: 1.9em;
+                border-bottom: 2px solid #007bff;
+                padding-bottom: 12px;
+                font-weight: 700;
+            }
 
-        #cadViewer {
-            flex-grow: 1; /* Allows CAD viewer to take up remaining space */
-            background-color: #f0f2f5; /* Changed to light background for Fusion 360 style */
-            position: relative;
-        }
+        #cadViewer {
+            flex-grow: 1;
+            background-color: #1c1f26; /* Matched to body background */
+            position: relative;
+        }
 
-        #cadCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+        #cadCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
 
-        #aiLog {
-            flex-grow: 1;
-            background-color: #2d3748; /* Darker background for log */
-            border-radius: 10px; /* Rounded corners for log */
-            padding: 15px;
-            color: #e2e8f0; /* Light text for readability */
-            overflow-y: auto;
-            height: 400px; /* SIGNIFICANTLY INCREASED HEIGHT for chat log */
-            min-height: 250px; /* Ensure a minimum height */
-            flex-shrink: 1;
-            line-height: 1.5; /* Better line spacing */
-            margin-bottom: 15px; /* Space before input group */
-        }
+        #aiLog {
+            flex-grow: 1;
+            background-color: #2d3748;
+            border-radius: 10px;
+            padding: 15px;
+            color: #e2e8f0;
+            overflow-y: auto;
+            height: 400px;
+            min-height: 250px;
+            flex-shrink: 1;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
 
-        .user-message {
-            background-color: #007bff; /* Accent color for user messages */
-            color: white;
-            text-align: right;
-            align-self: flex-end; /* Align to the right */
-            max-width: 80%; /* Limit width */
-            margin-left: auto; /* Push to right */
-        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            text-align: right;
+            align-self: flex-end;
+            max-width: 80%;
+            margin-left: auto;
+        }
 
-        .ai-response {
-            background-color: #4a5568; /* Darker grey for AI responses */
-            color: #e2e8f0;
-            text-align: left;
-            align-self: flex-start; /* Align to the left */
-            max-width: 80%;
-            margin-right: auto;
-        }
+        .ai-response {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            text-align: left;
+            align-self: flex-start;
+            max-width: 80%;
+            margin-right: auto;
+        }
 
-        .system-message {
-            background-color: #2d3748; /* Background for system messages */
-            color: #cbd5e0; /* Lighter grey for system messages */
-            text-align: center;
-            font-style: italic;
-            border-bottom: 1px dashed #4a5568; /* Subtle separator */
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
+        .system-message {
+            background-color: #2d3748;
+            color: #cbd5e0;
+            text-align: center;
+            font-style: italic;
+            border-bottom: 1px dashed #4a5568;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
 
-        /* Updated AI Input Group for integrated voice button */
-        .ai-input-group {
-            display: flex;
-            align-items: center; /* Align items vertically */
-            gap: 10px;
-            flex-shrink: 0;
-            margin-top: auto; /* Push to bottom of the panel */
-            /* Removed position: relative as the button is no longer absolutely positioned inside */
-        }
+        /* Updated AI Input Group for integrated voice button */
+        .ai-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
 
-        #textCommandInput {
-            flex-grow: 1;
-            padding: 12px; /* Revert padding as microphone is no longer inside */
-            border: 1px solid #4a5568; /* Darker border */
-            border-radius: 25px; /* More rounded corners for a modern look */
-            background-color: #2d3748; /* Dark background */
-            color: #e2e8f0; /* Light text */
-            font-size: 1em;
-            outline: none; /* Remove default outline */
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3); /* Inner shadow */
-        }
+        #textCommandInput {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #4a5568;
+            border-radius: 25px;
+            background-color: #2d3748;
+            color: #e2e8f0;
+            font-size: 1em;
+            outline: none;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
 
-        #textCommandInput::placeholder {
-            color: #a0aec0; /* Lighter placeholder text */
-        }
+            #textCommandInput::placeholder {
+                color: #a0aec0;
+            }
 
-        #textCommandInput:focus {
-            border-color: #007bff; /* Accent color on focus */
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 123, 255, 0.3); /* Focus ring */
-        }
+            #textCommandInput:focus {
+                border-color: #007bff;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 123, 255, 0.3);
+            }
 
-        #sendTextCommandBtn {
-            padding: 12px 20px; /* Consistent padding */
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-        }
+        #sendTextCommandBtn {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
 
-        #sendTextCommandBtn:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
-        }
+            #sendTextCommandBtn:hover {
+                background-color: #0056b3;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+            }
 
-        /* New style for the integrated microphone button (now a separate button) */
-        #integratedVoiceBtn {
-            background-color: #3a414e; /* Darker background for the button */
-            border: none;
-            cursor: pointer;
-            padding: 10px; /* Adjust padding for visual size */
-            border-radius: 50%; /* Make it perfectly circular */
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 48px; /* Fixed size for circular button */
-            width: 48px; /* Fixed size for circular button */
-            box-sizing: border-box;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-            flex-shrink: 0; /* Prevent shrinking in flex container */
-        }
+        /* New style for the integrated microphone button (now a separate button) */
+        #integratedVoiceBtn {
+            background-color: #3a414e;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 48px;
+            width: 48px;
+            box-sizing: border-box;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
 
-        #integratedVoiceBtn svg {
-            fill: #a0aec0; /* Default icon color */
-            height: 24px;
-            width: 24px;
-            transition: fill 0.3s ease;
-        }
+            #integratedVoiceBtn svg {
+                fill: #a0aec0;
+                height: 24px;
+                width: 24px;
+                transition: fill 0.3s ease;
+            }
 
-        #integratedVoiceBtn:hover {
-            background-color: #4a5568; /* Slightly lighter on hover */
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-        }
+            #integratedVoiceBtn:hover {
+                background-color: #4a5568;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            }
 
-        #integratedVoiceBtn:hover svg {
-            fill: #e2e8f0; /* Lighter icon on hover */
-        }
+                #integratedVoiceBtn:hover svg {
+                    fill: #e2e8f0;
+                }
 
-        #integratedVoiceBtn.active-voice-btn {
-            background-color: #e53e3e; /* Red when active */
-            box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4); /* Red glow when active */
-        }
+            #integratedVoiceBtn.active-voice-btn {
+                background-color: #e53e3e;
+                box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4);
+            }
 
-        #integratedVoiceBtn.active-voice-btn svg {
-            fill: white; /* White icon when active */
-        }
+                #integratedVoiceBtn.active-voice-btn svg {
+                    fill: white;
+                }
 
+        /* Styling for the new "Back to Upload" button position and size */
+        .top-right-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            font-size: 0.9em;
+            z-index: 100;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
 
-        /* Styling for the new "Back to Upload" button position and size */
-        .top-right-button {
-            position: absolute;
-            top: 20px; /* Distance from top */
-            right: 20px; /* Distance from right */
-            padding: 8px 15px; /* Smaller padding */
-            font-size: 0.9em; /* Smaller font size */
-            z-index: 100; /* Ensure it's above other elements */
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-        }
-
-        .top-right-button:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
-        }
-    </style>
-        <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
-            }
-        }
-    </script>
+            .top-right-button:hover {
+                background-color: #0056b3;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+            }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body>
-    <header>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 1L2 6v12l10 5 10-5V6L12 1zm0 2.31L18.47 6 12 9.31 5.53 6 12 3.31zM4 7.69l6 3.15v6.52L4 13.84V7.69zm8 11.01L6.47 16 12 12.69l5.53 3.31L12 18.7zM20 13.84l-6 3.15V10.84l6-3.15v6.15z"/>
-            <circle cx="12" cy="12" r="2" fill="#007bff"/>
-            <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#fff"/>
-        </svg>
-        AI VR CAD Editor
-    </header>
-
-    <div class="page-container">
-        <section id="uploadPage" class="page page-active">
-            <div class="upload-content">
-                <h2>Upload your 3D Model</h2>
-                <div id="dropZone">
-                    Drag and Drop your .gltf or .glb file(s) here
-                    <input type="file" id="fileInput" accept=".gltf,.glb" />
-                </div>
-                <button class="button primary" id="loadEditorButton">Load Model & Go to Editor</button>
-                <p id="loadingMsg">Loading model, please wait...</p>
-            </div>
-        </section>
-
-        <section id="editorPage" class="page page-inactive">
-            <main id="cadViewer">
-                <canvas id="cadCanvas"></canvas>
-            </main>
-                        <button class="top-right-button" onclick="window.goBack()">
-                <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#FFFFFF"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-13v4H7.5L12 16.5 16.5 12H13V7z"/></svg>
-                Back to Upload
-            </button>
-                                                <div class="right-panel">
-                <h2>AI Chat Log</h2>
-                <div id="aiLog">
-                    <p class="system-message">System: AI Chat Log Initialized.</p>
-                </div>
-                <div class="ai-input-group">
-                    <input type="text" id="textCommandInput" placeholder="Type AI command or question..." />
-                                        <button id="integratedVoiceBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.64 6.44-6.2 6.93V21h-2v-3.07c-3.56-.49-6.2-3.4-6.2-6.93h-2c0 4.17 3.13 7.62 7.2 8.15V23h4v-2.85c4.07-.53 7.2-3.98 7.2-8.15h-2z"/></svg>
-                    </button>
-                    <button id="sendTextCommandBtn">Send</button>
-                </div>
-            </div>
-        </section>
-    </div>
-
-<script type="module">
-    // Import Three.js and its modules
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { VRButton } from 'three/addons/webxr/VRButton.js';
-    import { TransformControls } from 'three/addons/controls/TransformControls.js';
-
-    // Global map to store dropped files by their relative path (e.g., "scene.bin", "textures/image.png")
-    const droppedFileBlobs = new Map();
-
-    let uploadedFile = null, scene, camera, renderer, mesh, controls;
-    let recognition;
-    let synth;
-    let isVoiceAssistActive = false;
-    let raycaster;
-    let mouse;
-    let selectedObject = null; // This will hold the currently selected THREE.Mesh part
-    const originalMaterials = new Map(); // Map to store original materials by object UUID
-    let transformControls;
-
-    // Get references to HTML elements
-    const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('dropZone');
-    const loadingMsg = document.getElementById('loadingMsg');
-    const uploadPage = document.getElementById('uploadPage');
-    const editorPage = document.getElementById('editorPage');
-    const integratedVoiceBtn = document.getElementById('integratedVoiceBtn'); // New reference for integrated button
-    const aiLog = document.getElementById('aiLog');
-    const textCommandInput = document.getElementById('textCommandInput');
-    const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
-    const cadCanvas = document.getElementById('cadCanvas'); // Reference to the canvas element
-    const loadEditorButton = document.getElementById('loadEditorButton'); // Reference to the new button ID
-
-    // --- Expose functions globally for HTML onclick attributes ---
-    window.removeObject = removeObject;
-    window.resetView = resetView;
-    window.showDesignInfo = showDesignInfo;
-    window.goBack = goBack;
-    window.selectPartByName = selectPartByName;
-    window.setTransformMode = setTransformMode;
-    window.listParts = listParts;
-
-    // --- File Input and Page Navigation ---
-    dropZone.addEventListener('dragover', e => {
-        e.preventDefault();
-        dropZone.textContent = 'Release to drop your .gltf or .glb file(s)';
-        dropZone.style.borderColor = '#007bff';
-    });
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here';
-        dropZone.style.borderColor = '#a0aec0'; // Reset to original color
-    });
-    dropZone.addEventListener('drop', async e => {
-        e.preventDefault();
-        dropZone.textContent = 'Processing files...';
-        dropZone.style.borderColor = '#a0aec0'; // Reset to original color
-        loadingMsg.textContent = 'Processing dropped files...';
-        loadingMsg.style.color = '#007bff';
-        loadingMsg.style.display = 'block';
-
-        droppedFileBlobs.clear(); // Clear previous files
-        let mainModelFile = null;
-
-        console.log("[Drop Handler] Drop event detected. Items:", e.dataTransfer.items);
-        console.log("[Drop Handler] Files:", e.dataTransfer.files);
-
-        // Function to recursively read directory entries
-        async function readDroppedFiles(entry, path) {
-            if (entry.isFile) {
-                const file = await new Promise(resolve => entry.file(resolve));
-                const fullPath = path ? `${path}/${file.name}` : file.name;
-                droppedFileBlobs.set(fullPath, file);
-                console.log(`[Drop Handler] Stored file: ${fullPath}, Type: ${file.type}, Size: ${file.size} bytes`); // Debugging
-                if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
-                    mainModelFile = file;
-                }
-            } else if (entry.isDirectory) {
-                const directoryReader = entry.createReader();
-                const entries = await new Promise(resolve => directoryReader.readEntries(resolve));
-                console.log(`[Drop Handler] Reading directory: ${path ? `${path}/${entry.name}` : entry.name}, Entries found: ${entries.length}`);
-                for (const subEntry of entries) {
-                    await readDroppedFiles(subEntry, path ? `${path}/${entry.name}` : entry.name);
-                }
-            }
-        }
-
-        // Check if DataTransferItem.webkitGetAsEntry is available (for folder drops)
-        if (e.dataTransfer.items && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
-            console.log("[Drop Handler] Using webkitGetAsEntry for folder drop detection.");
-            for (let i = 0; i < e.dataTransfer.items.length; i++) {
-                const item = e.dataTransfer.items[i];
-                const entry = item.webkitGetAsEntry();
-                if (entry) {
-                    await readDroppedFiles(entry, ''); // Start recursive read from root
-                }
-            }
-        } else {
-            console.log("[Drop Handler] Falling back to flat file drop (webkitGetAsEntry not available or not a folder drop).");
-            // Fallback for browsers that's don't support webkitGetAsEntry or if only files are dropped
-            for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                const file = e.dataTransfer.files[i];
-                droppedFileBlobs.set(file.name, file);
-                console.log(`[Drop Handler] Stored file (flat): ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`); // Debugging
-                if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
-                    mainModelFile = file;
-                }
-            }
-        }
-
-        if (mainModelFile) {
-            uploadedFile = mainModelFile; // Set the main model file
-            console.log("[Drop Handler] Identified main model file:", uploadedFile.name);
-            validateFile(uploadedFile); // Validate and proceed
-            console.log("[Drop Handler] All dropped files (keys in map):", Array.from(droppedFileBlobs.keys()));
-        } else {
-            loadingMsg.textContent = '❌ No .gltf or .glb file found among dropped items!';
-            loadingMsg.style.color = 'red';
-            loadingMsg.style.display = 'block';
-            uploadedFile = null;
-            console.error("[Drop Handler] No GLTF/GLB file found in dropped items.");
-        }
-        console.log("[Drop Handler] uploadedFile after drop processing:", uploadedFile ? uploadedFile.name : "null");
-    });
-
-    fileInput.addEventListener('change', () => {
-        console.log("[File Input] Change event detected. Files:", fileInput.files);
-        // For file input, we only get one file, so it's simpler
-        if (fileInput.files.length > 0) {
-            loadingMsg.textContent = 'Processing selected file...';
-            loadingMsg.style.color = '#007bff';
-            loadingMsg.style.display = 'block';
-
-            droppedFileBlobs.clear();
-            const file = fileInput.files[0];
-            droppedFileBlobs.set(file.name, file);
-            uploadedFile = file;
-            console.log("[File Input] Selected file:", uploadedFile.name, `Type: ${uploadedFile.type}, Size: ${uploadedFile.size} bytes`);
-            validateFile(uploadedFile);
-            console.log("[File Input] Dropped file (keys in map):", Array.from(droppedFileBlobs.keys()));
-        } else {
-            console.log("[File Input] No file selected via input.");
-            uploadedFile = null;
-            loadingMsg.textContent = 'No file selected. Please choose a .gltf or .glb file.';
-            loadingMsg.style.color = 'orange';
-            loadingMsg.style.display = 'block';
-        }
-        console.log("[File Input] uploadedFile after change processing:", uploadedFile ? uploadedFile.name : "null");
-    });
-
-    // Attach event listener for the "Load Model & Go to Editor" button
-    loadEditorButton.addEventListener('click', goToEditor); // Correctly attach event listener
-
-    function validateFile(file) {
-        console.log("[Validation] Validating file:", file ? file.name : "null");
-        if (file && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
-            console.log("[Validation] File is a valid GLTF/GLB.");
-            // Explicitly tell the user to click the button
-            loadingMsg.textContent = `File selected: ${file.name}. Click 'Load Model & Go to Editor' to view it.`;
-            loadingMsg.style.color = '#007bff';
-            loadingMsg.style.display = 'block';
-            return true;
-        } else {
-            console.error("[Validation] Unsupported file type! Please upload a .gltf or .glb file.");
-            loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
-            loadingMsg.style.color = 'red';
-            loadingMsg.style.display = 'block';
-            uploadedFile = null; // Ensure uploadedFile is null if validation fails
-            return false;
-        }
-    }
-
-    // Helper function to dispose Three.js resources
-    function disposeSceneResources() {
-        console.log("[Dispose] Disposing Three.js resources...");
-        if (scene) {
-            scene.traverse(function (object) {
-                if (object.isMesh) {
-                    if (object.geometry) object.geometry.dispose();
-                    if (object.material) {
-                        if (Array.isArray(object.material)) {
-                            object.material.forEach(material => material.dispose());
-                        } else {
-                            object.material.dispose();
-                        }
-                    }
-                }
-            });
-            scene = null; // Ensure scene is nulled out
-        }
-        if (renderer) {
-            renderer.setAnimationLoop(null); // Stop animation loop
-            renderer.dispose();
-            renderer = null; // Ensure renderer is nulled out
-        }
-        if (controls) {
-            controls.dispose();
-            controls = null; // Ensure controls are nulled out
-        }
-        // Remove event listeners from the canvas to prevent memory leaks
-        if (cadCanvas) {
-            cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
-            cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
-        }
-        // Dispose TransformControls
-        if (transformControls) {
-            transformControls.dispose();
-            transformControls = null;
-        }
-        console.log("[Dispose] Resources disposed.");
-    }
-
-
-    function goToEditor() {
-        console.log("[goToEditor] Attempting to go to editor.");
-        console.log("[goToEditor] Current uploadedFile:", uploadedFile ? uploadedFile.name : "null");
-        if (!uploadedFile) {
-            addMessageToLog('System', "Please upload a valid .gltf or .glb file before continuing.");
-            loadingMsg.textContent = 'Please upload a valid .gltf or .glb file.';
-            loadingMsg.style.color = 'red';
-            loadingMsg.style.display = 'block';
-            console.warn("[goToEditor] No uploaded file found.");
-            return;
-        }
-
-        uploadPage.classList.remove('page-active');
-        uploadPage.classList.add('page-inactive');
-
-        editorPage.classList.remove('page-inactive');
-        editorPage.classList.add('page-active');
-
-        loadingMsg.textContent = `Loading model: ${uploadedFile.name}...`;
-        loadingMsg.style.color = '#007bff';
-        loadingMsg.style.display = 'block';
-        console.log(`[goToEditor] Transitioning to editor. Preparing to load model: ${uploadedFile.name}`);
-        console.log(`[goToEditor] Current droppedFileBlobs keys:`, Array.from(droppedFileBlobs.keys()));
-
-
-        // Dispose existing resources before initializing a new scene
-        disposeSceneResources();
-        // Re-initialize the scene every time we go to editor to ensure a clean state
-        initScene();
-
-        loadModel(uploadedFile); // Load model after transition
-    }
-
-    function goBack() {
-        console.log("[Navigation] Going back to upload page.");
-        editorPage.classList.remove('page-active');
-        editorPage.classList.add('page-inactive');
-
-        uploadPage.classList.remove('page-inactive');
-        uploadPage.classList.add('page-active');
-
-        stopVoiceAssist(); // Ensure voice assist is stopped when going back
-
-        // IMPORTANT: Remove resize listener BEFORE disposing renderer
-        window.removeEventListener('resize', onWindowResize, false);
-
-        // Dispose of Three.js resources when navigating back
-        disposeSceneResources(); // Call the helper function
-
-        uploadedFile = null; // Clear the uploaded file
-        droppedFileBlobs.clear(); // Clear the map of dropped files
-        originalMaterials.clear(); // Clear original materials map
-        selectedObject = null; // Clear selected object
-
-        // --- NEW: Reset file input and loading message state for re-selection ---
-        fileInput.value = ''; // Clear the selected file in the input to allow re-selection of the same file
-        loadingMsg.textContent = 'Drag and Drop your .gltf or .glb file(s) here, or click to browse.'; // Reset text
-        loadingMsg.style.display = 'none'; // Ensure it's hidden
-        loadingMsg.style.color = ''; // Reset color
-        dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here'; // Reset drop zone text
-        dropZone.style.borderColor = '#a0aec0'; // Reset drop zone border
-        // --- END NEW ---
-
-        console.log("[Navigation] Returned to upload page. State reset.");
-    }
-
-    // --- Three.js Scene Setup and Model Loading ---
-    function initScene() {
-        console.log("[initScene] Initializing Three.js scene...");
-
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xf0f2f5); // Fusion 360 style background
-
-        camera = new THREE.PerspectiveCamera(75, cadCanvas.clientWidth / cadCanvas.clientHeight, 0.1, 1000);
-        camera.position.set(2, 2, 2); // Adjust camera position as needed
-
-        renderer = new THREE.WebGLRenderer({ canvas: cadCanvas, antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(cadCanvas.clientWidth, cadCanvas.clientHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.xr.enabled = true; // Enable WebXR for VR
-
-        document.body.appendChild(VRButton.createButton(renderer)); // Add VR button to the document body
-
-        controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; // An animation loop is required when damping is enabled
-        controls.dampingFactor = 0.25;
-        controls.screenSpacePanning = false;
-        controls.maxPolarAngle = Math.PI / 2;
-
-        // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        scene.add(ambientLight);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 10, 7.5);
-        directionalLight.castShadow = true;
-        directionalLight.shadow.mapSize.width = 1024;
-        directionalLight.shadow.mapSize.height = 1024;
-        directionalLight.shadow.camera.near = 0.5;
-        directionalLight.shadow.camera.far = 50;
-        scene.add(directionalLight);
-
-        // Add a simple ground plane for shadows
-        const planeGeometry = new THREE.PlaneGeometry(50, 50);
-        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        plane.rotation.x = -Math.PI / 2;
-        plane.receiveShadow = true;
-        scene.add(plane);
-
-        // Raycaster for object selection
-        raycaster = new THREE.Raycaster();
-        mouse = new THREE.Vector2();
-
-        cadCanvas.addEventListener('mousedown', onCanvasClick, false);
-        cadCanvas.addEventListener('touchstart', onCanvasClick, false);
-
-        // TransformControls setup
-        transformControls = new TransformControls(camera, renderer.domElement);
-        transformControls.addEventListener('dragging-changed', function (event) {
-            controls.enabled = !event.value;
-        });
-        scene.add(transformControls);
-
-        // Event listener for window resize
-        window.addEventListener('resize', onWindowResize, false);
-
-        animate();
-        console.log("[initScene] Three.js scene initialized.");
-    }
-
-    function onWindowResize() {
-        if (camera && renderer && cadCanvas) {
-            camera.aspect = cadCanvas.clientWidth / cadCanvas.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(cadCanvas.clientWidth, cadCanvas.clientHeight);
-            console.log("[Resize] Canvas resized to:", cadCanvas.clientWidth, "x", cadCanvas.clientHeight);
-        }
-    }
-
-    function animate() {
-        renderer.setAnimationLoop(render);
-    }
-
-    function render() {
-        if (controls) controls.update(); // only required if controls.enableDamping is set to true
-        if (renderer && scene && camera) {
-            renderer.render(scene, camera);
-        }
-    }
-
-    function loadModel(file) {
-        console.log("[loadModel] Loading model:", file.name);
-        loadingMsg.textContent = `Loading ${file.name}...`;
-        loadingMsg.style.display = 'block';
-
-        const loader = new GLTFLoader();
-
-        // --- FIX START: Custom FileLoader for GLTF dependencies ---
-        // Create a custom FileLoader that reads from our droppedFileBlobs Map
-        const customFileLoader = new THREE.FileLoader();
-        customFileLoader.manager = new THREE.LoadingManager();
-
-        // Override the load method to retrieve files from our map
-        customFileLoader.load = function (url, onLoad, onProgress, onError) {
-            console.log(`[CustomFileLoader] Attempting to load URL: ${url}`);
-            // GLTF urls are relative to the main GLTF file.
-            // We need to normalize the path for map lookup.
-            const pathSegments = url.split('/');
-            const filename = pathSegments[pathSegments.length - 1];
-            const directoryPath = pathSegments.slice(0, -1).join('/');
-
-            // Try to find the file in the droppedFileBlobs map
-            // Important: GLTF relative paths might not match the exact droppedFileBlobs keys
-            // due to directory structures. A simple filename match is a common starting point
-            // for flattened dropped files or simple GLB. For complex GLTF folders,
-            // `readDroppedFiles` already stores the full relative path.
-            let targetFile = null;
-            let normalizedUrl = url;
-
-            // If the URL is just a filename, prepend the base path if the main model had one
-            // This logic is simplified; a robust solution might need more sophisticated path resolution
-            // considering the base path of the main GLTF itself.
-            if (!url.includes('/') && uploadedFile.webkitRelativePath) {
-                const uploadedFileDir = uploadedFile.webkitRelativePath.split('/').slice(0, -1).join('/');
-                if (uploadedFileDir) {
-                    normalizedUrl = `${uploadedFileDir}/${url}`;
-                    console.log(`[CustomFileLoader] Normalized URL for lookup: ${normalizedUrl}`);
-                }
-            }
-
-            targetFile = droppedFileBlobs.get(normalizedUrl) || droppedFileBlobs.get(filename);
-
-            if (targetFile) {
-                console.log(`[CustomFileLoader] Found file in map: ${normalizedUrl || filename}`);
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    onLoad(event.target.result); // Pass the loaded data
-                };
-                reader.onerror = (e) => {
-                    console.error(`[CustomFileLoader] Error reading file from blob for ${url}:`, e);
-                    onError(e);
-                };
-
-                // Determine how to read the file based on its type (text for JSON, array buffer for binary/images)
-                const extension = filename.split('.').pop().toLowerCase();
-                if (extension === 'json' || extension === 'gltf') {
-                    reader.readAsText(targetFile);
-                } else {
-                    reader.readAsArrayBuffer(targetFile);
-                }
-            } else {
-                const errorMsg = `[CustomFileLoader] File not found in dropped blobs: ${url}`;
-                console.error(errorMsg);
-                onError(new Error(errorMsg));
-            }
-        };
-
-        loader.fileLoader = customFileLoader; // Tell GLTFLoader to use our custom file loader
-        // --- FIX END ---
-
-        // Determine the correct URL for the GLTF loader based on whether it's a GLB or GLTF
-        let modelUrl;
-        if (uploadedFile.name.toLowerCase().endsWith('.glb')) {
-            modelUrl = URL.createObjectURL(uploadedFile); // GLB can be loaded directly as a Blob URL
-        } else {
-            // For GLTF, we need a Blob URL for the main .gltf file itself
-            // and rely on the customFileLoader for its dependencies (like .bin, textures)
-            modelUrl = URL.createObjectURL(uploadedFile);
-        }
-
-
-        loader.load(modelUrl,
-            function (gltf) {
-                if (mesh) { // Remove previous model if exists
-                    scene.remove(mesh);
-                    mesh.traverse(object => {
-                        if (object.isMesh) {
-                            if (object.geometry) object.geometry.dispose();
-                            if (Array.isArray(object.material)) {
-                                object.material.forEach(material => material.dispose());
-                            } else if (object.material) {
-                                object.material.dispose();
-                            }
-                        }
-                    });
-                }
-
-                mesh = gltf.scene;
-                mesh.traverse(object => {
-                    if (object.isMesh) {
-                        object.castShadow = true;
-                        object.receiveShadow = true;
-                        // Store original materials for highlighting
-                        originalMaterials.set(object.uuid, object.material);
-                    }
-                });
-
-                // Fit model to view
-                const box = new THREE.Box3().setFromObject(mesh);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const fov = camera.fov * (Math.PI / 180);
-                let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-                cameraZ *= 1.5; // Add some padding
-
-                camera.position.set(center.x, center.y, center.z + cameraZ);
-                controls.target.set(center.x, center.y, center.z);
-                controls.update();
-
-                scene.add(mesh);
-                loadingMsg.style.display = 'none';
-                addMessageToLog('System', `Model "${file.name}" loaded successfully.`);
-                console.log("[loadModel] Model loaded:", mesh);
-
-                // Revoke the Blob URL after loading is complete
-                if (modelUrl.startsWith('blob:')) {
-                    URL.revokeObjectURL(modelUrl);
-                    console.log(`[loadModel] Revoked Blob URL: ${modelUrl}`);
-                }
-            },
-            // Called while loading is progressing
-            function (xhr) {
-                const progress = (xhr.loaded / xhr.total) * 100;
-                loadingMsg.textContent = `Loading ${file.name}: ${progress.toFixed(2)}%`;
-                console.log(`[loadModel] Model loading progress: ${progress.toFixed(2)}%`);
-            },
-            // Called when loading has errors
-            function (error) {
-                console.error('[loadModel] An error happened during model loading:', error);
-                loadingMsg.textContent = '❌ Error loading model! See console for details.';
-                loadingMsg.style.color = 'red';
-                addMessageToLog('System', `Error loading model: ${error.message || error}. Please ensure all model files (e.g., .bin, textures) are in the same folder as the .gltf, or included within the .glb file, and dropped together.`);
-                // Optionally go back to upload page on error
-                // setTimeout(goBack, 3000);
-            }
-        );
-    }
-
-    // --- AI Interaction / Voice Control ---
-    // Initialize SpeechRecognition and SpeechSynthesis
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
-
-        recognition.onstart = () => {
-            console.log("Voice recognition started.");
-            addMessageToLog('System', 'Voice command listening...');
-            integratedVoiceBtn.classList.add('active-voice-btn');
-            isVoiceAssistActive = true;
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            console.log("Voice input:", transcript);
-            addMessageToLog('User', transcript);
-            processVoiceCommand(transcript);
-        };
-
-        recognition.onerror = (event) => {
-            console.error("Speech recognition error:", event.error);
-            addMessageToLog('System', `Voice recognition error: ${event.error}.`);
-            integratedVoiceBtn.classList.remove('active-voice-btn');
-            isVoiceAssistActive = false;
-        };
-
-        recognition.onend = () => {
-            console.log("Voice recognition ended.");
-            addMessageToLog('System', 'Voice command stopped.');
-            integratedVoiceBtn.classList.remove('active-voice-btn');
-            isVoiceAssistActive = false;
-        };
-
-        integratedVoiceBtn.addEventListener('click', () => {
-            if (isVoiceAssistActive) {
-                stopVoiceAssist();
-            } else {
-                startVoiceAssist();
-            }
-        });
-    } else {
-        console.warn("Speech Recognition API not supported in this browser.");
-        integratedVoiceBtn.disabled = true;
-        integratedVoiceBtn.textContent = 'Voice Not Supported';
-        addMessageToLog('System', 'Speech Recognition not supported in your browser.');
-    }
-
-    // Initialize SpeechSynthesis
-    if ('speechSynthesis' in window) {
-        synth = window.speechSynthesis;
-        console.log("Speech Synthesis API available.");
-    } else {
-        console.warn("Speech Synthesis API not supported in this browser.");
-        addMessageToLog('System', 'Speech Synthesis not supported in your browser.');
-    }
-
-    function startVoiceAssist() {
-        if (recognition) {
-            try {
-                recognition.start();
-            } catch (e) {
-                console.error("Error starting speech recognition:", e);
-                addMessageToLog('System', `Error starting voice recognition: ${e.message}`);
-            }
-        }
-    }
-
-    function stopVoiceAssist() {
-        if (recognition && isVoiceAssistActive) {
-            recognition.stop();
-        }
-    }
-
-    function speak(text) {
-        if (synth) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            synth.speak(utterance);
-        }
-    }
-
-    function addMessageToLog(sender, message) {
-        const msgElement = document.createElement('p');
-        msgElement.classList.add(sender === 'User' ? 'user-message' : sender === 'AI' ? 'ai-response' : 'system-message');
-        msgElement.textContent = `${sender}: ${message}`;
-        aiLog.appendChild(msgElement);
-        aiLog.scrollTop = aiLog.scrollHeight; // Auto-scroll to bottom
-    }
-
-    textCommandInput.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            sendTextCommandBtn.click();
-        }
-    });
-
-    sendTextCommandBtn.addEventListener('click', () => {
-        const command = textCommandInput.value.trim();
-        if (command) {
-            addMessageToLog('User', command);
-            processVoiceCommand(command); // Use the same processing logic
-            textCommandInput.value = '';
-        }
-    });
-
-    function processVoiceCommand(command) {
-        if (!mesh) {
-            const response = "Please load a 3D model first.";
-            addMessageToLog('AI', response);
-            speak(response);
-            return;
-        }
-
-        command = command.toLowerCase();
-
-        if (command.includes('remove') && command.includes('selected')) {
-            removeObject();
-        } else if (command.includes('reset view')) {
-            resetView();
-        } else if (command.includes('show design info') || command.includes('what is this model')) {
-            showDesignInfo();
-        } else if (command.includes('list parts')) {
-            listParts();
-        } else if (command.includes('select part')) {
-            const parts = command.split('select part');
-            if (parts.length > 1) {
-                let partName = parts[1].trim();
-                // Remove common prepositions or articles if present
-                partName = partName.replace(/^(the|a|an)\s/, '');
-                selectPartByName(partName);
-            } else {
-                const response = "Please specify which part to select. For example, 'select part wheel'.";
-                addMessageToLog('AI', response);
-                speak(response);
-            }
-        } else if (command.includes('transform mode') || command.includes('set mode')) {
-            if (command.includes('translate') || command.includes('move')) {
-                setTransformMode('translate');
-            } else if (command.includes('rotate')) {
-                setTransformMode('rotate');
-            } else if (command.includes('scale')) {
-                setTransformMode('scale');
-            } else if (command.includes('off') || command.includes('none')) {
-                setTransformMode(null);
-            } else {
-                const response = "Which transform mode? Translate, Rotate, Scale, or Off?";
-                addMessageToLog('AI', response);
-                speak(response);
-            }
-        } else {
-            const response = "I'm sorry, I didn't understand that command. Please try again.";
-            addMessageToLog('AI', response);
-            speak(response);
-        }
-    }
-
-    // --- 3D Interaction Logic ---
-    function onCanvasClick(event) {
-        let clientX, clientY;
-        if (event.type === 'touchstart') {
-            event.preventDefault(); // Prevent scrolling
-            clientX = event.touches[0].clientX;
-            clientY = event.touches[0].clientY;
-        } else {
-            clientX = event.clientX;
-            clientY = event.clientY;
-        }
-
-        // Calculate mouse position in normalized device coordinates (-1 to +1)
-        const rect = cadCanvas.getBoundingClientRect();
-        mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-
-        if (mesh) {
-            const intersects = raycaster.intersectObjects(mesh.children, true);
-
-            if (intersects.length > 0) {
-                const intersectedObject = intersects[0].object;
-                console.log("Clicked on:", intersectedObject.name || intersectedObject.uuid);
-                selectObject(intersectedObject);
-            } else {
-                console.log("Clicked on background.");
-                deselectObject();
-            }
-        }
-    }
-
-    function selectObject(object) {
-        if (selectedObject && selectedObject.uuid !== object.uuid) {
-            deselectObject(); // Deselect previous object
-        }
-
-        if (object && object.isMesh) {
-            if (!selectedObject || selectedObject.uuid !== object.uuid) {
-                selectedObject = object;
-                // Store original material if not already stored (for initial selection)
-                if (!originalMaterials.has(selectedObject.uuid)) {
-                    originalMaterials.set(selectedObject.uuid, selectedObject.material);
-                }
-
-                // Apply highlight material (e.g., wireframe or emissive color)
-                selectedObject.material = new THREE.MeshBasicMaterial({
-                    color: 0xffff00, // Yellow highlight
-                    wireframe: false,
-                    transparent: true,
-                    opacity: 0.7
-                });
-                addMessageToLog('AI', `Selected part: ${object.name || 'Unnamed Part'}`);
-
-                // Attach TransformControls to the selected object
-                if (transformControls) {
-                    transformControls.attach(selectedObject);
-                    transformControls.show(); // Ensure controls are visible when an object is selected
-                    console.log("TransformControls attached to:", selectedObject.name || selectedObject.uuid);
-                }
-            }
-        }
-    }
-
-    function deselectObject() {
-        if (selectedObject) {
-            // Restore original material
-            const originalMaterial = originalMaterials.get(selectedObject.uuid);
-            if (originalMaterial) {
-                selectedObject.material = originalMaterial;
-            } else {
-                // Fallback if original material wasn't stored (shouldn't happen with proper logic)
-                selectedObject.material = new THREE.MeshStandardMaterial({ color: 0x888888 }); // Neutral default
-            }
-
-            // Detach TransformControls
-            if (transformControls) {
-                transformControls.detach();
-                transformControls.hide(); // Hide controls when no object is selected
-            }
-            selectedObject = null;
-            addMessageToLog('AI', 'Object deselected.');
-        }
-    }
-
-    function removeObject() {
-        if (selectedObject) {
-            if (confirm(`Are you sure you want to remove "${selectedObject.name || 'Unnamed Part'}"?`)) {
-                const removedName = selectedObject.name || 'Unnamed Part';
-                deselectObject(); // First deselect to detach controls and restore material (though it will be removed)
-                selectedObject.parent.remove(selectedObject);
-                // Dispose of geometry and material to free up memory
-                if (selectedObject.geometry) selectedObject.geometry.dispose();
-                if (selectedObject.material) {
-                    if (Array.isArray(selectedObject.material)) {
-                        selectedObject.material.forEach(material => material.dispose());
-                    } else {
-                        selectedObject.material.dispose();
-                    }
-                }
-                addMessageToLog('AI', `Removed "${removedName}".`);
-                selectedObject = null; // Ensure selectedObject is cleared after removal
-            }
-        } else {
-            const response = "No object is currently selected to remove.";
-            addMessageToLog('AI', response);
-            speak(response);
-        }
-    }
-
-    function resetView() {
-        if (mesh && controls && camera) {
-            const box = new THREE.Box3().setFromObject(mesh);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const fov = camera.fov * (Math.PI / 180);
-            let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-            cameraZ *= 1.5; // Padding
-
-            camera.position.set(center.x, center.y, center.z + cameraZ);
-            controls.target.set(center.x, center.y, center.z);
-            controls.update();
-            addMessageToLog('AI', 'View reset to fit the model.');
-            speak('View reset to fit the model.');
-        } else {
-            const response = "No model loaded to reset view.";
-            addMessageToLog('AI', response);
-            speak(response);
-        }
-    }
-
-    function showDesignInfo() {
-        if (mesh) {
-            let info = `Model Name: ${uploadedFile ? uploadedFile.name : 'Unknown'}\n`;
-            info += `Number of parts: ${countMeshObjects(mesh)}\n`;
-            if (selectedObject) {
-                info += `Currently selected: ${selectedObject.name || 'Unnamed Part'}\n`;
-            }
-            addMessageToLog('AI', info);
-            speak(`This model is named ${uploadedFile ? uploadedFile.name : 'Unknown'}. It contains ${countMeshObjects(mesh)} parts.`);
-        } else {
-            const response = "No model loaded to show design info.";
-            addMessageToLog('AI', response);
-            speak(response);
-        }
-    }
-
-    function countMeshObjects(object) {
-        let count = 0;
-        object.traverse(child => {
-            if (child.isMesh) {
-                count++;
-            }
-        });
-        return count;
-    }
-
-    function listParts() {
-        if (mesh) {
-            const partNames = [];
-            mesh.traverse(child => {
-                if (child.isMesh && child.name) {
-                    partNames.push(child.name);
-                }
-            });
-
-            if (partNames.length > 0) {
-                const message = "Model parts: " + partNames.join(', ');
-                addMessageToLog('AI', message);
-                speak("The model contains the following parts: " + partNames.join(', ') + ".");
-            } else {
-                const response = "This model contains no named parts.";
-                addMessageToLog('AI', response);
-                speak(response);
-            }
-        } else {
-            const response = "No model loaded to list parts.";
-            addMessageToLog('AI', response);
-            speak(response);
-        }
-    }
-
-    function selectPartByName(name) {
-        if (!mesh) {
-            const response = "No model loaded to select parts from.";
-            addMessageToLog('AI', response);
-            speak(response);
-            return;
-        }
-
-        const targetName = name.toLowerCase().trim();
-        let foundObject = null;
-        mesh.traverse(child => {
-            if (child.isMesh && child.name && child.name.toLowerCase().includes(targetName)) {
-                foundObject = child;
-                return; // Found the first one, exit traverse
-            }
-        });
-
-        if (foundObject) {
-            selectObject(foundObject);
-            addMessageToLog('AI', `Part "${foundObject.name}" selected.`);
-            speak(`Part "${foundObject.name}" selected.`);
-        } else {
-            const response = `Could not find a part named "${name}". Please check the spelling or list available parts.`;
-            addMessageToLog('AI', response);
-            speak(response);
-        }
-    }
-
-    function setTransformMode(mode) {
-        if (!transformControls) {
-            addMessageToLog('System', 'Transform controls not initialized.');
-            return;
-        }
-
-        if (mode === 'translate' || mode === 'rotate' || mode === 'scale') {
-            transformControls.setMode(mode);
-            transformControls.show();
-            addMessageToLog('AI', `Transform mode set to: ${mode}.`);
-            speak(`Transform mode set to ${mode}.`);
-        } else if (mode === null) {
-            transformControls.detach();
-            transformControls.hide();
-            addMessageToLog('AI', 'Transform controls detached.');
-            speak('Transform controls detached.');
-        } else {
-            const response = "Invalid transform mode. Use 'translate', 'rotate', 'scale', or 'null' (to turn off).";
-            addMessageToLog('AI', response);
-            speak(response);
-        }
-    }
-
-</script>
+    <header>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 1L2 6v12l10 5 10-5V6L12 1zm0 2.31L18.47 6 12 9.31 5.53 6 12 3.31zM4 7.69l6 3.15v6.52L4 13.84V7.69zm8 11.01L6.47 16 12 12.69l5.53 3.31L12 18.7zM20 13.84l-6 3.15V10.84l6-3.15v6.15z" />
+            <circle cx="12" cy="12" r="2" fill="#007bff" />
+            <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#fff" />
+        </svg>
+        AI VR CAD Editor
+    </header>
+
+    <div class="page-container">
+        <section id="uploadPage" class="page page-active">
+            <div class="upload-content">
+                <h2>Upload your 3D Model</h2>
+                <div id="dropZone">
+                    Drag and Drop your .gltf or .glb file(s) here
+                    <input type="file" id="fileInput" accept=".gltf,.glb" />
+                </div>
+                <button class="button primary" id="loadEditorButton">Load Model & Go to Editor</button>
+                <p id="loadingMsg">Loading model, please wait...</p>
+            </div>
+        </section>
+
+        <section id="editorPage" class="page page-inactive">
+            <main id="cadViewer">
+                <canvas id="cadCanvas"></canvas>
+            </main>
+            <button class="top-right-button" onclick="window.goBack()">
+                <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#FFFFFF"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-13v4H7.5L12 16.5 16.5 12H13V7z" /></svg>
+                Back to Upload
+            </button>
+            <div class="right-panel">
+                <h2>AI Chat Log</h2>
+                <div id="aiLog">
+                    <p class="system-message">System: AI Chat Log Initialized.</p>
+                </div>
+                <div class="ai-input-group">
+                    <input type="text" id="textCommandInput" placeholder="Type AI command or question..." />
+                    <button id="integratedVoiceBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.64 6.44-6.2 6.93V21h-2v-3.07c-3.56-.49-6.2-3.4-6.2-6.93h-2c0 4.17 3.13 7.62 7.2 8.15V23h4v-2.85c4.07-.53 7.2-3.98 7.2-8.15h-2z" /></svg>
+                    </button>
+                    <button id="sendTextCommandBtn">Send</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script type="module">
+        // Import Three.js and its modules
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { VRButton } from 'three/addons/webxr/VRButton.js';
+        import { TransformControls } from 'three/addons/controls/TransformControls.js';
+
+        // Global map to store dropped files by their relative path (e.g., "scene.bin", "textures/image.png")
+        const droppedFileBlobs = new Map();
+
+        let uploadedFile = null, scene, camera, renderer, mesh, controls;
+        let recognition;
+        let synth;
+        let isVoiceAssistActive = false;
+        let raycaster;
+        let mouse;
+        let selectedObject = null; // This will hold the currently selected THREE.Mesh part
+        const originalMaterials = new Map(); // Map to store original materials by object UUID
+        let transformControls;
+
+        // Get references to HTML elements
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const loadingMsg = document.getElementById('loadingMsg');
+        const uploadPage = document.getElementById('uploadPage');
+        const editorPage = document.getElementById('editorPage');
+        const integratedVoiceBtn = document.getElementById('integratedVoiceBtn');
+        const aiLog = document.getElementById('aiLog');
+        const textCommandInput = document.getElementById('textCommandInput');
+        const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
+        const cadCanvas = document.getElementById('cadCanvas');
+        const loadEditorButton = document.getElementById('loadEditorButton');
+
+        // --- Expose functions globally for HTML onclick attributes ---
+        window.removeObject = removeObject;
+        window.resetView = resetView;
+        window.showDesignInfo = showDesignInfo;
+        window.goBack = goBack;
+        window.selectPartByName = selectPartByName;
+        window.setTransformMode = setTransformMode;
+        window.listParts = listParts;
+
+        // --- File Input and Page Navigation ---
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.textContent = 'Release to drop your .gltf or .glb file(s)';
+            dropZone.style.borderColor = '#007bff';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here';
+            dropZone.style.borderColor = '#a0aec0';
+        });
+        dropZone.addEventListener('drop', async e => {
+            e.preventDefault();
+            dropZone.textContent = 'Processing files...';
+            dropZone.style.borderColor = '#a0aec0';
+            loadingMsg.textContent = 'Processing dropped files...';
+            loadingMsg.style.color = '#007bff';
+            loadingMsg.style.display = 'block';
+
+            droppedFileBlobs.clear();
+            let mainModelFile = null;
+
+            console.log("[Drop Handler] Drop event detected. Items:", e.dataTransfer.items);
+            console.log("[Drop Handler] Files:", e.dataTransfer.files);
+
+            async function readDroppedFiles(entry, path) {
+                if (entry.isFile) {
+                    const file = await new Promise(resolve => entry.file(resolve));
+                    const fullPath = path ? `${path}/${file.name}` : file.name;
+                    droppedFileBlobs.set(fullPath, file);
+                    console.log(`[Drop Handler] Stored file: ${fullPath}, Type: ${file.type}, Size: ${file.size} bytes`);
+                    if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
+                        mainModelFile = file;
+                    }
+                } else if (entry.isDirectory) {
+                    const directoryReader = entry.createReader();
+                    const entries = await new Promise(resolve => directoryReader.readEntries(resolve));
+                    console.log(`[Drop Handler] Reading directory: ${path ? `${path}/${entry.name}` : entry.name}, Entries found: ${entries.length}`);
+                    for (const subEntry of entries) {
+                        await readDroppedFiles(subEntry, path ? `${path}/${entry.name}` : entry.name);
+                    }
+                }
+            }
+
+            if (e.dataTransfer.items && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
+                console.log("[Drop Handler] Using webkitGetAsEntry for folder drop detection.");
+                for (let i = 0; i < e.dataTransfer.items.length; i++) {
+                    const item = e.dataTransfer.items[i];
+                    const entry = item.webkitGetAsEntry();
+                    if (entry) {
+                        await readDroppedFiles(entry, '');
+                    }
+                }
+            } else {
+                console.log("[Drop Handler] Falling back to flat file drop (webkitGetAsEntry not available or not a folder drop).");
+                for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                    const file = e.dataTransfer.files[i];
+                    droppedFileBlobs.set(file.name, file);
+                    console.log(`[Drop Handler] Stored file (flat): ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
+                    if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
+                        mainModelFile = file;
+                    }
+                }
+            }
+
+            if (mainModelFile) {
+                uploadedFile = mainModelFile;
+                console.log("[Drop Handler] Identified main model file:", uploadedFile.name);
+                validateFile(uploadedFile);
+                console.log("[Drop Handler] All dropped files (keys in map):", Array.from(droppedFileBlobs.keys()));
+            } else {
+                loadingMsg.textContent = '❌ No .gltf or .glb file found among dropped items!';
+                loadingMsg.style.color = 'red';
+                loadingMsg.style.display = 'block';
+                uploadedFile = null;
+                console.error("[Drop Handler] No GLTF/GLB file found in dropped items.");
+            }
+            console.log("[Drop Handler] uploadedFile after drop processing:", uploadedFile ? uploadedFile.name : "null");
+        });
+
+        fileInput.addEventListener('change', () => {
+            console.log("[File Input] Change event detected. Files:", fileInput.files);
+            if (fileInput.files.length > 0) {
+                loadingMsg.textContent = 'Processing selected file...';
+                loadingMsg.style.color = '#007bff';
+                loadingMsg.style.display = 'block';
+
+                droppedFileBlobs.clear();
+                const file = fileInput.files[0];
+                droppedFileBlobs.set(file.name, file);
+                uploadedFile = file;
+                console.log("[File Input] Selected file:", uploadedFile.name, `Type: ${uploadedFile.type}, Size: ${uploadedFile.size} bytes`);
+                validateFile(uploadedFile);
+                console.log("[File Input] Dropped file (keys in map):", Array.from(droppedFileBlobs.keys()));
+            } else {
+                console.log("[File Input] No file selected via input.");
+                uploadedFile = null;
+                loadingMsg.textContent = 'No file selected. Please choose a .gltf or .glb file.';
+                loadingMsg.style.color = 'orange';
+                loadingMsg.style.display = 'block';
+            }
+            console.log("[File Input] uploadedFile after change processing:", uploadedFile ? uploadedFile.name : "null");
+        });
+
+        loadEditorButton.addEventListener('click', goToEditor);
+
+        function validateFile(file) {
+            console.log("[Validation] Validating file:", file ? file.name : "null");
+            if (file && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
+                console.log("[Validation] File is a valid GLTF/GLB.");
+                loadingMsg.textContent = `File selected: ${file.name}. Click 'Load Model & Go to Editor' or drop more files if needed.`;
+                loadingMsg.style.color = '#007bff';
+                loadingMsg.style.display = 'block';
+                return true;
+            } else {
+                console.error("[Validation] Unsupported file type detected for:", file ? file.name : "null");
+                loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
+                loadingMsg.style.color = 'red';
+                loadingMsg.style.display = 'block';
+                uploadedFile = null;
+                return false;
+            }
+        }
+
+        function disposeSceneResources() {
+            console.log("[Dispose] Disposing Three.js resources...");
+            if (scene) {
+                scene.traverse(function (object) {
+                    if (object.isMesh) {
+                        if (object.geometry) object.geometry.dispose();
+                        if (object.material) {
+                            if (Array.isArray(object.material)) {
+                                object.material.forEach(material => material.dispose());
+                            } else {
+                                object.material.dispose();
+                            }
+                        }
+                    }
+                });
+                scene = null;
+            }
+            if (renderer) {
+                renderer.setAnimationLoop(null);
+                renderer.dispose();
+                renderer = null;
+            }
+            if (controls) {
+                controls.dispose();
+                controls = null;
+            }
+            if (cadCanvas) {
+                cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
+                cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
+            }
+            if (transformControls) {
+                transformControls.dispose();
+                transformControls = null;
+            }
+            console.log("[Dispose] Resources disposed.");
+        }
+
+
+        function goToEditor() {
+            console.log("[goToEditor] Attempting to go to editor.");
+            console.log("[goToEditor] Current uploadedFile:", uploadedFile ? uploadedFile.name : "null");
+            if (!uploadedFile) {
+                addMessageToLog('System', "Please upload a valid .gltf or .glb file before continuing.");
+                loadingMsg.textContent = 'Please upload a valid .gltf or .glb file.';
+                loadingMsg.style.color = 'red';
+                loadingMsg.style.display = 'block';
+                console.warn("[goToEditor] No uploaded file found.");
+                return;
+            }
+
+            uploadPage.classList.remove('page-active');
+            uploadPage.classList.add('page-inactive');
+
+            editorPage.classList.remove('page-inactive');
+            editorPage.classList.add('page-active');
+
+            loadingMsg.textContent = `Loading model: ${uploadedFile.name}...`;
+            loadingMsg.style.color = '#007bff';
+            loadingMsg.style.display = 'block';
+            console.log(`[goToEditor] Transitioning to editor. Preparing to load model: ${uploadedFile.name}`);
+            console.log(`[goToEditor] Current droppedFileBlobs keys:`, Array.from(droppedFileBlobs.keys()));
+
+
+            disposeSceneResources();
+            initScene();
+
+            loadModel(uploadedFile);
+        }
+
+        function goBack() {
+            console.log("[Navigation] Going back to upload page.");
+            editorPage.classList.remove('page-active');
+            editorPage.classList.add('page-inactive');
+            uploadPage.classList.remove('page-inactive');
+            uploadPage.classList.add('page-active');
+            stopVoiceAssist();
+            window.removeEventListener('resize', onWindowResize, false);
+            disposeSceneResources();
+            uploadedFile = null;
+            droppedFileBlobs.clear();
+            originalMaterials.clear();
+            selectedObject = null;
+            fileInput.value = '';
+            loadingMsg.textContent = 'Drag and Drop your .gltf or .glb file(s) here, or click to browse.';
+            loadingMsg.style.display = 'none';
+            loadingMsg.style.color = '';
+            dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here';
+            dropZone.style.borderColor = '#a0aec0';
+            console.log("[Navigation] Returned to upload page. State reset.");
+        }
+
+        // --- Three.js Scene Setup and Model Loading ---
+        function initScene() {
+            console.log("[initScene] Initializing Three.js scene...");
+            if (typeof THREE === 'undefined') {
+                console.error("THREE is not defined at initScene! Three.js script might not have loaded or executed correctly.");
+                addMessageToLog('System', "Error: Three.js library failed to load. Please check console for details.");
+                return;
+            }
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x222222);
+            const viewerDiv = cadCanvas.parentElement;
+            const width = viewerDiv.clientWidth;
+            const height = viewerDiv.clientHeight;
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.set(0, 0, 50);
+            renderer = new THREE.WebGLRenderer({ canvas: cadCanvas, antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(width, height);
+            renderer.xr.enabled = true;
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.25;
+            transformControls = new TransformControls(camera, renderer.domElement);
+            scene.add(transformControls);
+            transformControls.addEventListener('dragging-changed', function (event) {
+                controls.enabled = !event.value;
+            });
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(1, 1, 1).normalize();
+            scene.add(directionalLight);
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            renderer.domElement.addEventListener('mousedown', onCanvasClick, false);
+            renderer.domElement.addEventListener('touchstart', onCanvasClick, false);
+            console.log("[initScene] Three.js scene initialized.");
+            animate();
+        }
+
+        function animate() {
+            renderer.setAnimationLoop(() => {
+                controls.update();
+                renderer.render(scene, camera);
+            });
+        }
+
+        function loadModel(file) {
+            console.log("[loadModel] Attempting to load file:", file.name);
+            const loader = new GLTFLoader();
+            const fileLoader = new THREE.FileLoader();
+            fileLoader.manager = new THREE.LoadingManager();
+            fileLoader.manager.setURLModifier(url => {
+                console.log(`[URLModifier] Requested URL: "${url}"`);
+                const fileName = url.split('/').pop();
+                let resolvedPath = fileName;
+                if (url.startsWith('blob:')) {
+                    const blobFile = Array.from(droppedFileBlobs.values()).find(f => URL.createObjectURL(f) === url);
+                    if (blobFile) {
+                        resolvedPath = blobFile.name;
+                        console.log(`[URLModifier] Resolved blob URL to file: ${resolvedPath}`);
+                    }
+                } else {
+                    const potentialPaths = Array.from(droppedFileBlobs.keys()).filter(key => key.endsWith(fileName));
+                    if (potentialPaths.length > 0) {
+                        resolvedPath = potentialPaths.sort((a, b) => a.length - b.length)[0];
+                        console.log(`[URLModifier] Resolved relative path to: ${resolvedPath}`);
+                    }
+                }
+                const foundFile = droppedFileBlobs.get(resolvedPath);
+                if (foundFile) {
+                    const blobURL = URL.createObjectURL(foundFile);
+                    console.log(`[URLModifier] Returning Blob URL for ${resolvedPath}: ${blobURL}`);
+                    return blobURL;
+                } else {
+                    console.warn(`[URLModifier] GLTFLoader could not find referenced file: "${url}" (tried "${resolvedPath}", and potentially combined paths). Falling back to original URL.`);
+                    return url;
+                }
+            });
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const contents = event.target.result;
+                console.log(`[FileReader] ${file.name} read successfully.`);
+                loader.manager = fileLoader.manager;
+                loader.parse(contents, '', (gltf) => {
+                    console.log("[GLTFLoader] .gltf/.glb parsing successful.");
+                    if (mesh) {
+                        scene.remove(mesh);
+                        mesh.traverse(obj => {
+                            if (obj.isMesh) {
+                                if (obj.geometry) obj.geometry.dispose();
+                                if (obj.material) {
+                                    if (Array.isArray(obj.material)) {
+                                        obj.material.forEach(m => m.dispose());
+                                    } else {
+                                        m.dispose();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    clearSelection();
+                    mesh = gltf.scene;
+                    scene.add(mesh);
+                    console.log("[GLTFLoader] gltf.scene object:", mesh);
+                    console.log("[GLTFLoader] gltf.scene children count:", mesh.children.length);
+                    const bbox = new THREE.Box3().setFromObject(mesh);
+                    const center = bbox.getCenter(new THREE.Vector3());
+                    mesh.position.sub(center);
+                    const size = bbox.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const desiredMaxDim = 40;
+                    const scaleFactor = desiredMaxDim / maxDim;
+                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    const newBbox = new THREE.Box3().setFromObject(mesh);
+                    const newSize = newBbox.getSize(new THREE.Vector3());
+                    const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
+                    camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+                    camera.lookAt(0, 0, 0);
+                    controls.update();
+                    loadingMsg.style.display = 'none';
+                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                    speakResponse(`Model loaded successfully.`);
+                    console.log("[loadModel] Model successfully added to scene.");
+                }, (xhr) => {
+                    loadingMsg.textContent = `Loading ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
+                }, (error) => {
+                    console.error('An error happened loading the GLTF model:', error);
+                    addMessageToLog('System', 'Error loading model. Please ensure it\'s a valid .gltf or .glb file and all associated files (like textures) are in the same folder if dropped as a folder, or embedded within the .glb.');
+                    speakResponse(`Error loading model. Please check the console for details.`);
+                    loadingMsg.textContent = '❌ Error loading model!';
+                    loadingMsg.style.color = 'red';
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- Model Interaction (Selection, Transformation, Information) ---
+        function onCanvasClick(event) {
+            console.log("[onCanvasClick] Canvas click detected.");
+            if (event.type === 'touchstart') {
+                mouse.x = (event.touches[0].clientX / renderer.domElement.clientWidth) * 2 - 1;
+                mouse.y = -(event.touches[0].clientY / renderer.domElement.clientHeight) * 2 + 1;
+            } else {
+                mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+                mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+            }
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(mesh.children, true);
+
+            if (intersects.length > 0) {
+                const intersectedObject = intersects[0].object;
+                console.log("[onCanvasClick] Object intersected:", intersectedObject.name || "Unnamed Object", intersectedObject.uuid);
+                selectObject(intersectedObject);
+            } else {
+                console.log("[onCanvasClick] No object intersected.");
+                clearSelection();
+            }
+        }
+
+        function selectObject(object) {
+            if (selectedObject && originalMaterials.has(selectedObject.uuid)) {
+                selectedObject.material = originalMaterials.get(selectedObject.uuid);
+                originalMaterials.delete(selectedObject.uuid);
+            }
+
+            if (object) {
+                selectedObject = object;
+                // Store original material
+                originalMaterials.set(selectedObject.uuid, selectedObject.material);
+
+                // Create a new material for highlighting, preserving original properties
+                const highlightMaterial = selectedObject.material.clone();
+                highlightMaterial.emissive = new THREE.Color(0x00ffff); // Cyan highlight
+                highlightMaterial.emissiveIntensity = 0.5;
+                selectedObject.material = highlightMaterial;
+
+                transformControls.attach(selectedObject); // Attach controls to the selected object
+                addMessageToLog('System', `Selected: ${object.name || 'Unnamed Part'} (UUID: ${object.uuid})`);
+                speakResponse(`Selected ${object.name || 'a part'}.`);
+            } else {
+                clearSelection();
+            }
+        }
+
+        function clearSelection() {
+            if (selectedObject && originalMaterials.has(selectedObject.uuid)) {
+                selectedObject.material = originalMaterials.get(selectedObject.uuid);
+                originalMaterials.delete(selectedObject.uuid);
+                selectedObject = null;
+            }
+            transformControls.detach(); // Detach controls when selection is cleared
+            addMessageToLog('System', 'Selection cleared.');
+            speakResponse('Selection cleared.');
+        }
+
+        function removeObject() {
+            if (selectedObject && mesh) {
+                const objectToRemoveName = selectedObject.name || "Unnamed Part";
+                const objectToRemoveUUID = selectedObject.uuid;
+
+                // Detach transform controls before removing
+                transformControls.detach();
+
+                // Remove the selected object from its parent
+                if (selectedObject.parent) {
+                    selectedObject.parent.remove(selectedObject);
+                    // Dispose of its resources (geometry, material, textures)
+                    if (selectedObject.geometry) selectedObject.geometry.dispose();
+                    if (selectedObject.material) {
+                        if (Array.isArray(selectedObject.material)) {
+                            selectedObject.material.forEach(material => material.dispose());
+                        } else {
+                            selectedObject.material.dispose();
+                        }
+                    }
+                    console.log(`[Remove Object] Removed object: ${objectToRemoveName} (UUID: ${objectToRemoveUUID})`);
+                    addMessageToLog('AI', `Removed ${objectToRemoveName}.`);
+                    speakResponse(`Removed ${objectToRemoveName}.`);
+                    selectedObject = null; // Clear selected object after removal
+                } else {
+                    console.warn(`[Remove Object] Selected object ${objectToRemoveName} has no parent to remove from.`);
+                    addMessageToLog('System', `Cannot remove ${objectToRemoveName}: No parent found.`);
+                    speakResponse(`Cannot remove that part.`);
+                }
+            } else {
+                addMessageToLog('System', 'No object selected to remove.');
+                speakResponse('No object selected to remove.');
+            }
+        }
+
+        function resetView() {
+            if (controls && camera && mesh) {
+                controls.reset(); // Reset orbit controls
+                const bbox = new THREE.Box3().setFromObject(mesh);
+                const size = bbox.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5);
+                camera.lookAt(0, 0, 0);
+                controls.update();
+                addMessageToLog('AI', 'View reset.');
+                speakResponse('View reset.');
+            } else {
+                addMessageToLog('System', 'No model loaded to reset view.');
+                speakResponse('No model loaded.');
+            }
+        }
+
+        function showDesignInfo() {
+            if (mesh) {
+                let info = `Model Name: ${uploadedFile ? uploadedFile.name : 'N/A'}\n`;
+                info += `Number of Meshes: ${mesh.children.filter(c => c.isMesh).length}\n`;
+                info += `Total Objects: ${mesh.children.length}\n`;
+
+                const bbox = new THREE.Box3().setFromObject(mesh);
+                const size = bbox.getSize(new THREE.Vector3());
+                info += `Bounding Box Size: X=${size.x.toFixed(2)}, Y=${size.y.toFixed(2)}, Z=${size.z.toFixed(2)}\n`;
+
+                addMessageToLog('AI', info);
+                speakResponse('Design information displayed.');
+            } else {
+                addMessageToLog('System', 'No model loaded to show design information.');
+                speakResponse('No model loaded.');
+            }
+        }
+
+        function setTransformMode(mode) {
+            if (transformControls) {
+                transformControls.setMode(mode);
+                addMessageToLog('AI', `Transform mode set to ${mode}.`);
+                speakResponse(`Transform mode set to ${mode}.`);
+            } else {
+                addMessageToLog('System', 'Transform controls not available.');
+                speakResponse('Transform controls are not available.');
+            }
+        }
+
+        function listParts() {
+            if (mesh && mesh.children.length > 0) {
+                let parts = "Parts in model:\n";
+                mesh.traverse(obj => {
+                    if (obj.isMesh && obj.name) {
+                        parts += `- ${obj.name}\n`;
+                    }
+                });
+                if (parts === "Parts in model:\n") {
+                    parts += "No named parts found. Objects might be unnamed meshes.";
+                }
+                addMessageToLog('AI', parts);
+                speakResponse('Listed parts in the model.');
+            } else {
+                addMessageToLog('System', 'No model loaded or no parts to list.');
+                speakResponse('No model loaded or no parts to list.');
+            }
+        }
+
+        function selectPartByName(partName) {
+            if (mesh) {
+                const foundObject = mesh.traverse((obj) => {
+                    if (obj.isMesh && obj.name === partName) {
+                        selectObject(obj);
+                        return;
+                    }
+                });
+                if (!selectedObject || selectedObject.name !== partName) {
+                    addMessageToLog('System', `Part "${partName}" not found.`);
+                    speakResponse(`Part ${partName} not found.`);
+                }
+            } else {
+                addMessageToLog('System', 'No model loaded to select parts from.');
+                speakResponse('No model loaded.');
+            }
+        }
+
+        // --- AI Chat and Voice Commands ---
+        function addMessageToLog(sender, message) {
+            const messageElement = document.createElement('p');
+            messageElement.classList.add(sender === 'User' ? 'user-message' : sender === 'AI' ? 'ai-response' : 'system-message');
+            messageElement.textContent = `${sender}: ${message}`;
+            aiLog.appendChild(messageElement);
+            aiLog.scrollTop = aiLog.scrollHeight; // Auto-scroll to bottom
+        }
+
+        async function sendAICommand(command) {
+            addMessageToLog('User', command);
+            addMessageToLog('System', 'AI is thinking...'); // Add a "thinking" message
+
+            try {
+                // Adjusting endpoint to match the local server setup
+                const response = await fetch('/ai-command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ command: command })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                processAICommand(result);
+
+            } catch (error) {
+                console.error("Error sending AI command:", error);
+                addMessageToLog('System', `Error communicating with AI service: ${error.message}. Please ensure the backend server is running.`);
+                speakResponse(`I'm sorry, I couldn't communicate with the AI service.`);
+            } finally {
+                // Remove the "thinking" message
+                const lastLogMessage = aiLog.lastChild;
+                if (lastLogMessage && lastLogMessage.textContent.includes('AI is thinking...')) {
+                    aiLog.removeChild(lastLogMessage);
+                }
+            }
+        }
+
+        function processAICommand(aiResponse) {
+            console.log("Processing AI command:", aiResponse);
+            // Assuming aiResponse.candidates[0].content.parts[0].text contains a JSON string
+            if (aiResponse && aiResponse.candidates && aiResponse.candidates.length > 0 &&
+                aiResponse.candidates[0].content && aiResponse.candidates[0].content.parts &&
+                aiResponse.candidates[0].content.parts.length > 0) {
+
+                const responseText = aiResponse.candidates[0].content.parts[0].text;
+                try {
+                    const parsedResponse = JSON.parse(responseText);
+
+                    if (parsedResponse.action) {
+                        switch (parsedResponse.action) {
+                            case 'removeObject':
+                                removeObject();
+                                break;
+                            case 'resetView':
+                                resetView();
+                                break;
+                            case 'showDesignInfo':
+                                showDesignInfo();
+                                break;
+                            case 'setTransformMode':
+                                if (parsedResponse.value) {
+                                    setTransformMode(parsedResponse.value);
+                                } else {
+                                    addMessageToLog('AI', 'Please specify a transform mode (translate, rotate, scale).');
+                                    speakResponse('Please specify a transform mode like translate, rotate, or scale.');
+                                }
+                                break;
+                            case 'listParts':
+                                listParts();
+                                break;
+                            case 'selectPartByName':
+                                if (parsedResponse.value) {
+                                    selectPartByName(parsedResponse.value);
+                                } else {
+                                    addMessageToLog('AI', 'Please specify a part name to select.');
+                                    speakResponse('Please tell me which part to select.');
+                                }
+                                break;
+                            case 'error':
+                                addMessageToLog('AI', parsedResponse.message || 'An unknown error occurred.');
+                                speakResponse(parsedResponse.message || 'An unknown error occurred.');
+                                break;
+                            case 'speak': // For general conversational responses
+                                addMessageToLog('AI', parsedResponse.value);
+                                speakResponse(parsedResponse.value);
+                                break;
+                            default:
+                                addMessageToLog('AI', `Understood: "${parsedResponse.action}". However, I don't know how to perform this action.`);
+                                speakResponse(`I understand, but I don't know how to perform ${parsedResponse.action}.`);
+                        }
+                    } else if (parsedResponse.message) {
+                        // If no specific action, but a message is present (e.g., direct AI response)
+                        addMessageToLog('AI', parsedResponse.message);
+                        speakResponse(parsedResponse.message);
+                    } else {
+                        addMessageToLog('AI', `Unexpected AI response format: ${responseText}`);
+                        speakResponse('I received an unexpected response.');
+                    }
+                } catch (jsonError) {
+                    console.error("Failed to parse AI response as JSON:", jsonError, "Response:", responseText);
+                    addMessageToLog('AI', `I received an uninterpretable response: "${responseText}".`);
+                    speakResponse('I received an uninterpretable response.');
+                }
+            } else {
+                addMessageToLog('AI', 'I could not get a valid response from the AI service.');
+                speakResponse('I could not get a valid response from the AI service.');
+            }
+        }
+
+        // Voice input integration
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isVoiceAssistActive = true;
+                integratedVoiceBtn.classList.add('active-voice-btn');
+                addMessageToLog('System', 'Listening for voice commands...');
+            };
+
+            recognition.onresult = (event) => {
+                const command = event.results[0][0].transcript;
+                addMessageToLog('System', `You said: "${command}"`);
+                sendAICommand(command);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                addMessageToLog('System', `Voice command error: ${event.error}`);
+                speakResponse("I didn't catch that. Could you please repeat?");
+                integratedVoiceBtn.classList.remove('active-voice-btn');
+                isVoiceAssistActive = false;
+            };
+
+            recognition.onend = () => {
+                integratedVoiceBtn.classList.remove('active-voice-btn');
+                isVoiceAssistActive = false;
+                addMessageToLog('System', 'Voice command ended.');
+            };
+
+            integratedVoiceBtn.addEventListener('click', () => {
+                if (isVoiceAssistActive) {
+                    stopVoiceAssist();
+                } else {
+                    startVoiceAssist();
+                }
+            });
+        } else {
+            integratedVoiceBtn.style.display = 'none'; // Hide button if API not supported
+            addMessageToLog('System', 'Voice recognition not supported in this browser.');
+        }
+
+        function startVoiceAssist() {
+            if (recognition && !isVoiceAssistActive) {
+                recognition.start();
+            }
+        }
+
+        function stopVoiceAssist() {
+            if (recognition && isVoiceAssistActive) {
+                recognition.stop();
+            }
+        }
+
+        // Text-to-speech integration
+        if ('speechSynthesis' in window) {
+            synth = window.speechSynthesis;
+        } else {
+            console.warn('Text-to-speech not supported in this browser.');
+        }
+
+        function speakResponse(text) {
+            if (synth) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                synth.speak(utterance);
+            }
+        }
+
+        // Send text command via input field
+        sendTextCommandBtn.addEventListener('click', () => {
+            const command = textCommandInput.value.trim();
+            if (command) {
+                sendAICommand(command);
+                textCommandInput.value = ''; // Clear input after sending
+            }
+        });
+
+        // Allow sending command by pressing Enter in the input field
+        textCommandInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendTextCommandBtn.click();
+            }
+        });
+
+        // Handle window resizing for Three.js canvas
+        function onWindowResize() {
+            if (camera && renderer && cadCanvas) {
+                const viewerDiv = cadCanvas.parentElement;
+                camera.aspect = viewerDiv.clientWidth / viewerDiv.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(viewerDiv.clientWidth, viewerDiv.clientHeight);
+            }
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+
+
+    </script>
 </body>
 </html>
