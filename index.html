@@ -477,19 +477,19 @@
             <aside class="sidebar">
                 <h2>Controls</h2>
                 <div class="editor-controls">
-                    <button class="control-button" onclick="removeObject()">
+                    <button class="control-button" onclick="window.removeObject()">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4h-3.5z"/></svg>
                         Remove Object
                     </button>
-                    <button class="control-button" onclick="resetView()">
+                    <button class="control-button" onclick="window.resetView()">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98C20.93 5.9 16.69 4 12 4zm0 2.98c2.18 0 4.2.82 5.74 2.37L12 18.06 6.26 9.35C7.8 7.8 9.82 6.98 12 6.98z"/></svg>
                         Reset View
                     </button>
-                    <button class="control-button" onclick="showDesignInfo()">
+                    <button class="control-button" onclick="window.showDesignInfo()">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
                         Design Info
                     </button>
-                    <button class="control-button" onclick="goBack()">
+                    <button class="control-button" onclick="window.goBack()">
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-13v4H7.5L12 16.5 16.5 12H13V7z"/></svg>
                         Back to Upload
                     </button>
@@ -752,6 +752,8 @@
 
         console.log("[Navigation] Returned to upload page. State reset.");
     }
+    // Make goBack globally accessible
+    window.goBack = goBack;
 
     // --- Three.js Scene Setup and Model Loading ---
     function initScene() {
@@ -1082,6 +1084,9 @@
             speakResponse("No object or part to remove.");
         }
     }
+    // Make removeObject globally accessible
+    window.removeObject = removeObject;
+
 
     function resetView() {
         if (mesh) { // Resetting view always applies to the whole loaded model
@@ -1105,6 +1110,8 @@
             speakResponse("No model to reset view for.");
         }
     }
+    // Make resetView globally accessible
+    window.resetView = resetView;
 
     function showDesignInfo() {
         let targetObject = selectedObject || mesh; // Get info for selected object or whole model
@@ -1122,6 +1129,8 @@
         addMessageToLog('AI', info.replace(/\n/g, ', '));
         speakResponse(info);
     }
+    // Make showDesignInfo globally accessible
+    window.showDesignInfo = showDesignInfo;
 
     // --- Raycasting and Selection ---
     function onCanvasClick(event) {
