@@ -1,8 +1,8 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { Configuration, OpenAIApi } = require('openai');
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import 'dotenv/config';
+import { OpenAI } from 'openai';
 
 const app = express();
 const port = 10000;
@@ -10,10 +10,9 @@ const port = 10000;
 app.use(cors());
 app.use(bodyParser.json());
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
-const openai = new OpenAIApi(configuration);
 
 app.post('/api/ai', async (req, res) => {
   const userInput = req.body.message;
