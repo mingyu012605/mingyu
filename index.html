@@ -686,7 +686,7 @@
                         if (Array.isArray(object.material)) {
                             object.material.forEach(material => material.dispose());
                         } else {
-                            object.material.dispose();
+                            material.dispose(); // Fixed: 'material' was undefined, should be 'object.material'
                         }
                     }
                 }
@@ -754,6 +754,9 @@
 
         stopVoiceAssist(); // Ensure voice assist is stopped when going back
 
+        // IMPORTANT: Remove resize listener BEFORE disposing renderer
+        window.removeEventListener('resize', onWindowResize, false);
+
         // Dispose of Three.js resources when navigating back
         disposeSceneResources(); // Call the helper function
 
@@ -766,16 +769,19 @@
         dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here'; // Reset drop zone text
         loadingMsg.style.display = 'none'; // Hide loading message
         loadingMsg.style.color = ''; // Reset color
-        loadingMsg.textContent = 'Loading model, please wait...'; // Reset default message
-
         console.log("[Navigation] Returned to upload page. State reset.");
     }
-    // Make goBack globally accessible
-    window.goBack = goBack;
 
     // --- Three.js Scene Setup and Model Loading ---
     function initScene() {
         console.log("[initScene] Initializing Three.js scene...");
+        // Add a debug check for THREE
+        if (typeof THREE === 'undefined') {
+            console.error("THREE is not defined at initScene! Three.js script might not have loaded or executed correctly.");
+            addMessageToLog('System', "Error: Three.js library failed to load. Please check console for details.");
+            return; // Prevent further errors
+        }
+
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x222222); // Dark background
 
@@ -791,7 +797,7 @@
         renderer.setSize(width, height);
         renderer.xr.enabled = true; // Enable WebXR for VR
 
-        // OrbitControls is now imported as a module
+        // OrbitControls is now globally available
         controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.25;
@@ -803,8 +809,8 @@
         directionalLight.position.set(1, 1, 1).normalize();
         scene.add(directionalLight);
 
-        // VR Button is now imported as a module
-        // document.body.appendChild(VRButton.createButton(renderer)); // Keep commented unless VR is explicitly requested
+        // VR Button is now globally available
+        // document.body.appendChild(VRButton.createButton(renderer));
 
         // Raycasting for selection
         raycaster = new THREE.Raycaster();
@@ -814,187 +820,76 @@
         renderer.domElement.addEventListener('mousedown', onCanvasClick, false);
         renderer.domElement.addEventListener('touchstart', onCanvasClick, false);
 
-        window.addEventListener('resize', onWindowResize, false); // Re-add resize listener
-
-        animate(); // Start the animation loop
         console.log("[initScene] Three.js scene initialized.");
+        animate(); // Start the animation loop
     }
 
     function animate() {
         // Use renderer.setAnimationLoop for WebXR compatibility
-        if (renderer) { // Ensure renderer exists before setting animation loop
-            renderer.setAnimationLoop(() => {
-                controls.update();
-                renderer.render(scene, camera);
-            });
-        }
+        renderer.setAnimationLoop(() => {
+            controls.update();
+            renderer.render(scene, camera);
+        });
     }
 
     function loadModel(file) {
-        console.log(`[loadModel] Attempting to load file: ${file.name}`);
-        loadingMsg.textContent = `Loading model: ${file.name}...`;
-        loadingMsg.style.color = '#007bff';
-        loadingMsg.style.display = 'block';
-
+        console.log("[loadModel] Attempting to load file:", file.name);
+        // GLTFLoader is now globally available
         const loader = new GLTFLoader();
 
-        let loadTimeout = setTimeout(() => {
-            console.error(`[loadModel] Model loading timed out after 30 seconds for ${file.name}.`);
-            loadingMsg.textContent = `Error: Model loading timed out for ${file.name}. Please check console for details. Ensure all associated files were dropped.`;
-            loadingMsg.style.color = 'red';
-            speakResponse(`Model loading timed out for ${file.name}. Please check console for details.`);
-            // Optionally, you might want to stop the loader or reset the state here
-        }, 30000); // 30-second timeout
+        // Custom FileLoader with a resolver for dropped files
+        const fileLoader = new THREE.FileLoader();
+        fileLoader.manager = new THREE.LoadingManager();
+        fileLoader.manager.setURLModifier(url => {
+            console.log(`[URLModifier] Requested URL: "${url}"`);
+            // Attempt to resolve relative paths within the droppedFileBlobs map
+            const fileName = url.split('/').pop(); // Get just the filename
+            let resolvedPath = fileName; // Default to just filename
 
-        loader.manager.setURLModifier((url, path) => {
-            console.log(`[URLModifier] Requested URL: "${url}", Base Path: "${path}"`);
-
-            // 1. Try to get a clean relative path from the full URL
-            let resolvedPath = url;
-            try {
-                const urlObj = new URL(url);
-                resolvedPath = urlObj.pathname.substring(1); // Remove leading slash
-                // Check if there's a 'filename' query parameter, which might be used by some loaders
-                const filenameParam = urlObj.searchParams.get('filename');
-                if (filenameParam) {
-                    resolvedPath = filenameParam;
+            // If the URL is a blob URL, try to find it in the map
+            if (url.startsWith('blob:')) {
+                // This is tricky as blob URLs are unique. We need to find the original file name.
+                // For now, if it's a blob, we assume it's the main model file itself or an embedded resource.
+                // The GLTFLoader's parse method handles embedded data.
+                // For external files referenced by name, we need to search our map.
+                const blobFile = Array.from(droppedFileBlobs.values()).find(f => URL.createObjectURL(f) === url);
+                if (blobFile) {
+                    resolvedPath = blobFile.name;
+                    console.log(`[URLModifier] Resolved blob URL to file: ${resolvedPath}`);
                 }
-            } catch (e) {
-                // If URL constructor fails, assume it's already a relative path or filename
-                resolvedPath = url;
-            }
-
-            // Normalize path separators for consistency (e.g., Windows vs. Unix paths)
-            resolvedPath = resolvedPath.replace(/\\/g, '/');
-            console.log(`[URLModifier] Normalized resolvedPath: "${resolvedPath}`);
-
-            // 2. Check if the exact resolvedPath exists in our dropped files
-            if (droppedFileBlobs.has(resolvedPath)) {
-                const blob = droppedFileBlobs.get(resolvedPath);
-                const blobUrl = URL.createObjectURL(blob);
-                console.log(`[URLModifier] Found "${resolvedPath}" (exact match), creating Blob URL: ${blobUrl}`);
-                return blobUrl;
-            }
-
-            // 3. If not found by full path, try just the filename (common for textures in GLTF)
-            const fileNameOnly = resolvedPath.substring(resolvedPath.lastIndexOf('/') + 1);
-            if (droppedFileBlobs.has(fileNameOnly)) {
-                const blob = droppedFileBlobs.get(fileNameOnly);
-                const blobUrl = URL.createObjectURL(blob);
-                console.log(`[URLModifier] Found "${fileNameOnly}" (filename only match), creating Blob URL: ${blobUrl}`);
-                return blobUrl;
-            }
-
-            // 4. Try matching the 'path' argument provided by GLTFLoader (it's often the base path)
-            // Combine 'path' with fileNameOnly if 'path' is provided and not empty
-            if (path && path !== '') {
-                // Ensure path ends with a slash for correct concatenation
-                const normalizedPath = path.endsWith('/') ? path : `${path}/`;
-                const combinedPath = `${normalizedPath}${fileNameOnly}`;
-                if (droppedFileBlobs.has(combinedPath)) {
-                    const blob = droppedFileBlobs.get(combinedPath);
-                    const blobUrl = URL.createObjectURL(blob);
-                    console.log(`[URLModifier] Found "${combinedPath}" (combined path match), creating Blob URL: ${blobUrl}`);
-                    return blobUrl;
+            } else {
+                // For relative paths in GLTF, try to find them in our map
+                // This is a simplified approach; a real GLTF resolver needs to handle base paths carefully
+                const potentialPaths = Array.from(droppedFileBlobs.keys()).filter(key => key.endsWith(fileName));
+                if (potentialPaths.length > 0) {
+                    // Prefer exact match or shortest path if multiple exist
+                    resolvedPath = potentialPaths.sort((a, b) => a.length - b.length)[0];
+                    console.log(`[URLModifier] Resolved relative path to: ${resolvedPath}`);
                 }
             }
 
-            console.warn(`[URLModifier] GLTFLoader could not find referenced file: "${url}" (tried "${resolvedPath}", "${fileNameOnly}", and potentially combined paths). Falling back to original URL.`);
-            return url; // Fallback to original URL
+            const foundFile = droppedFileBlobs.get(resolvedPath);
+            if (foundFile) {
+                const blobURL = URL.createObjectURL(foundFile);
+                console.log(`[URLModifier] Returning Blob URL for ${resolvedPath}: ${blobURL}`);
+                return blobURL;
+            } else {
+                console.warn(`[URLModifier] GLTFLoader could not find referenced file: "${url}" (tried "${resolvedPath}", and potentially combined paths). Falling back to original URL.`);
+                return url; // Fallback to original URL if not found in our map
+            }
         });
 
-        if (file.name.toLowerCase().endsWith('.glb')) {
-            console.log(`[loadModel] Handling .glb file: ${file.name}`);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                clearTimeout(loadTimeout); // Clear timeout on successful read
-                console.log(`[FileReader] .glb file read successfully.`);
-                const contents = event.target.result;
-                loader.parse(contents, '', (gltf) => {
-                    console.log(`[GLTFLoader] .glb parsing successful.`);
-                    console.log(`[GLTFLoader] gltf.scene object:`, gltf.scene);
-                    console.log(`[GLTFLoader] gltf.scene children count:`, gltf.scene ? gltf.scene.children.length : 0);
+        const reader = new FileReader();
 
-                    // Remove existing model if any
-                    if (mesh) {
-                        scene.remove(mesh);
-                        mesh.traverse(obj => {
-                            if (obj.isMesh) {
-                                if (obj.geometry) obj.geometry.dispose();
-                                if (obj.material) {
-                                    if (Array.isArray(obj.material)) {
-                                        obj.material.forEach(m => m.dispose());
-                                    } else {
-                                        m.dispose();
-                                    }
-                                }
-                            }
-                        });
-                    }
-                    clearSelection(); // Clear any previous selection
+        reader.onload = (event) => {
+            const contents = event.target.result;
+            console.log(`[FileReader] ${file.name} read successfully.`);
 
-                    if (gltf.scene && gltf.scene.children.length > 0) {
-                        mesh = gltf.scene; // The glTF scene is the main container for all objects
-                        scene.add(mesh);
+            // Use the custom fileLoader.manager for GLTFLoader
+            loader.manager = fileLoader.manager;
 
-                        // Center and scale the model
-                        const bbox = new THREE.Box3().setFromObject(mesh);
-                        const center = bbox.getCenter(new THREE.Vector3());
-                        mesh.position.sub(center); // Center the model's group
-
-                        const size = bbox.getSize(new THREE.Vector3());
-                        const maxDim = Math.max(size.x, size.y, size.z);
-                        const desiredMaxDim = 40; // Target size for the model in the scene
-                        const scaleFactor = desiredMaxDim / maxDim;
-                        mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-                        // Adjust camera to fit the new model
-                        const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
-                        const newSize = newBbox.getSize(new THREE.Vector3());
-                        const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
-                        camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
-                        camera.lookAt(0, 0, 0);
-                        controls.update(); // Update controls after camera change
-
-                        loadingMsg.style.display = 'none';
-                        addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
-                        speakResponse(`Model loaded successfully.`);
-                        console.log(`[loadModel] Model '${file.name}' successfully added to scene.`);
-                    } else {
-                        console.error(`[loadModel] GLB model '${file.name}' parsed successfully but contains no visible scene or objects.`);
-                        loadingMsg.textContent = `Error: GLB model '${file.name}' loaded but appears empty or invalid.`;
-                        loadingMsg.style.color = 'red';
-                        speakResponse(`GLB model loaded but appears empty or invalid.`);
-                        mesh = null; // Ensure mesh is null if the scene is empty
-                    }
-
-                }, (error) => {
-                    clearTimeout(loadTimeout); // Clear timeout on error
-                    console.error('[GLTFLoader] Error parsing GLB model:', error);
-                    loadingMsg.textContent = 'Error parsing GLB model. Check console for details.';
-                    loadingMsg.style.color = 'red';
-                    speakResponse('Error parsing GLB model.');
-                });
-            };
-            reader.onerror = (error) => {
-                clearTimeout(loadTimeout); // Clear timeout on error
-                console.error('[FileReader] Error reading GLB file:', error);
-                loadingMsg.textContent = 'Error reading GLB file. Check console for details.';
-                loadingMsg.style.color = 'red';
-                speakResponse('Error reading GLB file.');
-            };
-            reader.readAsArrayBuffer(file);
-        } else if (file.name.toLowerCase().endsWith('.gltf')) {
-            console.log(`[loadModel] Handling .gltf file: ${file.name}`);
-            const blobUrl = URL.createObjectURL(file);
-            console.log(`[loadModel] Created Blob URL for main GLTF file: ${blobUrl}`);
-
-            loader.load(blobUrl, (gltf) => {
-                clearTimeout(loadTimeout); // Clear timeout on successful load
-                console.log(`[GLTFLoader] .gltf loading successful.`);
-                console.log(`[GLTFLoader] gltf.scene object:`, gltf.scene);
-                console.log(`[GLTFLoader] gltf.scene children count:`, gltf.scene ? gltf.scene.children.length : 0);
-
+            loader.parse(contents, '', (gltf) => {
+                console.log("[GLTFLoader] .gltf/.glb parsing successful.");
                 // Remove existing model if any
                 if (mesh) {
                     scene.remove(mesh);
@@ -1005,7 +900,7 @@
                                 if (Array.isArray(obj.material)) {
                                     obj.material.forEach(m => m.dispose());
                                 } else {
-                                    m.dispose();
+                                    obj.material.dispose();
                                 }
                             }
                         }
@@ -1013,61 +908,59 @@
                 }
                 clearSelection(); // Clear any previous selection
 
-                if (gltf.scene && gltf.scene.children.length > 0) {
-                    mesh = gltf.scene; // The glTF scene is the main container for all objects
-                    scene.add(mesh);
+                mesh = gltf.scene; // The glTF scene is the main container for all objects
+                scene.add(mesh);
+                console.log("[GLTFLoader] gltf.scene object:", mesh);
+                console.log("[GLTFLoader] gltf.scene children count:", mesh.children.length);
 
-                    // Center and scale the model
-                    const bbox = new THREE.Box3().setFromObject(mesh);
-                    const center = bbox.getCenter(new THREE.Vector3());
-                    mesh.position.sub(center); // Center the model's group
+                // Center and scale the model
+                const bbox = new THREE.Box3().setFromObject(mesh);
+                const center = bbox.getCenter(new THREE.Vector3());
+                mesh.position.sub(center); // Center the model's group
 
-                    const size = bbox.getSize(new THREE.Vector3());
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    const desiredMaxDim = 40; // Target size for the model in the scene
-                    const scaleFactor = desiredMaxDim / maxDim;
-                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                const size = bbox.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const desiredMaxDim = 40; // Target size for the model in the scene
+                const scaleFactor = desiredMaxDim / maxDim;
+                mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-                    // Adjust camera to fit the new model
-                    const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
-                    const newSize = newBbox.getSize(new THREE.Vector3());
-                    const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
-                    camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
-                    camera.lookAt(0, 0, 0);
-                    controls.update(); // Update controls after camera change
+                // Adjust camera to fit the new model
+                const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
+                const newSize = newBbox.getSize(new THREE.Vector3());
+                const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
+                camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+                camera.lookAt(0, 0, 0);
+                controls.update(); // Update controls after camera change
 
-                    loadingMsg.style.display = 'none';
-                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
-                    speakResponse(`Model loaded successfully.`);
-                    console.log(`[loadModel] Model '${file.name}' successfully added to scene.`);
-                } else {
-                    console.error(`[loadModel] GLTF model '${file.name}' loaded but contains no visible scene or objects.`);
-                    loadingMsg.textContent = `Error: GLTF model '${file.name}' loaded but appears empty or invalid. Ensure all associated files (.bin, textures) are dropped together.`;
-                    loadingMsg.style.color = 'red';
-                    speakResponse(`GLTF model loaded but appears empty or invalid. Ensure all associated files are dropped together.`);
-                    mesh = null; // Ensure mesh is null if the scene is empty
-                }
-
-                URL.revokeObjectURL(blobUrl); // Clean up the Blob URL
+                loadingMsg.style.display = 'none';
+                addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                speakResponse(`Model loaded successfully.`);
+                console.log("[loadModel] Model successfully added to scene.");
 
             }, (xhr) => {
                 // Progress during loading
-                console.log(`[GLTFLoader] Progress for ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
                 loadingMsg.textContent = `Loading ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
             }, (error) => {
-                clearTimeout(loadTimeout); // Clear timeout on error
-                console.error('[GLTFLoader] Error loading GLTF model:', error);
-                loadingMsg.textContent = 'Error loading GLTF model. Ensure all associated files (.bin, textures) are dropped together.';
+                console.error('An error happened loading the GLTF model:', error);
+                addMessageToLog('System', 'Error loading model. Check console for details.');
+                loadingMsg.textContent = 'Error loading model. Check console.';
                 loadingMsg.style.color = 'red';
-                speakResponse('Error loading GLTF model. Please ensure all associated files are dropped together.');
-                URL.revokeObjectURL(blobUrl); // Clean up the Blob URL on error
+                loadingMsg.style.display = 'block';
+                speakResponse('Error loading model.');
             });
+        };
+
+        if (file.name.toLowerCase().endsWith('.glb')) {
+            console.log(`[loadModel] Handling .glb file: ${file.name}`);
+            reader.readAsArrayBuffer(file); // GLTFLoader prefers ArrayBuffer for GLB
+        } else if (file.name.toLowerCase().endsWith('.gltf')) {
+            console.log(`[loadModel] Handling .gltf file: ${file.name}`);
+            reader.readAsText(file); // GLTFLoader can parse JSON directly from text for GLTF
         } else {
-            // This case should ideally be caught by validateFile, but as a fallback
-            loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
+            console.error(`[loadModel] Unsupported file type for loading: ${file.name}`);
+            loadingMsg.textContent = 'Unsupported file type for loading. Please use .gltf or .glb.';
             loadingMsg.style.color = 'red';
             loadingMsg.style.display = 'block';
-            speakResponse('Unsupported file type.');
         }
     }
 
@@ -1078,7 +971,7 @@
         const width = viewerDiv.clientWidth;
         const height = viewerDiv.clientHeight;
 
-        if (width > 0 && height > 0) {
+        if (width > 0 && height > 0 && camera && renderer && controls) { // Added checks for camera, renderer, controls
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
             renderer.setSize(width, height);
@@ -1095,22 +988,21 @@
     // --- CAD Editor Functions ---
     // Note: removeObject, resetView, showDesignInfo are updated to handle selectedObject or mesh
     function removeObject() {
-        console.log("[Control Button] Remove Object clicked.");
         let targetObject = selectedObject || mesh; // Target selected object, or the whole model
         if (targetObject) {
             scene.remove(targetObject);
-            targetObject.traverse(obj => { // Dispose resources
-                if (obj.isMesh) {
-                    if (obj.geometry) obj.geometry.dispose();
-                    if (obj.material) {
-                        if (Array.isArray(obj.material)) {
-                            obj.material.forEach(m => m.dispose());
-                        } else {
-                            m.dispose();
-                        }
-                    }
+            // Dispose of its resources explicitly
+            if (targetObject.geometry) {
+                targetObject.geometry.dispose();
+            }
+            if (targetObject.material) {
+                if (Array.isArray(targetObject.material)) {
+                    targetObject.material.forEach(material => material.dispose());
+                } else {
+                    targetObject.material.dispose();
                 }
-            });
+            }
+            
             if (targetObject === mesh) { // If main model was removed
                 mesh = null;
                 addMessageToLog('AI', "Model removed.");
@@ -1127,12 +1019,8 @@
             speakResponse("No object or part to remove.");
         }
     }
-    // Make removeObject globally accessible
-    window.removeObject = removeObject;
-
 
     function resetView() {
-        console.log("[Control Button] Reset View clicked.");
         if (mesh) { // Resetting view always applies to the whole loaded model
             mesh.rotation.set(0, 0, 0); // Reset rotation of the main model
             mesh.position.set(0, 0, 0); // Reset position of the main model
@@ -1144,7 +1032,7 @@
 
             const size = bbox.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+            camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5); // Corrected to maxDim
             camera.lookAt(0, 0, 0);
             controls.update();
             addMessageToLog('AI', "View reset.");
@@ -1154,11 +1042,8 @@
             speakResponse("No model to reset view for.");
         }
     }
-    // Make resetView globally accessible
-    window.resetView = resetView;
 
     function showDesignInfo() {
-        console.log("[Control Button] Design Info clicked.");
         let targetObject = selectedObject || mesh; // Get info for selected object or whole model
         if (!targetObject) {
             addMessageToLog('AI', "No design loaded or part selected.");
@@ -1174,8 +1059,6 @@
         addMessageToLog('AI', info.replace(/\n/g, ', '));
         speakResponse(info);
     }
-    // Make showDesignInfo globally accessible
-    window.showDesignInfo = showDesignInfo;
 
     // --- Raycasting and Selection ---
     function onCanvasClick(event) {
@@ -1207,7 +1090,7 @@
 
             if (clickedObject) {
                 if (selectedObject && selectedObject !== clickedObject) {
-                    // Restore original material of previously selected object if it's different
+                    // Restore original material of previously selected object
                     restoreOriginalMaterial(selectedObject);
                 }
 
@@ -1226,64 +1109,36 @@
     }
 
     function storeAndHighlight(object) {
-        object.traverse((child) => {
-            if (child.isMesh && child.material) {
-                if (Array.isArray(child.material)) {
-                    child.material.forEach((m, index) => {
-                        const uuidKey = `${child.uuid}-${index}`;
-                        if (!originalMaterials.has(uuidKey)) {
-                            // Store a clone of the material to preserve its original state (including map)
-                            originalMaterials.set(uuidKey, m.clone());
-                        }
-                        // Create a new material for highlighting to avoid modifying the original
-                        const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                        child.material[index] = highlightMaterial;
-                        child.material[index].needsUpdate = true;
-                    });
-                } else {
-                    const uuidKey = child.uuid;
-                    if (!originalMaterials.has(uuidKey)) {
-                        // Store a clone of the material to preserve its original state (including map)
-                        originalMaterials.set(uuidKey, child.material.clone());
-                    }
-                    // Create a new material for highlighting to avoid modifying the original
-                    const highlightMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                    child.material = highlightMaterial;
-                    child.material.needsUpdate = true;
-                }
-            }
-        });
+        // Store a clone of the original material(s)
+        if (Array.isArray(object.material)) {
+            const originalMats = object.material.map(m => m.clone());
+            originalMaterials.set(object.uuid, originalMats);
+            object.material.forEach(m => m.color.set(0x00ff00)); // Green highlight
+        } else if (object.material) {
+            originalMaterials.set(object.uuid, object.material.clone());
+            object.material.color.set(0x00ff00); // Green highlight
+        }
     }
 
     function restoreOriginalMaterial(object) {
-        object.traverse((child) => {
-            if (child.isMesh && child.material) {
-                if (Array.isArray(child.material)) {
-                    child.material.forEach((m, index) => {
-                        const uuidKey = `${child.uuid}-${index}`;
-                        const originalMat = originalMaterials.get(uuidKey);
-                        if (originalMat) {
-                            child.material[index] = originalMat; // Restore the entire material
-                            originalMaterials.delete(uuidKey);
-                            child.material[index].needsUpdate = true;
-                        }
-                    });
-                } else {
-                    const uuidKey = child.uuid;
-                    const originalMat = originalMaterials.get(uuidKey);
-                    if (originalMat) {
-                        child.material = originalMat; // Restore the entire material
-                        originalMaterials.delete(uuidKey);
-                        child.material.needsUpdate = true;
+        const storedMaterial = originalMaterials.get(object.uuid);
+        if (storedMaterial) {
+            if (Array.isArray(object.material) && Array.isArray(storedMaterial)) {
+                object.material.forEach((m, index) => {
+                    if (storedMaterial[index]) {
+                        m.copy(storedMaterial[index]); // Copy properties back
                     }
-                }
+                });
+            } else if (object.material && !Array.isArray(object.material) && storedMaterial && !Array.isArray(storedMaterial)) {
+                object.material.copy(storedMaterial); // Copy properties back
             }
-        });
+            originalMaterials.delete(object.uuid); // Clean up map entry
+        }
     }
 
     function clearSelection() {
         if (selectedObject) {
-            restoreOriginalMaterial(selectedObject); // Use the new function
+            restoreOriginalMaterial(selectedObject);
             selectedObject = null;
             addMessageToLog('System', 'Selection cleared.');
             speakResponse('Selection cleared.');
@@ -1297,7 +1152,6 @@
         p.classList.add(sender === 'User' ? 'user-message' : (sender === 'AI' ? 'ai-response' : 'system-message'));
         aiLog.appendChild(p);
         aiLog.scrollTop = aiLog.scrollHeight;
-        return p; // Return the created element
     }
 
     sendTextCommandBtn.addEventListener('click', () => {
@@ -1341,10 +1195,7 @@
     function speakResponse(text) {
         if (!synth) {
             synth = initializeSpeechSynthesis();
-            if (!synth) {
-                console.warn("Speech synthesis not available or failed to initialize.");
-                return;
-            }
+            if (!synth) return;
         }
         synth.cancel();
 
@@ -1361,9 +1212,7 @@
         };
         utterance.onerror = (event) => {
             console.error('Speech synthesis error:', event);
-            addMessageToLog('System', "Error speaking response. Attempting to reinitialize speech synthesis.");
-            // Invalidate the current synth object to force re-initialization next time
-            synth = null;
+            addMessageToLog('System', "Error speaking response.");
         };
         synth.speak(utterance);
     }
@@ -1399,22 +1248,21 @@
 
         recognition.onstart = function () {
             addMessageToLog('System', "Listening...");
-            console.log('[Speech Recognition] Started listening.');
+            console.log('Speech recognition started');
         };
 
         recognition.onresult = function (event) {
-            console.log('[Speech Recognition] onresult event received:', event); // Log the raw event
             const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
             addMessageToLog('User', transcript);
             addMessageToLog('System', "Processing voice command...");
-            console.log('[Speech Recognition] Speech recognized:', transcript);
+            console.log('Speech recognized:', transcript);
 
             recognition.stop();
             processAICommand(transcript);
         };
 
         recognition.onerror = function (event) {
-            console.error('[Speech Recognition] Error:', event); // Log the raw error event
+            console.error('Speech recognition error:', event);
             let errorMessage = "An unknown speech recognition error occurred.";
             if (event.error === 'not-allowed') {
                 errorMessage = "Microphone access denied. Please allow microphone access in your browser settings.";
@@ -1429,16 +1277,7 @@
         };
 
         recognition.onend = function () {
-            console.log('[Speech Recognition] Ended.');
-            // If voice assist is still active, restart listening after a brief delay
-            if (isVoiceAssistActive && !synth.speaking) {
-                setTimeout(() => {
-                    if (isVoiceAssistActive) {
-                        addMessageToLog('System', "Listening again...");
-                        recognition.start();
-                    }
-                }, 1000);
-            }
+            console.log('Speech recognition ended');
         };
     }
 
@@ -1458,17 +1297,6 @@
 
     // --- AI Command Processing (Core Logic) ---
     async function processAICommand(command) {
-        console.log(`[AI Command Processing] Received command: "${command}"`);
-
-        // Handle common greetings explicitly
-        const greetingKeywords = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening'];
-        if (greetingKeywords.some(keyword => command.includes(keyword))) {
-            addMessageToLog('AI', "Hello there! How can I help you with your 3D model today?");
-            speakResponse("Hello there! How can I help you with your 3D model today?");
-            console.log(`[AI Command Processing] Handling greeting: "${command}"`);
-            return;
-        }
-
         // Handle pre-defined UI commands first
         if (command.includes("select object") || command.includes("select part")) {
             if (selectedObject) {
@@ -1485,285 +1313,41 @@
             return;
         }
 
-        let loadingMessageElement = null; // Declare here to be accessible in catch and finally
-
         try {
-            // Define the tools/functions for OpenAI's API
-            const tools = [
-                {
-                    type: "function",
-                    function: {
-                        name: "rotate",
-                        description: "Rotates the entire loaded 3D model around its Y-axis by a specified degree. Use for general model rotation.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                value: { type: "number", description: "Degrees to rotate (e.g., 90, -45)." }
-                            },
-                            required: ["value"]
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "rotateSelected",
-                        description: "Rotates the currently selected 3D part around its Y-axis by a specified degree. Use for rotating individual parts.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                value: { type: "number", description: "Degrees to rotate (e.g., 90, -45)." }
-                            },
-                            required: ["value"]
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "scale",
-                        description: "Scales the entire loaded 3D model by a specified factor. Use for general model resizing.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                value: { type: "number", description: "Scale factor (e.g., 0.5 for half, 2 for double). Must be positive)." }
-                            },
-                            required: ["value"]
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "scaleSelected",
-                        description: "Scales the currently selected 3D part by a specified factor. Use for resizing individual parts.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                value: { type: "number", description: "Scale factor (e.g., 0.5 for half, 2 for double). Must be positive)." }
-                            },
-                            required: ["value"]
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "translate",
-                        description: "Moves the entire loaded 3D model by specified X, Y, Z offsets. Use for general model positioning.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                x: { type: "number", description: "X-axis offset." },
-                                y: { type: "number", description: "Y-axis offset." },
-                                z: { type: "number", description: "Z-axis offset." }
-                            }
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "translateSelected",
-                        description: "Moves the currently selected 3D part by specified X, Y, Z offsets. Use for positioning individual parts.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                x: { type: "number", description: "X-axis offset." },
-                                y: { type: "number", description: "Y-axis offset." },
-                                z: { type: "number", description: "Z-axis offset." }
-                            }
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "color",
-                        description: "Changes the color of the entire loaded 3D model using a hexadecimal color code. Use for general model coloring.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                value: { type: "string", description: "Hexadecimal color code (e.g., #FF0000 for red)." }
-                            },
-                            required: ["value"]
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "colorSelected",
-                        description: "Changes the color of the currently selected 3D part using a hexadecimal color code. Use for coloring individual parts.",
-                        parameters: {
-                            type: "object",
-                            properties: {
-                                value: { type: "string", description: "Hexadecimal color code (e.g., #00FF00 for green)." }
-                            },
-                            required: ["value"]
-                        }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "hide",
-                        description: "Hides the entire loaded 3D model. Use for toggling model visibility.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "hideSelected",
-                        description: "Hides the currently selected 3D part. Use for toggling individual part visibility.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "show",
-                        description: "Shows the entire loaded 3D model if it was hidden. Use for toggling model visibility.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "showSelected",
-                        description: "Shows the currently selected 3D part if it was hidden. Use for toggling individual part visibility.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "duplicate",
-                        description: "Duplicates the entire loaded 3D model. The duplicate will be slightly offset.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "duplicateSelected",
-                        description: "Duplicates the currently selected 3D part. The duplicate will be slightly offset.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "removeObject",
-                        description: "Removes the entire loaded 3D model from the scene.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "removeSelected",
-                        description: "Removes the currently selected 3D part from the scene.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "resetView",
-                        description: "Resets the camera view and model position/rotation to their initial state.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "designInfo",
-                        description: "Provides information about the loaded 3D model or selected part, such as dimensions and position.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "zoomIn",
-                        description: "Zooms the camera closer to the model.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                },
-                {
-                    type: "function",
-                    function: {
-                        name: "zoomOut",
-                        description: "Zooms the camera further from the model.",
-                        parameters: { type: "object", properties: {} }
-                    }
-                }
-            ];
-
-            const payload = {
-                model: "gpt-3.5-turbo", // Using a common GPT model
-                messages: [{ role: "user", content: command }],
-                tools: tools,
-                tool_choice: "auto" // Allow the model to decide whether to call a tool
-            };
-
-            // Create and append the loading message element BEFORE the fetch
-            loadingMessageElement = addMessageToLog('System', 'AI is thinking...'); // Use the helper function and get the element
-
-            const aiReply = await sendToAIInternal(payload); // Call the internal function
+            const aiReply = await sendToAI(command);
+            console.log("Raw AI response from backend:", aiReply);
 
             let resultData;
             try {
-                // OpenAI responses for tool calls are structured differently
-                if (aiReply.content && aiReply.content.tool_calls && aiReply.content.tool_calls.length > 0) {
-                    const toolCall = aiReply.content.tool_calls[0]; // Assuming one tool call for simplicity
-                    resultData = {
-                        action: toolCall.function.name,
-                        value: JSON.parse(toolCall.function.arguments) // Arguments are a JSON string
-                    };
-                    console.log("[AI Command Processing] Parsed OpenAI tool call:", resultData);
-                } else if (aiReply.content && aiReply.content.content) {
-                    resultData = { action: 'conversational', value: aiReply.content.content };
-                    console.log("[AI Command Processing] Parsed OpenAI conversational response:", resultData);
-                } else {
-                    resultData = { action: 'conversational', value: "AI did not provide a valid response." };
-                    console.log("[AI Command Processing] Unexpected OpenAI response format:", aiReply);
-                }
+                // Ensure we're parsing the 'content' field from the backend response
+                resultData = JSON.parse(aiReply.content);
+                console.log("Parsed AI command:", resultData);
             } catch (e) {
-                resultData = { action: 'conversational', value: aiReply.content || "An error occurred parsing AI response." };
-                console.log("[AI Command Processing] Parsed AI conversational response (JSON parse failed or unexpected structure):", resultData);
+                console.warn("AI response content was not valid JSON. Treating as conversational. Raw content:", aiReply.content, "Error:", e);
+                // If parsing fails, treat the content as a conversational message
+                resultData = { action: 'conversational', value: aiReply.content };
+                console.log("Parsed AI conversational response:", resultData);
             }
 
             if (resultData && typeof resultData === 'object' && resultData.action) {
                 let target = selectedObject || mesh; // Target the selected object, or the whole model if nothing is selected
-
-                // Log the target object
-                console.log(`[Action Execution] Target object for action '${resultData.action}':`, target ? (target.name || target.uuid) : "None (mesh/selectedObject is null)");
 
                 // Handle cases where an action requires a selected object but none is present
                 const requiresSelection = ['rotateSelected', 'scaleSelected', 'translateSelected', 'colorSelected', 'hideSelected', 'showSelected', 'duplicateSelected', 'removeSelected'];
                 if (requiresSelection.includes(resultData.action) && !selectedObject) {
                     addMessageToLog('AI', "Please select a part of the model first to perform that action.");
                     speakResponse("Please select a part of the model first to perform that action.");
-                    // Remove loading message here if an early return happens
-                    if (loadingMessageElement && loadingMessageElement.parentNode === aiLog) {
-                        aiLog.removeChild(loadingMessageElement);
-                    }
                     return;
                 }
 
                 switch (resultData.action) {
                     case 'rotate':
                     case 'rotateSelected':
-                        if (target && typeof resultData.value.value === 'number') {
-                            console.log(`[Three.js Property Check] Before rotate: target.rotation.y = ${target.rotation.y}`);
+                        if (target && typeof resultData.value === 'number') {
                             // THREE.MathUtils.degToRad is now directly available via THREE
-                            target.rotation.y += THREE.MathUtils.degToRad(resultData.value.value);
-                            console.log(`[Three.js Property Check] After rotate: target.rotation.y = ${target.rotation.y}`);
-                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value.value} degrees.`);
-                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value.value} degrees.`);
+                            target.rotation.y += THREE.MathUtils.degToRad(resultData.value);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
                         } else {
                             addMessageToLog('AI', "Sorry, I couldn't rotate. Please specify a valid degree value or ensure a model is loaded/selected.");
                             speakResponse("Sorry, I couldn't rotate.");
@@ -1771,13 +1355,11 @@
                         break;
                     case 'scale':
                     case 'scaleSelected':
-                        if (target && typeof resultData.value.value === 'number' && resultData.value.value > 0) {
-                            console.log(`[Three.js Property Check] Before scale: target.scale.x = ${target.scale.x}`);
-                            // Corrected to use setScalar for uniform scaling
-                            target.scale.setScalar(resultData.value.value);
-                            console.log(`[Three.js Property Check] After scale: target.scale.x = ${target.scale.x}`);
-                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value.value}.`);
-                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value.value}.`);
+                        if (target && typeof resultData.value === 'number' && resultData.value > 0) {
+                            // Apply scale to X, Y, Z consistently
+                            target.scale.set(resultData.value, resultData.value, resultData.value);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
                         } else {
                             addMessageToLog('AI', "Sorry, I couldn't scale. Please specify a positive scale factor or ensure a model is loaded/selected.");
                             speakResponse("Sorry, I couldn't scale.");
@@ -1787,11 +1369,9 @@
                     case 'translateSelected':
                         if (target && typeof resultData.value === 'object' &&
                             !isNaN(resultData.value.x) && !isNaN(resultData.value.y) && !isNaN(resultData.value.z)) {
-                            console.log(`[Three.js Property Check] Before translate: target.position = ${JSON.stringify(target.position)}`);
                             target.position.x += resultData.value.x || 0;
                             target.position.y += resultData.value.y || 0;
                             target.position.z += resultData.value.z || 0;
-                            console.log(`[Three.js Property Check] After translate: target.position = ${JSON.stringify(target.position)}`);
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} moved by X:${resultData.value.x || 0}, Y:${resultData.value.y || 0}, Z:${resultData.value.z || 0} units.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} moved.`);
                         } else {
@@ -1801,48 +1381,13 @@
                         break;
                     case 'color':
                     case 'colorSelected':
-                        if (target && typeof resultData.value.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value.value)) {
-                            const newColor = new THREE.Color(resultData.value.value);
-                            console.log(`[Action Execution] Attempting to change color of ${selectedObject ? 'selected part' : 'model'} to ${resultData.value.value}`);
-
-                            target.traverse((child) => {
-                                if (child.isMesh) {
-                                    if (Array.isArray(child.material)) {
-                                        child.material.forEach(m => {
-                                            if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshBasicMaterial) {
-                                                // Store original material state if not already stored (for selected object)
-                                                // This part is handled by storeAndHighlight for selection.
-                                                // For direct color change, we apply the color directly.
-                                                m.color.set(newColor);
-                                                // If a texture map exists, remove it to make the solid color visible
-                                                if (m.map) {
-                                                    console.log(`[Three.js Property Check] Material had a map, setting map to null for visibility.`);
-                                                    m.map = null;
-                                                    m.needsUpdate = true; // Important for material changes to take effect
-                                                }
-                                                console.log(`[Three.js Property Check] Material color set to: ${m.color.getHexString()}`);
-                                            }
-                                        });
-                                    } else if (child.material) {
-                                        const m = child.material;
-                                        if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshBasicMaterial) {
-                                            // Store original material state if not already stored (for selected object)
-                                            // This part is handled by storeAndHighlight for selection.
-                                            // For direct color change, we apply the color directly.
-                                            m.color.set(newColor);
-                                            // If a texture map exists, remove it to make the solid color visible
-                                            if (m.map) {
-                                                console.log(`[Three.js Property Check] Material had a map, setting map to null for visibility.`);
-                                                m.map = null;
-                                                m.needsUpdate = true; // Important for material changes to take effect
-                                            }
-                                            console.log(`[Three.js Property Check] Material color set to: ${m.color.getHexString()}`);
-                                        }
-                                    }
-                                }
-                            });
-
-                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} color changed to ${resultData.value.value}.`);
+                        if (target && typeof resultData.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value)) {
+                            if (Array.isArray(target.material)) {
+                                target.material.forEach(m => m.color.set(resultData.value));
+                            } else if (target.material) {
+                                target.material.color.set(resultData.value);
+                            }
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} color changed to ${resultData.value}.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} color changed.`);
                         } else {
                             addMessageToLog('AI', "Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, or ensure a model is loaded/selected.");
@@ -1896,30 +1441,6 @@
                     case 'designInfo': // This command always applies to selected or whole model
                         showDesignInfo();
                         break;
-                    case 'zoomIn':
-                        if (camera) {
-                            camera.fov = Math.max(10, camera.fov - 5); // Decrease FOV to zoom in
-                            camera.updateProjectionMatrix();
-                            controls.update();
-                            addMessageToLog('AI', `Zoomed in. Current FOV: ${camera.fov.toFixed(2)}.`);
-                            speakResponse("Zoomed in.");
-                        } else {
-                            addMessageToLog('AI', "No camera available to zoom.");
-                            speakResponse("No camera available to zoom.");
-                        }
-                        break;
-                    case 'zoomOut':
-                        if (camera) {
-                            camera.fov = Math.min(100, camera.fov + 5); // Increase FOV to zoom out
-                            camera.updateProjectionMatrix();
-                            controls.update();
-                            addMessageToLog('AI', `Zoomed out. Current FOV: ${camera.fov.toFixed(2)}.`);
-                            speakResponse("Zoomed out.");
-                        } else {
-                            addMessageToLog('AI', "No camera available to zoom.");
-                            speakResponse("No camera available to zoom.");
-                        }
-                        break;
                     case 'conversational':
                         let responseText = resultData.value || resultData.message;
                         if (responseText) {
@@ -1950,77 +1471,43 @@
             console.error("Error processing AI command:", error);
             addMessageToLog('AI', "I'm sorry, I encountered an error while processing your command. Please try again.");
             speakResponse("I'm sorry, I encountered an error. Please try again.");
-        } finally { // Ensure loading message is removed in all cases
-            if (loadingMessageElement && loadingMessageElement.parentNode === aiLog) {
-                aiLog.removeChild(loadingMessageElement);
-            }
         }
     }
 
-    // Renamed sendToAI to sendToAIInternal to avoid confusion with the outer processAICommand flow
-    async function sendToAIInternal(payload) {
+    async function sendToAI(prompt) {
         sendTextCommandBtn.disabled = true;
         textCommandInput.disabled = true;
+        addMessageToLog('System', 'AI is thinking...');
+
+        const payload = {
+            prompt: prompt
+        };
 
         try {
-            // IMPORTANT: Replace "YOUR_OPENAI_API_KEY" with your actual OpenAI API key.
-            // You can get one from https://platform.openai.com/account/api-keys
-            const openaiApiKey = "YOUR_OPENAI_API_KEY"; // <--- REPLACE THIS WITH YOUR KEY
-
-            if (openaiApiKey === "YOUR_OPENAI_API_KEY" || !openaiApiKey) {
-                const errorMessage = "OpenAI API key is not set. Please replace 'YOUR_OPENAI_API_KEY' in the code with your actual key.";
-                console.error(errorMessage);
-                addMessageToLog('AI', errorMessage);
-                speakResponse(errorMessage);
-                return { content: null }; // Indicate failure
-            }
-
-            const apiUrl = "https://api.openai.com/v1/chat/completions";
-
-            const response = await fetch(apiUrl, {
+            const response = await fetch('https://mingyu.onrender.com/api/ai', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${openaiApiKey}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                let errorMessage = `OpenAI API Error: ${response.status} - ${errorData.error ? errorData.error.message : response.statusText}`;
-                if (response.status === 401) {
-                    errorMessage = `OpenAI API Error: Invalid API Key (401). Please check your key.`;
-                } else if (response.status === 429) {
-                    errorMessage = `OpenAI API Error: Rate Limit Exceeded (429). Please try again later.`;
-                }
-                throw new Error(errorMessage);
+                throw new Error(`Backend error: ${errorData.message || response.statusText}`);
             }
 
             const result = await response.json();
-            console.log("[AI Response Raw] Full result object from OpenAI:", result); // Log the full result object
-
-            // Process the OpenAI response to extract content or tool calls
-            if (result.choices && result.choices.length > 0) {
-                const message = result.choices[0].message;
-                if (message.tool_calls && message.tool_calls.length > 0) {
-                    // OpenAI tool calls are in message.tool_calls
-                    return { content: { tool_calls: message.tool_calls } };
-                } else if (message.content) {
-                    // Regular conversational response
-                    return { content: { content: message.content } };
-                }
-            }
-            return { content: "OpenAI did not provide a valid response." };
+            return result;
 
         } catch (error) {
-            console.error("Error communicating with OpenAI API:", error);
-            addMessageToLog('AI', `Error communicating with OpenAI: ${error.message}`);
-            speakResponse(`Error communicating with OpenAI: ${error.message}`);
-            return { content: null }; // Indicate failure
+            console.error("Error communicating with backend AI:", error);
+            return { content: `Failed to communicate with AI: ${error.message}` };
         } finally {
             sendTextCommandBtn.disabled = false;
             textCommandInput.disabled = false;
+            const lastLogMessage = aiLog.lastChild;
+            if (lastLogMessage && lastLogMessage.textContent.includes('AI is thinking...')) {
+                aiLog.removeChild(lastLogMessage);
+            }
         }
     }
 </script>
