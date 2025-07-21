@@ -4,9 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI VR CAD Editor</title>
-    <link rel="stylesheet" href="styles.css"> <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="stylesheet" href="styles.css"> <!-- Ensure this links to your styles (1).css -->
     <style>
         html, body {
             margin: 0;
@@ -183,7 +181,7 @@
             border-right: 1px solid #3d3f4b;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
             flex-shrink: 0;
-            overflow-y: auto; /* Allow scrolling for chat log */
+            overflow-y: auto;
         }
 
         .sidebar h2 {
@@ -250,23 +248,23 @@
             flex-direction: column;
             gap: 10px;
             flex-shrink: 0;
-            height: auto; /* Allow height to adjust */
-            max-height: 40%; /* Max height for the AI panel */
-            overflow: hidden; /* Hide overflow initially */
+            height: auto;
+            max-height: 40%;
+            overflow: hidden;
             transition: all 0.3s ease-in-out;
-            position: absolute; /* Position relative to editorPage */
+            position: absolute;
             bottom: 0;
             width: 100%;
             left: 0;
             box-sizing: border-box;
-            transform: translateY(100%); /* Start hidden */
+            transform: translateY(100%);
             opacity: 0;
         }
 
         #aiInteractionPanel.active {
-            transform: translateY(0); /* Slide up */
+            transform: translateY(0);
             opacity: 1;
-            max-height: 80%; /* Allow it to grow when active */
+            max-height: 80%;
         }
 
 
@@ -276,9 +274,9 @@
             border-radius: 8px;
             padding: 10px;
             color: #e0e0e0;
-            overflow-y: auto; /* Enable scrolling for chat history */
-            height: 150px; /* Fixed height for log for easier flex control */
-            flex-shrink: 1; /* Allow log to shrink */
+            overflow-y: auto;
+            height: 150px;
+            flex-shrink: 1;
         }
 
         #aiLog p {
@@ -305,7 +303,7 @@
         .ai-input-group {
             display: flex;
             gap: 10px;
-            flex-shrink: 0; /* Prevents input from shrinking */
+            flex-shrink: 0;
         }
 
         #textCommandInput {
@@ -354,7 +352,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            z-index: 10; /* Ensure it's above other elements */
+            z-index: 10;
         }
 
         #voiceAssistBtn:hover {
@@ -363,13 +361,22 @@
         }
 
         #voiceAssistBtn.active-voice-btn {
-            background-color: #dc3545; /* Red when active */
+            background-color: #dc3545;
         }
 
         #voiceAssistBtn.active-voice-btn:hover {
             background-color: #c82333;
         }
     </style>
+    <!-- Import Map for ES Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body>
     <header>
@@ -382,10 +389,10 @@
     <div class="page-container">
         <section id="uploadPage" class="page page-active">
             <div class="upload-content">
-                <h2>Upload your STL Model</h2>
-                <div id="dropZone">Drag and Drop your .stl file here</div>
-                <input type="file" id="fileInput" accept=".stl" />
-                <button class="button primary" onclick="goToEditor()">Load Model & Go to Editor</button>
+                <h2>Upload your 3D Model</h2>
+                <div id="dropZone">Drag and Drop your .gltf or .glb file(s) here</div>
+                <input type="file" id="fileInput" accept=".gltf,.glb" />
+                <button class="button primary" id="loadEditorButton">Load Model & Go to Editor</button>
                 <p id="loadingMsg">Loading model, please wait...</p>
             </div>
         </section>
@@ -407,7 +414,7 @@
                         Design Info
                     </button>
                     <button class="control-button" onclick="goBack()">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-13v4H7.5L12 16.5 16.5 12H13V7z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-13v4H7.5L12 16.5 16.5 12H13V7z"/></svg>
                         Back to Upload
                     </button>
                 </div>
@@ -430,56 +437,133 @@
         </section>
     </div>
 
-<script>
+<script type="module">
+    // Import Three.js and its modules
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { VRButton } from 'three/addons/webxr/VRButton.js';
+
+    // Global map to store dropped files by their relative path (e.g., "scene.bin", "textures/image.png")
+    const droppedFileBlobs = new Map();
+
     let uploadedFile = null, scene, camera, renderer, mesh, controls;
     let recognition;
     let synth;
     let isVoiceAssistActive = false;
     let raycaster;
     let mouse;
-    let selectedObject = null;
-    let originalMaterialColor = null;
+    let selectedObject = null; // This will hold the currently selected THREE.Mesh part
+    const originalColors = new Map(); // Map to store original colors (hex value) by object UUID
 
+    // Get references to HTML elements
     const fileInput = document.getElementById('fileInput');
     const dropZone = document.getElementById('dropZone');
     const loadingMsg = document.getElementById('loadingMsg');
     const uploadPage = document.getElementById('uploadPage');
     const editorPage = document.getElementById('editorPage');
     const voiceAssistBtn = document.getElementById('voiceAssistBtn');
-
     const aiInteractionPanel = document.getElementById('aiInteractionPanel');
     const aiLog = document.getElementById('aiLog');
     const textCommandInput = document.getElementById('textCommandInput');
     const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
+    const cadCanvas = document.getElementById('cadCanvas'); // Reference to the canvas element
+    const loadEditorButton = document.getElementById('loadEditorButton'); // Reference to the new button ID
 
-
+    // --- File Input and Page Navigation ---
     dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.textContent = 'Drop your .stl file here'; });
-    dropZone.addEventListener('dragleave', () => dropZone.textContent = 'Drag and Drop your .stl file here');
-    dropZone.addEventListener('drop', e => {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.textContent = 'Drop your .gltf or .glb file(s) here'; });
+    dropZone.addEventListener('dragleave', () => dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here');
+    dropZone.addEventListener('drop', async e => {
         e.preventDefault();
-        uploadedFile = e.dataTransfer.files[0];
-        validateFile(uploadedFile);
+        droppedFileBlobs.clear(); // Clear previous files
+        let mainModelFile = null;
+
+        // Function to recursively read directory entries
+        async function readDroppedFiles(entry, path) {
+            if (entry.isFile) {
+                const file = await new Promise(resolve => entry.file(resolve));
+                const fullPath = path ? `${path}/${file.name}` : file.name;
+                droppedFileBlobs.set(fullPath, file);
+                console.log(`[Drop Handler] Dropped file: ${fullPath}`); // Debugging
+                if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
+                    mainModelFile = file;
+                }
+            } else if (entry.isDirectory) {
+                const directoryReader = entry.createReader();
+                const entries = await new Promise(resolve => directoryReader.readEntries(resolve));
+                for (const subEntry of entries) {
+                    await readDroppedFiles(subEntry, path ? `${path}/${entry.name}` : entry.name);
+                }
+            }
+        }
+
+        // Check if DataTransferItem.webkitGetAsEntry is available (for folder drops)
+        if (e.dataTransfer.items && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].webkitGetAsEntry) {
+            console.log("[Drop Handler] Using webkitGetAsEntry for folder drop.");
+            for (let i = 0; i < e.dataTransfer.items.length; i++) {
+                const item = e.dataTransfer.items[i];
+                const entry = item.webkitGetAsEntry();
+                if (entry) {
+                    await readDroppedFiles(entry, ''); // Start recursive read from root
+                }
+            }
+        } else {
+            console.log("[Drop Handler] Falling back to flat file drop (webkitGetAsEntry not available or not a folder drop).");
+            // Fallback for browsers that don't support webkitGetAsEntry or if only files are dropped
+            for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                const file = e.dataTransfer.files[i];
+                droppedFileBlobs.set(file.name, file);
+                console.log(`[Drop Handler] Dropped file (flat): ${file.name}`); // Debugging
+                if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
+                    mainModelFile = file;
+                }
+            }
+        }
+
+        if (mainModelFile) {
+            uploadedFile = mainModelFile; // Set the main model file
+            validateFile(uploadedFile); // Validate and proceed
+            console.log("[Drop Handler] All dropped files (keys):", Array.from(droppedFileBlobs.keys()));
+        } else {
+            loadingMsg.textContent = '❌ No .gltf or .glb file found among dropped items!';
+            loadingMsg.style.color = 'red';
+            loadingMsg.style.display = 'block';
+            uploadedFile = null;
+        }
     });
-    fileInput.addEventListener('change', e => {
-        uploadedFile = e.target.files[0];
-        validateFile(uploadedFile);
+
+    fileInput.addEventListener('change', () => {
+        // For file input, we only get one file, so it's simpler
+        if (fileInput.files.length > 0) {
+            droppedFileBlobs.clear();
+            const file = fileInput.files[0];
+            droppedFileBlobs.set(file.name, file);
+            uploadedFile = file;
+            validateFile(uploadedFile);
+            console.log("[File Input] Dropped file (keys):", Array.from(droppedFileBlobs.keys()));
+        }
     });
+
+    // Attach event listener for the "Load Model & Go to Editor" button
+    loadEditorButton.addEventListener('click', goToEditor); // Correctly attach event listener
 
     function validateFile(file) {
-        if (file && file.name.toLowerCase().endsWith('.stl')) {
-            dropZone.style.borderColor = '#28a745';
-            dropZone.textContent = `✅ File received: ${file.name}`;
+        if (file && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
+            loadingMsg.textContent = `Loading ${file.name}...`;
+            loadingMsg.style.display = 'block';
+            // goToEditor will be called by the button click, or automatically if drag/drop leads to valid file
         } else {
-            dropZone.style.borderColor = 'red';
-            dropZone.textContent = '❌ Unsupported file type! Please upload a .stl file.';
+            loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
+            loadingMsg.style.color = 'red';
+            loadingMsg.style.display = 'block';
             uploadedFile = null;
         }
     }
 
     function goToEditor() {
         if (!uploadedFile) {
-            addMessageToLog('System', "Please upload a valid .STL file before continuing.");
+            addMessageToLog('System', "Please upload a valid .gltf or .glb file before continuing.");
             return;
         }
 
@@ -490,165 +574,7 @@
         editorPage.classList.add('page-active');
 
         loadingMsg.style.display = 'block';
-
-        loadSTLModel(uploadedFile);
-    }
-
-    function loadSTLModel(file) {
-        if (scene) {
-            scene.traverse(function (object) {
-                if (object.isMesh) {
-                    if (object.geometry) object.geometry.dispose();
-                    if (object.material) {
-                        if (Array.isArray(object.material)) {
-                            object.material.forEach(material => material.dispose());
-                        } else {
-                            object.material.dispose();
-                        }
-                    }
-                }
-            });
-            scene = null;
-        }
-        if (renderer) {
-            renderer.dispose();
-            renderer = null;
-        }
-        if (controls) {
-            controls.dispose();
-            controls = null;
-        }
-        window.removeEventListener('resize', onWindowResize, false);
-        const existingCanvas = document.getElementById('cadCanvas');
-        if (existingCanvas) {
-            existingCanvas.removeEventListener('mousedown', onCanvasClick, false);
-            existingCanvas.removeEventListener('touchstart', onCanvasClick, false);
-        }
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const contents = e.target.result;
-            const loader = new THREE.STLLoader();
-            const geometry = loader.parse(contents);
-
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1e1f26);
-
-            const canvas = document.getElementById('cadCanvas');
-            const viewerDiv = canvas.parentElement;
-
-            const width = viewerDiv.clientWidth;
-            const height = viewerDiv.clientHeight;
-
-            if (width === 0 || height === 0) {
-                console.warn("Viewer dimensions are 0, model might not render correctly. Retrying in 100ms...");
-                setTimeout(() => loadSTLModel(file), 100);
-                return;
-            }
-
-            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-            renderer.setSize(width, height);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            window.addEventListener('resize', onWindowResize, false);
-
-            const light1 = new THREE.DirectionalLight(0xffffff, 0.8);
-            light1.position.set(1, 1, 1).normalize();
-            scene.add(light1);
-
-            const light2 = new THREE.DirectionalLight(0xffffff, 0.5);
-            light2.position.set(-1, -1, -1).normalize();
-            scene.add(light2);
-
-            scene.add(new THREE.AmbientLight(0x404040));
-
-            const material = new THREE.MeshLambertMaterial({ color: 0x0077ff });
-            mesh = new THREE.Mesh(geometry, material);
-
-            geometry.computeBoundingBox();
-            const box = geometry.boundingBox;
-            const center = box.getCenter(new THREE.Vector3());
-            mesh.position.sub(center);
-            scene.add(mesh);
-
-            const size = new THREE.Vector3();
-            box.getSize(size);
-            const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5);
-            camera.lookAt(0, 0, 0);
-
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.1;
-            controls.screenSpacePanning = false;
-            controls.enableZoom = true;
-            controls.enablePan = true;
-
-            loadingMsg.style.display = 'none';
-            animate();
-
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
-            renderer.domElement.addEventListener('mousedown', onCanvasClick, false);
-            renderer.domElement.addEventListener('touchstart', onCanvasClick, false);
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function onWindowResize() {
-        if (camera && renderer && controls) {
-            const canvas = document.getElementById('cadCanvas');
-            const viewerDiv = canvas.parentElement;
-            const width = viewerDiv.clientWidth;
-            const height = viewerDiv.clientHeight;
-
-            if (width > 0 && height > 0) {
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-                renderer.setSize(width, height);
-                controls.update();
-            }
-        }
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        if (controls) controls.update();
-        if (renderer && scene && camera) {
-            renderer.render(scene, camera);
-        }
-    }
-
-    function removeObject() {
-        if (mesh) {
-            scene.remove(mesh);
-            mesh = null;
-            addMessageToLog('AI', "Object removed.");
-            speakResponse("Object removed.");
-            clearSelection();
-        } else {
-            addMessageToLog('AI', "No object to remove.");
-            speakResponse("No object to remove.");
-        }
-    }
-
-    function resetView() {
-        if (mesh) mesh.rotation.set(0, 0, 0);
-        if (camera && mesh) {
-            const box = new THREE.Box3().setFromObject(mesh);
-            const size = new THREE.Vector3();
-            box.getSize(size);
-            const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5);
-            camera.lookAt(0, 0, 0);
-            controls.update();
-            addMessageToLog('AI', "View reset.");
-            speakResponse("View reset.");
-        } else {
-            addMessageToLog('AI', "No object to reset view for.");
-            speakResponse("No object to reset view for.");
-        }
+        loadModel(uploadedFile); // Load model after transition
     }
 
     function goBack() {
@@ -658,8 +584,9 @@
         uploadPage.classList.remove('page-inactive');
         uploadPage.classList.add('page-active');
 
-        stopVoiceAssist();
+        stopVoiceAssist(); // Ensure voice assist is stopped when going back
 
+        // Dispose of Three.js resources when navigating back
         if (scene) {
             scene.traverse(function (object) {
                 if (object.isMesh) {
@@ -684,102 +611,452 @@
             controls = null;
         }
         window.removeEventListener('resize', onWindowResize, false);
-        clearSelection();
-        if (renderer && renderer.domElement) {
-            renderer.domElement.removeEventListener('mousedown', onCanvasClick, false);
-            renderer.domElement.removeEventListener('touchstart', onCanvasClick, false);
+        clearSelection(); // Clear any active selection
+        if (cadCanvas) { // Use cadCanvas reference
+            cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
+            cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
         }
-        uploadedFile = null;
-        dropZone.style.borderColor = '#aaa';
-        dropZone.textContent = 'Drag and Drop your .stl file here';
+        uploadedFile = null; // Clear the uploaded file
+        droppedFileBlobs.clear(); // Clear the map of dropped files
+        dropZone.style.borderColor = '#aaa'; // Reset drop zone style
+        dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here'; // Reset drop zone text
+        loadingMsg.style.display = 'none'; // Hide loading message
+        loadingMsg.style.color = ''; // Reset color
+    }
+
+    // --- Three.js Scene Setup and Model Loading ---
+    function initScene() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222); // Dark background
+
+        const viewerDiv = cadCanvas.parentElement;
+        const width = viewerDiv.clientWidth;
+        const height = viewerDiv.clientHeight;
+
+        camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+        camera.position.set(0, 0, 50); // Initial camera position
+
+        renderer = new THREE.WebGLRenderer({ canvas: cadCanvas, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(width, height);
+        renderer.xr.enabled = true; // Enable WebXR for VR
+
+        // OrbitControls is now imported as a module
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(1, 1, 1).normalize();
+        scene.add(directionalLight);
+
+        // VR Button is now imported as a module
+        // document.body.appendChild(VRButton.createButton(renderer));
+
+        // Raycasting for selection
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+
+        // Attach event listeners for selection after renderer is set up
+        renderer.domElement.addEventListener('mousedown', onCanvasClick, false);
+        renderer.domElement.addEventListener('touchstart', onCanvasClick, false);
+
+        animate(); // Start the animation loop
+    }
+
+    function animate() {
+        // Use renderer.setAnimationLoop for WebXR compatibility
+        renderer.setAnimationLoop(() => {
+            controls.update();
+            renderer.render(scene, camera);
+        });
+    }
+
+    function loadModel(file) {
+        console.log(`[loadModel] Attempting to load file: ${file.name}`);
+        const loader = new GLTFLoader();
+
+        loader.manager.setURLModifier((url, path) => {
+            // debugger; // Pause execution here to inspect 'url', 'path', and 'droppedFileBlobs'
+
+            console.log(`[URLModifier] Requested URL: "${url}", Path: "${path}"`);
+
+            // 1. Try to get a clean relative path from the full URL
+            let resolvedPath = url;
+            try {
+                const urlObj = new URL(url);
+                resolvedPath = urlObj.pathname.substring(1); // Remove leading slash
+                const filenameParam = urlObj.searchParams.get('filename');
+                if (filenameParam) {
+                    resolvedPath = filenameParam;
+                }
+            } catch (e) {
+                // If URL constructor fails, assume it's already a relative path or filename
+                resolvedPath = url;
+            }
+
+            // Normalize path separators for consistency (e.g., Windows vs. Unix paths)
+            resolvedPath = resolvedPath.replace(/\\/g, '/');
+
+            // 2. Check if the exact resolvedPath exists in our dropped files
+            if (droppedFileBlobs.has(resolvedPath)) {
+                const blob = droppedFileBlobs.get(resolvedPath);
+                const blobUrl = URL.createObjectURL(blob);
+                console.log(`[URLModifier] Found "${resolvedPath}" (exact match), creating Blob URL: ${blobUrl}`);
+                return blobUrl;
+            }
+
+            // 3. If not found by full path, try just the filename (common for textures in GLTF)
+            const fileNameOnly = resolvedPath.substring(resolvedPath.lastIndexOf('/') + 1);
+            if (droppedFileBlobs.has(fileNameOnly)) {
+                const blob = droppedFileBlobs.get(fileNameOnly);
+                const blobUrl = URL.createObjectURL(blob);
+                console.log(`[URLModifier] Found "${fileNameOnly}" (filename only match), creating Blob URL: ${blobUrl}`);
+                return blobUrl;
+            }
+
+            // 4. Try matching the 'path' argument provided by GLTFLoader (it's often the base path)
+            // Combine 'path' with fileNameOnly if 'path' is provided and not empty
+            if (path && path !== '') {
+                const combinedPath = `${path}${fileNameOnly}`;
+                if (droppedFileBlobs.has(combinedPath)) {
+                    const blob = droppedFileBlobs.get(combinedPath);
+                    const blobUrl = URL.createObjectURL(blob);
+                    console.log(`[URLModifier] Found "${combinedPath}" (combined path match), creating Blob URL: ${blobUrl}`);
+                    return blobUrl;
+                }
+            }
+
+
+            console.warn(`[URLModifier] GLTFLoader could not find referenced file: "${url}" (tried "${resolvedPath}", "${fileNameOnly}", and potentially combined paths). Falling back to original URL.`);
+            return url; // Fallback to original URL
+        });
+
+        if (file.name.toLowerCase().endsWith('.glb')) {
+            console.log(`[loadModel] Handling .glb file: ${file.name}`);
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                console.log(`[FileReader] .glb file read successfully.`);
+                const contents = event.target.result;
+                loader.parse(contents, '', (gltf) => {
+                    console.log(`[GLTFLoader] .glb parsing successful.`);
+                    // Remove existing model if any
+                    if (mesh) {
+                        scene.remove(mesh);
+                        mesh.traverse(obj => {
+                            if (obj.isMesh) {
+                                if (obj.geometry) obj.geometry.dispose();
+                                if (obj.material) {
+                                    if (Array.isArray(obj.material)) {
+                                        obj.material.forEach(m => m.dispose());
+                                    } else {
+                                        obj.material.dispose();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    clearSelection(); // Clear any previous selection
+
+                    mesh = gltf.scene; // The glTF scene is the main container for all objects
+                    scene.add(mesh);
+
+                    // Center and scale the model
+                    const bbox = new THREE.Box3().setFromObject(mesh);
+                    const center = bbox.getCenter(new THREE.Vector3());
+                    mesh.position.sub(center); // Center the model's group
+
+                    const size = bbox.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const desiredMaxDim = 40; // Target size for the model in the scene
+                    const scaleFactor = desiredMaxDim / maxDim;
+                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                    // Adjust camera to fit the new model
+                    const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
+                    const newSize = newBbox.getSize(new THREE.Vector3());
+                    const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
+                    camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+                    camera.lookAt(0, 0, 0);
+                    controls.update(); // Update controls after camera change
+
+                    loadingMsg.style.display = 'none';
+                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                    speakResponse(`Model loaded successfully.`);
+
+                }, (error) => {
+                    console.error('[GLTFLoader] Error parsing GLB model:', error);
+                    loadingMsg.textContent = 'Error parsing GLB model. Check console for details.';
+                    loadingMsg.style.color = 'red';
+                    speakResponse('Error parsing GLB model.');
+                });
+            };
+            reader.onerror = (error) => {
+                console.error('[FileReader] Error reading GLB file:', error);
+                loadingMsg.textContent = 'Error reading GLB file. Check console for details.';
+                loadingMsg.style.color = 'red';
+                speakResponse('Error reading GLB file.');
+            };
+            reader.readAsArrayBuffer(file);
+        } else if (file.name.toLowerCase().endsWith('.gltf')) {
+            console.log(`[loadModel] Handling .gltf file: ${file.name}`);
+            const blobUrl = URL.createObjectURL(file);
+            console.log(`[loadModel] Created Blob URL for main GLTF file: ${blobUrl}`);
+
+            loader.load(blobUrl, (gltf) => {
+                console.log(`[GLTFLoader] .gltf loading successful.`);
+                // Remove existing model if any
+                if (mesh) {
+                    scene.remove(mesh);
+                    mesh.traverse(obj => {
+                        if (obj.isMesh) {
+                            if (obj.geometry) obj.geometry.dispose();
+                            if (obj.material) {
+                                if (Array.isArray(obj.material)) {
+                                    obj.material.forEach(m => m.dispose());
+                                } else {
+                                    obj.material.dispose();
+                                }
+                            }
+                        }
+                    });
+                }
+                clearSelection(); // Clear any previous selection
+
+                mesh = gltf.scene; // The glTF scene is the main container for all objects
+                scene.add(mesh);
+
+                // Center and scale the model
+                const bbox = new THREE.Box3().setFromObject(mesh);
+                const center = bbox.getCenter(new THREE.Vector3());
+                mesh.position.sub(center); // Center the model's group
+
+                const size = bbox.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const desiredMaxDim = 40; // Target size for the model in the scene
+                const scaleFactor = desiredMaxDim / maxDim;
+                mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                // Adjust camera to fit the new model
+                const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
+                const newSize = newBbox.getSize(new THREE.Vector3());
+                const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
+                camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+                camera.lookAt(0, 0, 0);
+                controls.update(); // Update controls after camera change
+
+                loadingMsg.style.display = 'none';
+                addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                speakResponse(`Model loaded successfully.`);
+
+                URL.revokeObjectURL(blobUrl); // Clean up the Blob URL
+
+            }, (xhr) => {
+                // Progress during loading
+                console.log(`[GLTFLoader] Progress for ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
+                loadingMsg.textContent = `Loading ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
+            }, (error) => {
+                console.error('[GLTFLoader] Error loading GLTF model:', error);
+                loadingMsg.textContent = 'Error loading GLTF model. Ensure all associated files (.bin, textures) are dropped together.';
+                loadingMsg.style.color = 'red';
+                speakResponse('Error loading GLTF model. Please ensure all associated files are dropped together.');
+                URL.revokeObjectURL(blobUrl); // Clean up the Blob URL on error
+            });
+        } else {
+            // This case should ideally be caught by validateFile, but as a fallback
+            loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
+            loadingMsg.style.color = 'red';
+            loadingMsg.style.display = 'block';
+            speakResponse('Unsupported file type.');
+        }
+    }
+
+    window.addEventListener('resize', onWindowResize, false);
+
+    function onWindowResize() {
+        const viewerDiv = cadCanvas.parentElement;
+        const width = viewerDiv.clientWidth;
+        const height = viewerDiv.clientHeight;
+
+        if (width > 0 && height > 0) {
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            controls.update();
+        }
+    }
+
+    // Initialize scene when the window loads
+    window.onload = () => {
+        initScene();
+        initializeSpeechSynthesis();
+    };
+
+    // --- CAD Editor Functions ---
+    // Note: removeObject, resetView, showDesignInfo are updated to handle selectedObject or mesh
+    function removeObject() {
+        let targetObject = selectedObject || mesh; // Target selected object, or the whole model
+        if (targetObject) {
+            scene.remove(targetObject);
+            targetObject.traverse(obj => { // Dispose resources
+                if (obj.isMesh) {
+                    if (obj.geometry) obj.geometry.dispose();
+                    if (obj.material) {
+                        if (Array.isArray(obj.material)) {
+                            obj.material.forEach(m => m.dispose());
+                        } else {
+                            obj.material.dispose();
+                        }
+                    }
+                }
+            });
+            if (targetObject === mesh) { // If main model was removed
+                mesh = null;
+                addMessageToLog('AI', "Model removed.");
+                speakResponse("Model removed.");
+                // Go back to upload page if main model is removed
+                goBack(); // This will also clear selection
+            } else { // If a specific part was removed
+                addMessageToLog('AI', `Part '${targetObject.name || 'unnamed part'}' removed.`);
+                speakResponse(`Part removed.`);
+                clearSelection(); // Clear selection after removal
+            }
+        } else {
+            addMessageToLog('AI', "No object or part to remove.");
+            speakResponse("No object or part to remove.");
+        }
+    }
+
+    function resetView() {
+        if (mesh) { // Resetting view always applies to the whole loaded model
+            mesh.rotation.set(0, 0, 0); // Reset rotation of the main model
+            mesh.position.set(0, 0, 0); // Reset position of the main model
+
+            // Recenter and re-frame camera
+            const bbox = new THREE.Box3().setFromObject(mesh);
+            const center = bbox.getCenter(new THREE.Vector3());
+            mesh.position.sub(center); // Center the model's group
+
+            const size = bbox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+            camera.lookAt(0, 0, 0);
+            controls.update();
+            addMessageToLog('AI', "View reset.");
+            speakResponse("View reset.");
+        } else {
+            addMessageToLog('AI', "No model to reset view for.");
+            speakResponse("No model to reset view for.");
+        }
     }
 
     function showDesignInfo() {
-        if (!mesh) {
-            addMessageToLog('AI', "No design loaded.");
-            speakResponse("No design loaded.");
+        let targetObject = selectedObject || mesh; // Get info for selected object or whole model
+        if (!targetObject) {
+            addMessageToLog('AI', "No design loaded or part selected.");
+            speakResponse("No design loaded or part selected.");
             return;
         }
-        const box = new THREE.Box3().setFromObject(mesh);
+        const bbox = new THREE.Box3().setFromObject(targetObject);
         const size = new THREE.Vector3();
-        box.getSize(size);
-        const info = `Width: ${size.x.toFixed(2)}\nHeight: ${size.y.toFixed(2)}\nDepth: ${size.z.toFixed(2)}`;
+        bbox.getSize(size);
+        const info = `Name: ${targetObject.name || 'Unnamed'}\n` +
+                     `Width: ${size.x.toFixed(2)}\nHeight: ${size.y.toFixed(2)}\nDepth: ${size.z.toFixed(2)}\n` +
+                     `Position: X:${targetObject.position.x.toFixed(2)}, Y:${targetObject.position.y.toFixed(2)}, Z:${targetObject.position.z.toFixed(2)}`;
         addMessageToLog('AI', info.replace(/\n/g, ', '));
         speakResponse(info);
     }
 
-    /* Raycasting and Selection */
+    // --- Raycasting and Selection ---
     function onCanvasClick(event) {
-        event.preventDefault();
-
-        const canvas = renderer.domElement;
-        const rect = canvas.getBoundingClientRect();
-
-        if (event.changedTouches) {
+        // Calculate mouse position in normalized device coordinates (-1 to +1)
+        const rect = renderer.domElement.getBoundingClientRect();
+        if (event.changedTouches) { // Handle touch events
             mouse.x = ((event.changedTouches[0].clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.changedTouches[0].clientY - rect.top) / rect.height) * 2 + 1;
-        } else {
+        } else { // Handle mouse events
             mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
             mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         }
 
         raycaster.setFromCamera(mouse, camera);
 
-        const intersects = raycaster.intersectObjects(scene.children, true);
+        // Intersect with all children of the main loaded glTF scene object (`mesh`)
+        // This allows selecting individual parts/meshes if the glTF has them
+        const intersects = raycaster.intersectObjects(mesh ? mesh.children : [], true); // Only intersect if mesh exists
 
         if (intersects.length > 0) {
-            const intersected = intersects[0].object;
+            let clickedObject = null;
+            for (const intersect of intersects) {
+                // Ensure it's a visible mesh and not just a group or part of the background
+                if (intersect.object.isMesh && intersect.object.visible && intersect.object.material) {
+                    clickedObject = intersect.object;
+                    break;
+                }
+            }
 
-            if (intersected === mesh) {
-                if (selectedObject && selectedObject.material) {
-                    if (Array.isArray(selectedObject.material)) {
-                        selectedObject.material.forEach(m => m.color.copy(originalMaterialColor));
-                    } else {
-                        selectedObject.material.color.copy(originalMaterialColor);
-                    }
+            if (clickedObject) {
+                if (selectedObject && selectedObject !== clickedObject) {
+                    // Restore original color of previously selected object if it's different
+                    restoreOriginalColor(selectedObject);
                 }
 
-                selectedObject = intersected;
-                if (Array.isArray(selectedObject.material)) {
-                    originalMaterialColor = selectedObject.material[0].color.clone();
-                    selectedObject.material.forEach(m => m.color.set(0xffff00));
-                } else {
-                    originalMaterialColor = selectedObject.material.color.clone();
-                    selectedObject.material.color.set(0xffff00);
+                if (selectedObject !== clickedObject) { // If a new object is selected
+                    selectedObject = clickedObject;
+                    storeAndHighlight(selectedObject);
+                    addMessageToLog('System', `Object '${selectedObject.name || 'unnamed object'}' selected.`);
+                    speakResponse(`Object selected.`);
+                } else { // If the same object is clicked again, deselect it
+                    clearSelection();
                 }
-
-                console.log("Object selected:", selectedObject.name || selectedObject.uuid);
-                addMessageToLog('System', "Object selected.");
-                speakResponse("Object selected.");
-            } else {
-                clearSelection();
             }
         } else {
-            clearSelection();
+            clearSelection(); // If clicked outside, clear selection
         }
-        if (renderer && scene && camera) {
-            renderer.render(scene, camera);
+    }
+
+    function storeAndHighlight(object) {
+        if (Array.isArray(object.material)) {
+            object.material.forEach((m, index) => {
+                originalColors.set(`${object.uuid}-${index}`, m.color.getHex());
+                m.color.set(0x00ff00); // Green highlight
+            });
+        } else if (object.material) {
+            originalColors.set(object.uuid, object.material.color.getHex());
+            object.material.color.set(0x00ff00); // Green highlight
         }
+    }
+
+    function restoreOriginalColor(object) {
+        if (Array.isArray(object.material)) {
+            object.material.forEach((m, index) => {
+                const oldOriginalColor = originalColors.get(`${object.uuid}-${index}`);
+                if (oldOriginalColor !== undefined) {
+                    m.color.set(oldOriginalColor);
+                }
+            });
+        } else if (object.material) {
+            const oldOriginalColor = originalColors.get(object.uuid);
+            if (oldOriginalColor !== undefined) {
+                object.material.color.set(oldOriginalColor);
+            }
+        }
+        originalColors.delete(object.uuid); // Clean up map entry
     }
 
     function clearSelection() {
-        if (selectedObject && originalMaterialColor) {
-            if (Array.isArray(selectedObject.material)) {
-                selectedObject.material.forEach(m => m.color.copy(originalMaterialColor));
-            } else {
-                selectedObject.material.color.copy(originalMaterialColor);
-            }
+        if (selectedObject) {
+            restoreOriginalColor(selectedObject);
             selectedObject = null;
-            originalMaterialColor = null;
-            console.log("Selection cleared.");
-            addMessageToLog('System', "Selection cleared.");
-        }
-        if (renderer && scene && camera) {
-            renderer.render(scene, camera);
+            addMessageToLog('System', 'Selection cleared.');
+            speakResponse('Selection cleared.');
         }
     }
 
-    /* AI Interaction Panel Functions */
+    // --- AI Interaction Panel Functions ---
     function addMessageToLog(sender, message) {
         const p = document.createElement('p');
         p.textContent = `${sender}: ${message}`;
@@ -788,7 +1065,6 @@
         aiLog.scrollTop = aiLog.scrollHeight;
     }
 
-    // Handle text input for AI commands
     sendTextCommandBtn.addEventListener('click', () => {
         const command = textCommandInput.value.trim();
         if (command) {
@@ -804,8 +1080,7 @@
         }
     });
 
-
-    /* AI Voice Assist Functions */
+    // --- AI Voice Assist Functions ---
     voiceAssistBtn.addEventListener('click', toggleVoiceAssist);
 
     function initializeSpeechRecognition() {
@@ -855,8 +1130,8 @@
 
     function toggleVoiceAssist() {
         if (!mesh) {
-            addMessageToLog('AI', "Please load an STL model first.");
-            speakResponse("Please load an STL model first.");
+            addMessageToLog('AI', "Please load a 3D model first.");
+            speakResponse("Please load a 3D model first.");
             return;
         }
 
@@ -931,18 +1206,19 @@
         addMessageToLog('System', "Voice assist stopped.");
     }
 
-    // This function handles both voice and text commands
+    // --- AI Command Processing (Core Logic) ---
     async function processAICommand(command) {
-        if (command.includes("select object")) {
+        // Handle pre-defined UI commands first
+        if (command.includes("select object") || command.includes("select part")) {
             if (selectedObject) {
-                speakResponse("An object is already selected. Click on the model to change selection or click outside to clear.");
+                speakResponse("An object is already selected. Click on a different part to change selection or click outside to clear.");
             } else if (mesh) {
-                speakResponse("Please click on the model to select it.");
+                speakResponse("Please click on a part of the model to select it.");
             } else {
                 speakResponse("No model loaded to select.");
             }
             return;
-        } else if (command.includes("clear selection")) {
+        } else if (command.includes("clear selection") || command.includes("deselect")) {
             clearSelection();
             speakResponse("Selection cleared.");
             return;
@@ -950,67 +1226,127 @@
 
         try {
             const aiReply = await sendToAI(command);
-
-            console.log("Raw AI response from backend:", aiReply); // This will show { content: "..." }
+            console.log("Raw AI response from backend:", aiReply);
 
             let resultData;
             try {
-                // Attempt to parse the content as JSON for commands
                 resultData = JSON.parse(aiReply.content);
                 console.log("Parsed AI command:", resultData);
             } catch (e) {
-                // If parsing fails, it's likely conversational text
                 resultData = { action: 'conversational', value: aiReply.content };
                 console.log("Parsed AI conversational response:", resultData);
             }
 
             if (resultData && typeof resultData === 'object' && resultData.action) {
+                let target = selectedObject || mesh; // Target the selected object, or the whole model if nothing is selected
+
+                // Handle cases where an action requires a selected object but none is present
+                const requiresSelection = ['rotateSelected', 'scaleSelected', 'translateSelected', 'colorSelected', 'hideSelected', 'showSelected', 'duplicateSelected', 'removeSelected'];
+                if (requiresSelection.includes(resultData.action) && !selectedObject) {
+                    addMessageToLog('AI', "Please select a part of the model first to perform that action.");
+                    speakResponse("Please select a part of the model first to perform that action.");
+                    return;
+                }
+
                 switch (resultData.action) {
                     case 'rotate':
-                        if (mesh && typeof resultData.value === 'number') {
-                            mesh.rotation.y += THREE.MathUtils.degToRad(resultData.value);
-                            addMessageToLog('AI', `Model rotated by ${resultData.value} degrees.`);
-                            speakResponse(`Model rotated by ${resultData.value} degrees.`);
+                    case 'rotateSelected':
+                        if (target && typeof resultData.value === 'number') {
+                            // THREE.MathUtils.degToRad is now directly available via THREE
+                            target.rotation.y += THREE.MathUtils.degToRad(resultData.value);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} rotated by ${resultData.value} degrees.`);
                         } else {
-                            addMessageToLog('AI', "Sorry, I couldn't rotate the model. Please specify a valid degree value.");
-                            speakResponse("Sorry, I couldn't rotate the model. Please specify a valid degree value.");
+                            addMessageToLog('AI', "Sorry, I couldn't rotate. Please specify a valid degree value or ensure a model is loaded/selected.");
+                            speakResponse("Sorry, I couldn't rotate.");
                         }
                         break;
                     case 'scale':
-                        if (mesh && typeof resultData.value === 'number' && resultData.value > 0) {
-                            mesh.scale.set(resultData.value, resultData.value, resultData.value);
-                            addMessageToLog('AI', `Model scaled by a factor of ${resultData.value}.`);
-                            speakResponse(`Model scaled by a factor of ${resultData.value}.`);
+                    case 'scaleSelected':
+                        if (target && typeof resultData.value === 'number' && resultData.value > 0) {
+                            target.scale.set(resultData.value, resultData.value, resultData.value);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
                         } else {
-                            addMessageToLog('AI', "Sorry, I couldn't scale the model. Please specify a positive scale factor (e.g., 0.5, 2).");
-                            speakResponse("Sorry, I couldn't scale the model. Please specify a positive scale factor.");
+                            addMessageToLog('AI', "Sorry, I couldn't scale. Please specify a positive scale factor or ensure a model is loaded/selected.");
+                            speakResponse("Sorry, I couldn't scale.");
                         }
                         break;
-                    case 'move':
-                        if (mesh && typeof resultData.value === 'object' && resultData.value.x !== undefined && resultData.value.y !== undefined && resultData.value.z !== undefined) {
-                            mesh.position.x += resultData.value.x;
-                            mesh.position.y += resultData.value.y;
-                            mesh.position.z += resultData.value.z;
-                            addMessageToLog('AI', `Model moved by X:${resultData.value.x}, Y:${resultData.value.y}, Z:${resultData.value.z} units.`);
-                            speakResponse(`Model moved by X:${resultData.value.x}, Y:${resultData.value.y}, Z:${resultData.value.z} units.`);
+                    case 'translate':
+                    case 'translateSelected':
+                        if (target && typeof resultData.value === 'object' &&
+                            !isNaN(resultData.value.x) && !isNaN(resultData.value.y) && !isNaN(resultData.value.z)) {
+                            target.position.x += resultData.value.x || 0;
+                            target.position.y += resultData.value.y || 0;
+                            target.position.z += resultData.value.z || 0;
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} moved by X:${resultData.value.x || 0}, Y:${resultData.value.y || 0}, Z:${resultData.value.z || 0} units.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} moved.`);
                         } else {
-                            addMessageToLog('AI', "Sorry, I couldn't move the model. Please specify valid X, Y, and Z values (e.g., move by X 10, Y -5, Z 0).");
-                            speakResponse("Sorry, I couldn't move the model. Please specify valid X, Y, and Z values.");
+                            addMessageToLog('AI', "Sorry, I couldn't move. Please specify valid X, Y, and Z values or ensure a model is loaded/selected.");
+                            speakResponse("Sorry, I couldn't move.");
                         }
                         break;
                     case 'color':
-                        if (mesh && typeof resultData.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value)) {
-                            if (Array.isArray(mesh.material)) {
-                                mesh.material.forEach(m => m.color.set(resultData.value));
-                            } else {
-                                mesh.material.color.set(resultData.value);
+                    case 'colorSelected':
+                        if (target && typeof resultData.value === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(resultData.value)) {
+                            if (Array.isArray(target.material)) {
+                                target.material.forEach(m => m.color.set(resultData.value));
+                            } else if (target.material) {
+                                target.material.color.set(resultData.value);
                             }
-                            addMessageToLog('AI', `Model color changed to ${resultData.value}.`);
-                            speakResponse(`Model color changed to ${resultData.value}.`);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} color changed to ${resultData.value}.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} color changed.`);
                         } else {
-                            addMessageToLog('AI', "Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, like #FF0000 for red.");
-                            speakResponse("Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, like #FF0000 for red.");
+                            addMessageToLog('AI', "Sorry, I couldn't change the color. Please provide a valid hexadecimal color code, or ensure a model is loaded/selected.");
+                            speakResponse("Sorry, I couldn't change the color.");
                         }
+                        break;
+                    case 'hide':
+                    case 'hideSelected':
+                        if (target) {
+                            target.visible = false;
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} is now hidden.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} is now hidden.`);
+                            if (selectedObject === target) clearSelection(); // Deselect if hidden
+                        } else {
+                            addMessageToLog('AI', "No model or part to hide.");
+                            speakResponse("No model or part to hide.");
+                        }
+                        break;
+                    case 'show':
+                    case 'showSelected':
+                        if (target) {
+                            target.visible = true;
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} is now visible.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} is now visible.`);
+                        } else {
+                            addMessageToLog('AI', "No model or part to show.");
+                            speakResponse("No model or part to show.");
+                        }
+                        break;
+                    case 'duplicate':
+                    case 'duplicateSelected':
+                        if (target) {
+                            const newObject = target.clone();
+                            newObject.position.x += 10; // Offset slightly
+                            newObject.position.y += 10;
+                            scene.add(newObject);
+                            addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} duplicated.`);
+                            speakResponse(`${selectedObject ? 'Selected part' : 'Model'} duplicated.`);
+                        } else {
+                            addMessageToLog('AI', "No model or part to duplicate.");
+                            speakResponse("No model or part to duplicate.");
+                        }
+                        break;
+                    case 'removeObject':
+                    case 'removeSelected': // AI might send this for selected object
+                        removeObject(); // This function now handles selectedObject vs mesh
+                        break;
+                    case 'resetView': // This command always applies to the whole scene
+                        resetView();
+                        break;
+                    case 'designInfo': // This command always applies to selected or whole model
+                        showDesignInfo();
                         break;
                     case 'conversational':
                         let responseText = resultData.value || resultData.message;
@@ -1066,12 +1402,12 @@
                 throw new Error(`Backend error: ${errorData.message || response.statusText}`);
             }
 
-            const result = await response.json(); // This result will be { content: "..." }
+            const result = await response.json();
             return result;
 
         } catch (error) {
             console.error("Error communicating with backend AI:", error);
-            return { content: `Failed to communicate with AI: ${error.message}` }; // Return as content
+            return { content: `Failed to communicate with AI: ${error.message}` };
         } finally {
             sendTextCommandBtn.disabled = false;
             textCommandInput.disabled = false;
