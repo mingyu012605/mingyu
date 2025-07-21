@@ -14,10 +14,10 @@
             height: 100%;
             font-family: 'Inter', sans-serif;
             /* Changed background to Fusion-like dark grid */
-            background-color: #1c1f26; /* Dark base color */
+            background-color: #2E3339; /* Dark base color closer to Fusion 360 */
             background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px),
-                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
+                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.05) 20px), /* Very subtle white grid lines */
+                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.05) 20px);
             background-size: 20px 20px; /* Size of each grid cell */
             overflow: hidden;
             display: flex;
@@ -204,7 +204,7 @@
 
         /* Editor Page */
         #editorPage {
-            background-color: #1c1f26; /* Matched to body background */
+            background-color: #2E3339; /* Matched to body background */
             display: flex;
             flex-direction: row;
             justify-content: flex-start;
@@ -239,7 +239,7 @@
 
         #cadViewer {
             flex-grow: 1;
-            background-color: #1c1f26; /* Matched to body background */
+            background-color: #2E3339; /* Matched to body background */
             position: relative;
         }
 
@@ -621,7 +621,7 @@
                 loadingMsg.style.display = 'block';
                 return true;
             } else {
-                console.error("[Validation] Unsupported file type detected for:", file ? file.name : "null");
+                console.error("[Validation] Unsupported file type! Please upload a .gltf or .glb file.");
                 loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
                 loadingMsg.style.color = 'red';
                 loadingMsg.style.display = 'block';
