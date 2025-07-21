@@ -129,6 +129,8 @@
             font-size: 1.2em; /* Larger font size */
             background-color: #f7fafc; /* Slightly off-white background */
             font-weight: 600;
+            position: relative; /* Needed for absolute positioning of fileInput */
+            overflow: hidden; /* Hide overflow of fileInput */
         }
 
         #dropZone:hover {
@@ -138,7 +140,14 @@
         }
 
         #fileInput {
-            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0; /* Make it transparent */
+            cursor: pointer;
+            z-index: 2; /* Ensure it's above the dropZone text */
         }
 
         .button-group {
@@ -454,8 +463,11 @@
         <section id="uploadPage" class="page page-active">
             <div class="upload-content">
                 <h2>Upload your 3D Model</h2>
-                <div id="dropZone">Drag and Drop your .gltf or .glb file(s) here</div>
-                <input type="file" id="fileInput" accept=".gltf,.glb" />
+                <!-- Removed onclick from dropZone; fileInput will handle clicks directly -->
+                <div id="dropZone">
+                    Drag and Drop your .gltf or .glb file(s) here
+                    <input type="file" id="fileInput" accept=".gltf,.glb" />
+                </div>
                 <button class="button primary" id="loadEditorButton">Load Model & Go to Editor</button>
                 <p id="loadingMsg">Loading model, please wait...</p>
             </div>
@@ -535,7 +547,7 @@
     const loadEditorButton = document.getElementById('loadEditorButton'); // Reference to the new button ID
 
     // --- File Input and Page Navigation ---
-    dropZone.addEventListener('click', () => fileInput.click());
+    // Removed the click listener from dropZone as fileInput will handle clicks directly
     dropZone.addEventListener('dragover', e => {
         e.preventDefault();
         dropZone.textContent = 'Release to drop your .gltf or .glb file(s)';
@@ -543,12 +555,12 @@
     });
     dropZone.addEventListener('dragleave', () => {
         dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here';
-        dropZone.style.borderColor = '#aaa';
+        dropZone.style.borderColor = '#a0aec0'; // Reset to original color
     });
     dropZone.addEventListener('drop', async e => {
         e.preventDefault();
         dropZone.textContent = 'Processing files...';
-        dropZone.style.borderColor = '#aaa';
+        dropZone.style.borderColor = '#a0aec0'; // Reset to original color
         loadingMsg.textContent = 'Processing dropped files...';
         loadingMsg.style.color = '#007bff';
         loadingMsg.style.display = 'block';
@@ -587,7 +599,7 @@
             }
         } else {
             console.log("[Drop Handler] Falling back to flat file drop (webkitGetAsEntry not available or not a folder drop).");
-            // Fallback for browsers that don't support webkitGetAsEntry or if only files are dropped
+            // Fallback for browsers that's don't support webkitGetAsEntry or if only files are dropped
             for (let i = 0; i < e.dataTransfer.files.length; i++) {
                 const file = e.dataTransfer.files[i];
                 droppedFileBlobs.set(file.name, file);
@@ -662,23 +674,22 @@
                     }
                 }
             });
-            scene = null;
+            scene = null; // Ensure scene is nulled out
         }
         if (renderer) {
             renderer.setAnimationLoop(null); // Stop animation loop
             renderer.dispose();
-            renderer = null;
+            renderer = null; // Ensure renderer is nulled out
         }
         if (controls) {
             controls.dispose();
-            controls = null;
+            controls = null; // Ensure controls are nulled out
         }
         // Remove event listeners from the canvas to prevent memory leaks
         if (cadCanvas) {
             cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
             cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
         }
-        window.removeEventListener('resize', onWindowResize, false);
         console.log("[Dispose] Resources disposed.");
     }
 
@@ -704,6 +715,8 @@
         loadingMsg.style.color = '#007bff';
         loadingMsg.style.display = 'block';
         console.log(`[goToEditor] Transitioning to editor. Preparing to load model: ${uploadedFile.name}`);
+        console.log(`[goToEditor] Current droppedFileBlobs keys:`, Array.from(droppedFileBlobs.keys()));
+
 
         // Dispose existing resources before initializing a new scene
         disposeSceneResources();
@@ -728,10 +741,15 @@
 
         uploadedFile = null; // Clear the uploaded file
         droppedFileBlobs.clear(); // Clear the map of dropped files
-        dropZone.style.borderColor = '#aaa'; // Reset drop zone style
+        originalColors.clear(); // Clear original colors map
+        selectedObject = null; // Clear selected object
+
+        dropZone.style.borderColor = '#a0aec0'; // Reset drop zone style
         dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here'; // Reset drop zone text
         loadingMsg.style.display = 'none'; // Hide loading message
         loadingMsg.style.color = ''; // Reset color
+        loadingMsg.textContent = 'Loading model, please wait...'; // Reset default message
+
         console.log("[Navigation] Returned to upload page. State reset.");
     }
 
@@ -809,15 +827,14 @@
         }, 30000); // 30-second timeout
 
         loader.manager.setURLModifier((url, path) => {
-            // debugger; // Pause execution here to inspect 'url', 'path', and 'droppedFileBlobs'
-
-            console.log(`[URLModifier] Requested URL: "${url}", Path: "${path}"`);
+            console.log(`[URLModifier] Requested URL: "${url}", Base Path: "${path}"`);
 
             // 1. Try to get a clean relative path from the full URL
             let resolvedPath = url;
             try {
                 const urlObj = new URL(url);
                 resolvedPath = urlObj.pathname.substring(1); // Remove leading slash
+                // Check if there's a 'filename' query parameter, which might be used by some loaders
                 const filenameParam = urlObj.searchParams.get('filename');
                 if (filenameParam) {
                     resolvedPath = filenameParam;
@@ -829,6 +846,7 @@
 
             // Normalize path separators for consistency (e.g., Windows vs. Unix paths)
             resolvedPath = resolvedPath.replace(/\\/g, '/');
+            console.log(`[URLModifier] Normalized resolvedPath: "${resolvedPath}"`);
 
             // 2. Check if the exact resolvedPath exists in our dropped files
             if (droppedFileBlobs.has(resolvedPath)) {
@@ -860,7 +878,6 @@
                     return blobUrl;
                 }
             }
-
 
             console.warn(`[URLModifier] GLTFLoader could not find referenced file: "${url}" (tried "${resolvedPath}", "${fileNameOnly}", and potentially combined paths). Falling back to original URL.`);
             return url; // Fallback to original URL
@@ -956,50 +973,50 @@
                                     obj.material.dispose();
                                 }
                             }
-                        });
-                    }
-                    clearSelection(); // Clear any previous selection
+                        }
+                    });
+                }
+                clearSelection(); // Clear any previous selection
 
-                    mesh = gltf.scene; // The glTF scene is the main container for all objects
-                    scene.add(mesh);
+                mesh = gltf.scene; // The glTF scene is the main container for all objects
+                scene.add(mesh);
 
-                    // Center and scale the model
-                    const bbox = new THREE.Box3().setFromObject(mesh);
-                    const center = bbox.getCenter(new THREE.Vector3());
-                    mesh.position.sub(center); // Center the model's group
+                // Center and scale the model
+                const bbox = new THREE.Box3().setFromObject(mesh);
+                const center = bbox.getCenter(new THREE.Vector3());
+                mesh.position.sub(center); // Center the model's group
 
-                    const size = bbox.getSize(new THREE.Vector3());
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    const desiredMaxDim = 40; // Target size for the model in the scene
-                    const scaleFactor = desiredMaxDim / maxDim;
-                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                const size = bbox.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const desiredMaxDim = 40; // Target size for the model in the scene
+                const scaleFactor = desiredMaxDim / maxDim;
+                mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-                    // Adjust camera to fit the new model
-                    const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
-                    const newSize = newBbox.getSize(new THREE.Vector3());
-                    const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
-                    camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
-                    camera.lookAt(0, 0, 0);
-                    controls.update(); // Update controls after camera change
+                // Adjust camera to fit the new model
+                const newBbox = new THREE.Box3().setFromObject(mesh); // Get bbox after scaling
+                const newSize = newBbox.getSize(new THREE.Vector3());
+                const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
+                camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
+                camera.lookAt(0, 0, 0);
+                controls.update(); // Update controls after camera change
 
-                    loadingMsg.style.display = 'none';
-                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
-                    speakResponse(`Model loaded successfully.`);
+                loadingMsg.style.display = 'none';
+                addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                speakResponse(`Model loaded successfully.`);
 
-                    URL.revokeObjectURL(blobUrl); // Clean up the Blob URL
+                URL.revokeObjectURL(blobUrl); // Clean up the Blob URL
 
-                }, (xhr) => {
-                    // Progress during loading
-                    console.log(`[GLTFLoader] Progress for ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
-                    loadingMsg.textContent = `Loading ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
-                }, (error) => {
-                    clearTimeout(loadTimeout); // Clear timeout on error
-                    console.error('[GLTFLoader] Error loading GLTF model:', error);
-                    loadingMsg.textContent = 'Error loading GLTF model. Ensure all associated files (.bin, textures) are dropped together.';
-                    loadingMsg.style.color = 'red';
-                    speakResponse('Error loading GLTF model. Please ensure all associated files are dropped together.');
-                    URL.revokeObjectURL(blobUrl); // Clean up the Blob URL on error
-                });
+            }, (xhr) => {
+                // Progress during loading
+                console.log(`[GLTFLoader] Progress for ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
+                loadingMsg.textContent = `Loading ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
+            }, (error) => {
+                clearTimeout(loadTimeout); // Clear timeout on error
+                console.error('[GLTFLoader] Error loading GLTF model:', error);
+                loadingMsg.textContent = 'Error loading GLTF model. Ensure all associated files (.bin, textures) are dropped together.';
+                loadingMsg.style.color = 'red';
+                speakResponse('Error loading GLTF model. Please ensure all associated files are dropped together.');
+                URL.revokeObjectURL(blobUrl); // Clean up the Blob URL on error
             });
         } else {
             // This case should ideally be caught by validateFile, but as a fallback
@@ -1557,7 +1574,8 @@
                     case 'scale':
                     case 'scaleSelected':
                         if (target && typeof resultData.value === 'number' && resultData.value > 0) {
-                            target.scale.set(resultData.value, resultData.value, resultData.value);
+                            // Corrected to use setScalar for uniform scaling
+                            target.scale.setScalar(resultData.value);
                             addMessageToLog('AI', `${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
                             speakResponse(`${selectedObject ? 'Selected part' : 'Model'} scaled by a factor of ${resultData.value}.`);
                         } else {
