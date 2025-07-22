@@ -54,20 +54,7 @@
                 transform: rotate(5deg) scale(1.05);
             }
 
-        /* API Key Status Indicator - Now indicates backend connection status */
-        #apiKeyStatus {
-            position: absolute;
-            bottom: 5px;
-            right: 15px;
-            font-size: 0.75em;
-            color: #a0aec0;
-        }
-        #apiKeyStatus.configured {
-            color: #28a745; /* Green for configured */
-        }
-        #apiKeyStatus.unconfigured {
-            color: #e53e3e; /* Red for unconfigured */
-        }
+        /* API Key Status Indicator - REMOVED */
 
 
         /* Page Container & Transitions */
@@ -378,6 +365,7 @@
             line-height: 1.5;
             margin-bottom: 10px; /* Add some space between log and input */
             min-height: 50px; /* Ensure a minimum height for the log */
+            flex-basis: 0; /* Added to ensure it respects flex-grow properly */
         }
 
         .user-message, .ai-response, .system-message {
@@ -572,7 +560,7 @@
             <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#fff" />
         </svg>
         AI VR CAD Editor
-        <span id="apiKeyStatus">API Key Status: Checking...</span>
+        <!-- Removed API Key Status Indicator -->
     </header>
 
     <div class="page-container">
@@ -690,7 +678,7 @@
         const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
         const cadCanvas = document.getElementById('cadCanvas');
         const cadViewer = document.getElementById('cadViewer'); // Reference to the cadViewer div
-        const apiKeyStatusSpan = document.getElementById('apiKeyStatus'); // API Key Status Span
+        // Removed apiKeyStatusSpan reference
 
         // New button references on the upload page
         const loadRandomModelButton = document.getElementById('loadRandomModelButton');
@@ -1740,12 +1728,9 @@
             }
         }
 
-        // Function to test backend connection on load
+        // Function to test backend connection on load (now only logs, no UI status update)
         async function testAIConnection() {
             console.log("[testAIConnection] Attempting to test backend connection with a simple 'hello'.");
-
-            apiKeyStatusSpan.textContent = 'API Key Status: Connecting...';
-            apiKeyStatusSpan.classList.remove('configured', 'unconfigured'); // Clear previous states
 
             try {
                 const response = await fetch(BACKEND_API_URL, {
@@ -1757,25 +1742,16 @@
                 if (response.ok) {
                     const result = await response.json();
                     if (result.content) {
-                        apiKeyStatusSpan.textContent = 'API Key Status: Connected (via Backend)';
-                        apiKeyStatusSpan.classList.add('configured');
-                        addMessageToLog('System', `Backend connection successful! AI responded (via backend): "${JSON.parse(result.content).value || 'Hello!'}"`);
+                        console.log(`[testAIConnection] Backend connection successful! AI responded (via backend): "${JSON.parse(result.content).value || 'Hello!'}"`);
                     } else {
-                         apiKeyStatusSpan.textContent = 'API Key Status: Backend Issue';
-                         apiKeyStatusSpan.classList.add('unconfigured');
-                         addMessageToLog('System', 'Backend responded OK, but AI content was missing or malformed.');
+                         console.warn('[testAIConnection] Backend responded OK, but AI content was missing or malformed.');
                     }
                 } else {
                     const errorData = await response.json();
-                    apiKeyStatusSpan.textContent = 'API Key Status: Backend Error';
-                    apiKeyStatusSpan.classList.add('unconfigured');
-                    addMessageToLog('System', `Backend connection failed: Status ${response.status}. Error: ${errorData.error || response.statusText}. Check Render logs.`);
+                    console.error(`[testAIConnection] Backend connection failed: Status ${response.status}. Error: ${errorData.error || response.statusText}. Check Render logs.`);
                 }
             } catch (error) {
-                apiKeyStatusSpan.textContent = 'API Key Status: Network Error';
-                apiKeyStatusSpan.classList.add('unconfigured');
-                addMessageToLog('System', `Backend connection failed (network error): ${error.message}. Is your Render server running?`);
-                console.error("[testAIConnection] Network error during backend test:", error);
+                console.error(`[testAIConnection] Backend connection failed (network error): ${error.message}. Is your Render server running?`);
             }
         }
 
@@ -2002,7 +1978,7 @@
             editorPage.classList.remove('page-active');
 
             // Automatically test AI connection on load
-            testAIConnection();
+            testAIConnection(); // Still call to log backend status to console
         };
 
     </script>
