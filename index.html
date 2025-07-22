@@ -16,11 +16,10 @@
             font-family: 'Inter', sans-serif;
             /* Authentic Fusion-like pure white background for the whole app */
             background-color: #FFFFFF; /* Pure white base color for Fusion 360 */
-            background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), /* Visible darker grid lines */
-                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), /* Visible darker grid lines */
+            repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
             background-size: 20px 20px; /* Size of each grid cell */
-            overflow: hidden;
+            overflow: hidden; /* Keep overflow hidden for main body */
             display: flex;
             flex-direction: column;
         }
@@ -117,14 +116,25 @@
                 margin-bottom: 15px;
                 font-size: 2.2em;
                 font-weight: 700;
+                display: flex; /* Enable flex for logo and text alignment */
+                align-items: center;
+                justify-content: center;
+                gap: 10px; /* Space between logo and text */
             }
+
+                .upload-content h2 svg {
+                    height: 35px;
+                    width: 35px;
+                    fill: #DAA520; /* Accent color for the logo - Dark Yellow */
+                }
+
 
         #dropZone {
             width: 100%;
             height: 180px;
             border: 3px dashed #a0aec0;
             border-radius: 10px;
-            display: flex;
+            display: none; /* Initially hidden */
             justify-content: center;
             align-items: center;
             text-align: center;
@@ -134,8 +144,9 @@
             font-size: 1.2em;
             background-color: #f7fafc;
             font-weight: 600;
-            position: relative;
+            position: relative; /* Keep relative for internal positioning if needed later */
             overflow: hidden;
+            pointer-events: none; /* Crucial: ensure it doesn't block clicks when hidden */
         }
 
             #dropZone:hover {
@@ -144,21 +155,14 @@
                 color: #B8860B; /* Darker yellow text */
             }
 
-        #fileInput {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
-        }
+        /* fileInput is now handled by inline style and pointer-events on dropZone */
 
         .button-group {
             display: flex;
-            gap: 20px;
+            flex-direction: column; /* Stack buttons vertically */
+            gap: 15px; /* Space between buttons */
             margin-top: 25px;
+            width: 100%; /* Ensure buttons take full width of upload-content */
         }
 
         .button {
@@ -170,6 +174,8 @@
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%; /* Make buttons full width */
+            box-sizing: border-box; /* Include padding in width */
         }
 
             .button.primary {
@@ -213,6 +219,7 @@
             padding: 0;
             box-sizing: border-box;
             position: relative;
+            flex-grow: 1; /* Ensure editor page takes full height after header */
         }
 
         /* Right Panel for Chat and Code Editor */
@@ -226,8 +233,8 @@
             box-shadow: -4px 0 10px rgba(0, 0, 0, 0.3);
             flex-shrink: 0;
             color: #e2e8f0;
-            /* Ensure right-panel takes full available height */
-            height: 100%; /* Important for inner flex children to distribute space */
+            height: 100%; /* Ensure right-panel takes full available height */
+            box-sizing: border-box; /* Include padding in height calculation */
         }
 
             .right-panel h2 {
@@ -242,12 +249,15 @@
         /* Tab buttons for chat/code editor */
         .tab-buttons {
             display: flex;
+            align-items: center; /* Align items to center vertically */
             margin-bottom: 15px;
             border-radius: 8px;
             overflow: hidden;
             background-color: #2d3748;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-            gap: 10px; /* Added gap to prevent overlap */
+            padding: 5px; /* Added padding to contain the circular button better */
+            box-sizing: border-box;
+            gap: 5px; /* Reduced gap between buttons for tighter packing */
         }
 
         .tab-button {
@@ -261,37 +271,67 @@
             cursor: pointer;
             transition: background-color 0.3s ease, color 0.3s ease;
             text-align: center;
+            border-radius: 8px; /* Apply border-radius to individual buttons */
         }
 
-        .tab-button:hover {
-            background-color: #3a414e;
-            color: #e2e8f0;
-        }
+            .tab-button:hover {
+                background-color: #3a414e;
+                color: #e2e8f0;
+            }
 
-        .tab-button.active {
-            background-color: #DAA520; /* Active tab button - Dark Yellow */
+            .tab-button.active {
+                background-color: #DAA520; /* Active tab button - Dark Yellow */
+                color: white;
+                box-shadow: 0 2px 5px rgba(218, 165, 32, 0.3); /* Dark Yellow shadow */
+            }
+
+        /* Small circular button for "Back to Upload" */
+        #backToUploadCircleButton {
+            width: 40px; /* Small size */
+            height: 40px; /* Small size */
+            border-radius: 50%; /* Circular shape */
+            background-color: #DAA520; /* Dark Yellow */
             color: white;
-            box-shadow: 0 2px 5px rgba(218, 165, 32, 0.3); /* Dark Yellow shadow */
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em; /* Smaller font size if text is present */
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0; /* Prevent shrinking */
         }
+
+            #backToUploadCircleButton:hover {
+                background-color: #B8860B; /* Darker yellow on hover */
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+            }
+
+            #backToUploadCircleButton svg {
+                fill: #FFFFFF;
+                height: 20px;
+                width: 20px;
+            }
+
 
         /* Tab content areas */
         .tab-content {
-            flex-grow: 1;
+            flex-grow: 1; /* Ensure tab content grows to fill available space */
             display: none; /* Hidden by default */
             flex-direction: column; /* Ensure content stacks vertically */
-            overflow-y: auto; /* Allow internal scrolling */
             padding-top: 5px; /* Small padding for content */
+            height: 100%; /* Crucial: Make sure tab-content takes full height of its parent */
+            box-sizing: border-box; /* Include padding in height */
         }
 
-        .tab-content.active {
-            display: flex; /* Show active tab content */
-        }
+            .tab-content.active {
+                display: flex; /* Show active tab content */
+            }
 
         #chatContent {
-            height: 100%; /* Take full height of parent when active */
-            display: flex; /* Make chatContent a flex container */
-            flex-direction: column; /* Stack children vertically */
-            justify-content: space-between; /* Push input to bottom */
+            /* No changes needed here, as parent .tab-content and children #aiLog and .ai-input-group handle flex distribution */
         }
 
         #codeEditorContent {
@@ -317,10 +357,10 @@
             border-radius: 10px;
             padding: 15px;
             color: #e2e8f0;
-            overflow-y: auto;
-            /* Removed min-height to allow dynamic growth */
+            overflow-y: auto; /* This should handle scrolling for the chat history */
             line-height: 1.5;
-            margin-bottom: 15px;
+            margin-bottom: 10px; /* Add some space between log and input */
+            min-height: 50px; /* Ensure a minimum height for the log */
         }
 
         .user-message, .ai-response, .system-message {
@@ -364,6 +404,9 @@
             gap: 10px;
             flex-shrink: 0;
             margin-top: auto; /* Pushes this group to the bottom of its flex container */
+            padding-top: 10px; /* Add some padding above the input group */
+            /* Ensure it doesn't get pushed out by content above */
+            box-sizing: border-box;
         }
 
         #textCommandInput {
@@ -425,7 +468,7 @@
         }
 
             #integratedVoiceBtn svg {
-                fill: #a0aec0;
+                fill: #FFFFFF; /* Changed fill to white for visibility */
                 height: 24px;
                 width: 24px;
                 transition: fill 0.3s ease;
@@ -450,30 +493,6 @@
                     fill: white;
                 }
 
-        /* Styling for the new "Back to Upload" button position and size */
-        .top-right-button {
-            position: absolute;
-            top: 20px;
-            right: 370px; /* Adjusted to be outside the 350px wide right-panel + 20px margin */
-            padding: 8px 15px;
-            font-size: 0.9em;
-            z-index: 100;
-            background-color: #DAA520; /* Back to Upload button - Dark Yellow */
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-        }
-
-            .top-right-button:hover {
-                background-color: #B8860B; /* Darker yellow on hover */
-                transform: translateY(-2px);
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
-            }
-
         /* Code Editor Specific Styles */
         #cssCodeEditor {
             width: 100%;
@@ -492,10 +511,10 @@
             outline: none;
         }
 
-        #cssCodeEditor:focus {
-            border-color: #DAA520; /* Dark Yellow */
-            box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.3); /* Dark Yellow */
-        }
+            #cssCodeEditor:focus {
+                border-color: #DAA520; /* Dark Yellow */
+                box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.3); /* Dark Yellow */
+            }
 
         #applyCssButton {
             width: 100%;
@@ -511,12 +530,11 @@
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
         }
 
-        #applyCssButton:hover {
-            background-color: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
-        }
-
+            #applyCssButton:hover {
+                background-color: #218838;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+            }
     </style>
     <!-- Import Map for ES Modules -->
     <script type="importmap">
@@ -542,13 +560,25 @@
     <div class="page-container">
         <section id="uploadPage" class="page page-active">
             <div class="upload-content">
-                <h2>Upload your 3D Model</h2>
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1L2 6v12l10 5 10-5V6L12 1zm0 2.31L18.47 6 12 9.31 5.53 6 12 3.31zM4 7.69l6 3.15v6.52L4 13.84V7.69zm8 11.01L6.47 16 12 12.69l5.53 3.31L12 18.7zM20 13.84l-6 3.15V10.84l6-3.15v6.15z" />
+                        <circle cx="12" cy="12" r="2" fill="#DAA520" />
+                        <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#fff" />
+                    </svg>
+                    AI VR CAD Editor
+                </h2>
+                <div class="button-group">
+                    <button class="button primary" id="createNewEmptyModelButton">Create Empty Model</button>
+                    <button class="button primary" id="editExistingModelButton">Edit Existing Model</button>
+                    <button class="button secondary" id="loadRandomModelButton">Load Random Model</button>
+                </div>
                 <div id="dropZone">
                     Drag and Drop your .gltf or .glb file(s) here
-                    <input type="file" id="fileInput" accept=".gltf,.glb" />
                 </div>
-                <button class="button primary" id="loadEditorButton">Load Model & Go to Editor</button>
                 <p id="loadingMsg">Loading model, please wait...</p>
+                <!-- The file input is kept here, hidden, as it's triggered programmatically -->
+                <input type="file" id="fileInput" accept=".gltf,.glb" style="display: none;" />
             </div>
         </section>
 
@@ -556,15 +586,15 @@
             <main id="cadViewer">
                 <canvas id="cadCanvas"></canvas>
             </main>
-            <!-- This "Back to Upload" button is a floating button, distinct from the ones in the right panel. -->
-            <button class="top-right-button" onclick="window.goBack()">
-                <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#FFFFFF"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-13v4H7.5L12 16.5 16.5 12H13V7z" /></svg>
-                Back to Upload
-            </button>
 
             <!-- NEW: Right-side chat panel with updated buttons -->
             <div class="right-panel">
                 <div class="tab-buttons">
+                    <!-- Small circular "Back to Upload" button -->
+                    <button id="backToUploadCircleButton" onclick="window.goBack()">
+                        <!-- Left arrow SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" /></svg>
+                    </button>
                     <button class="tab-button active" id="uploadNewFileButton">Upload New File</button>
                     <button class="tab-button" id="saveButton">Save</button>
                 </div>
@@ -577,7 +607,8 @@
                     <div class="ai-input-group">
                         <input type="text" id="textCommandInput" placeholder="Type AI command or question..." />
                         <button id="integratedVoiceBtn">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.64 6.44-6.2 6.93V21h-2v-3.07c-3.56-.49-6.2-3.4-6.2-6.93h-2c0 4.17 3.13 7.62 7.2 8.15V23h4v-2.85c4.07-.53 7.2-3.98 7.2-8.15h-2z" /></svg>
+                            <!-- Changed fill to white directly in SVG for consistent visibility -->
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.64 6.44-6.2 6.93V21h-2v-3.07c-3.56-.49-6.2-3.4-6.2-6.93h-2c0 4.17 3.13 7.62 7.2 8.15V23h4v-2.85c4.07-.53 7.2-3.98 7.2-8.15h-2z" /></svg>
                         </button>
                         <button id="sendTextCommandBtn">Send</button>
                     </div>
@@ -603,7 +634,15 @@
         // Global map to store dropped files by their relative path (e.g., "scene.bin", "textures/image.png")
         const droppedFileBlobs = new Map();
 
-        // Removed 'mesh' from global declaration as we now handle multiple models
+        // List of random GLB model URLs
+        const RANDOM_MODEL_URLS = [
+            'https://threejs.org/examples/models/gltf/Horse.glb',
+            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
+            'https://threejs.org/examples/models/gltf/DamagedHelmet/DamagedHelmet.gltf',
+            'https://threejs.org/examples/models/gltf/FlightHelmet/FlightHelmet.gltf',
+            'https://threejs.org/examples/models/gltf/LittlestTokyo.glb'
+        ];
+
         let uploadedFile = null, scene, camera, renderer, controls;
         let recognition;
         let synth;
@@ -632,9 +671,14 @@
         const textCommandInput = document.getElementById('textCommandInput');
         const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
         const cadCanvas = document.getElementById('cadCanvas');
-        const loadEditorButton = document.getElementById('loadEditorButton');
 
-        // Updated button references
+        // New button references on the upload page
+        const loadRandomModelButton = document.getElementById('loadRandomModelButton'); // Renamed
+        const createNewEmptyModelButton = document.getElementById('createNewEmptyModelButton'); // New
+        const editExistingModelButton = document.getElementById('editExistingModelButton');
+
+
+        // Updated button references on editor page
         const uploadNewFileButton = document.getElementById('uploadNewFileButton');
         const saveButton = document.getElementById('saveButton');
         const chatContent = document.getElementById('chatContent');
@@ -662,6 +706,33 @@
         });
         saveButton.addEventListener('click', saveModel);
 
+        // --- New Event Listeners for Upload Page Buttons ---
+        loadRandomModelButton.addEventListener('click', () => {
+            console.log("[Load Random Model] button clicked.");
+            uploadedFile = null; // Ensure no previous file is considered for explicit upload
+            goToEditor('random'); // Go to editor and load a random model
+        });
+
+        createNewEmptyModelButton.addEventListener('click', () => {
+            console.log("[Create Empty Model] button clicked.");
+            uploadedFile = null; // Ensure no previous file is considered
+            goToEditor('empty'); // Go to editor with an empty scene
+        });
+
+        editExistingModelButton.addEventListener('click', () => {
+            console.log("[Edit Existing Model] button clicked.");
+            // Show the dropZone and trigger file input if needed
+            dropZone.style.display = 'flex'; // Make dropZone visible for interaction
+            dropZone.style.pointerEvents = 'auto'; // Enable pointer events when visible
+            loadingMsg.textContent = 'Please select a .gltf or .glb file, or drag and drop.';
+            loadingMsg.style.color = '#007bff';
+            loadingMsg.style.display = 'block';
+
+            // Programmatically click the hidden file input to open file dialog
+            fileInput.click();
+        });
+
+
         // --- Placeholder Save Model Function ---
         function saveModel() {
             addMessageToLog('System', 'Save functionality is a placeholder. To implement actual model saving (e.g., to GLTF/GLB), a GLTFExporter would be required, which involves more complex Three.js serialization.');
@@ -679,7 +750,7 @@
                 // Apply the new CSS properties
                 const lines = cssText.split(';');
                 lines.forEach(line => {
-                    const parts = line.split(':');
+                    const parts = line = line.split(':');
                     if (parts.length === 2) {
                         const prop = parts[0].trim();
                         const value = parts[1].trim();
@@ -771,10 +842,11 @@
                     if (editorPage.classList.contains('page-active')) {
                         loadModel(uploadedFile);
                     } else {
-                        // On upload page, just validate and wait for "Load Editor" button click
-                        loadingMsg.textContent = `File selected: ${uploadedFile.name}. Click 'Load Model & Go to Editor'.`;
+                        // On upload page, just validate and then go to editor with the uploaded file
+                        loadingMsg.textContent = `File selected: ${uploadedFile.name}. Loading editor...`;
                         loadingMsg.style.color = '#007bff';
                         loadingMsg.style.display = 'block';
+                        goToEditor('uploaded');
                     }
                 }
                 console.log("[Drop Handler] All dropped files (keys in map):", Array.from(droppedFileBlobs.keys()));
@@ -808,10 +880,11 @@
                     if (editorPage.classList.contains('page-active')) {
                         loadModel(uploadedFile);
                     } else {
-                        // On upload page, just validate and wait for "Load Editor" button click
-                        loadingMsg.textContent = `File selected: ${uploadedFile.name}. Click 'Load Model & Go to Editor'.`;
+                        // On upload page, just validate and then go to editor with the uploaded file
+                        loadingMsg.textContent = `File selected: ${uploadedFile.name}. Loading editor...`;
                         loadingMsg.style.color = '#007bff';
                         loadingMsg.style.display = 'block';
+                        goToEditor('uploaded');
                     }
                 }
                 console.log("[File Input] Dropped file (keys in map):", Array.from(droppedFileBlobs.keys()));
@@ -824,8 +897,6 @@
             }
             console.log("[File Input] uploadedFile after change processing:", uploadedFile ? uploadedFile.name : "null");
         });
-
-        loadEditorButton.addEventListener('click', goToEditor);
 
         function validateFile(file) {
             console.log("[Validation] Validating file:", file ? file.name : "null");
@@ -905,16 +976,33 @@
         }
 
 
-        function goToEditor() {
-            console.log("[goToEditor] Attempting to go to editor.");
-            console.log("[goToEditor] Current uploadedFile:", uploadedFile ? uploadedFile.name : "null");
-            if (!uploadedFile) {
-                addMessageToLog('System', "Please upload a valid .gltf or .glb file before continuing.");
-                loadingMsg.textContent = 'Please upload a valid .gltf or .glb file.';
-                loadingMsg.style.color = 'red';
+        function goToEditor(loadType = 'empty') { // Default to 'empty' if no type specified
+            console.log(`[goToEditor] Attempting to go to editor with load type: ${loadType}.`);
+
+            // Dispose and re-init scene to ensure a clean state for new or loaded models
+            disposeSceneResources();
+
+            if (loadType === 'random') {
+                console.log("[goToEditor] Loading a random model.");
+                loadRandomModel();
+                addMessageToLog('System', 'Loading a random model. Use "Upload New File" to add more models.');
+                speakResponse('Loading a random model. You can upload files from the editor.');
+            } else if (loadType === 'empty') {
+                console.log("[goToEditor] Creating an empty model scene.");
+                addMessageToLog('System', 'Starting a new, empty model. Use "Upload New File" to load models.');
+                speakResponse('Starting a new, empty model. You can upload files from the editor.');
+                // No model loading needed for empty scene, just initScene() handles the grid.
+            } else if (loadType === 'uploaded' && uploadedFile) {
+                loadingMsg.textContent = `Loading model: ${uploadedFile.name}...`;
+                loadingMsg.style.color = '#007bff';
                 loadingMsg.style.display = 'block';
-                console.warn("[goToEditor] No uploaded file found.");
-                return;
+                console.log(`[goToEditor] Transitioning to editor. Preparing to load uploaded model: ${uploadedFile.name}`);
+                console.log(`[goToEditor] Current droppedFileBlobs keys:`, Array.from(droppedFileBlobs.keys()));
+                loadModel(uploadedFile);
+            } else {
+                console.warn("[goToEditor] Invalid loadType or no uploadedFile for 'uploaded' type. Defaulting to empty scene.");
+                addMessageToLog('System', 'Invalid load request. Starting with an empty scene.');
+                speakResponse('Invalid load request. Starting with an empty scene.');
             }
 
             uploadPage.classList.remove('page-active');
@@ -922,24 +1010,27 @@
 
             editorPage.classList.remove('page-inactive');
             editorPage.classList.add('page-active');
-
-            loadingMsg.textContent = `Loading model: ${uploadedFile.name}...`;
-            loadingMsg.style.color = '#007bff';
-            loadingMsg.style.display = 'block';
-            console.log(`[goToEditor] Transitioning to editor. Preparing to load model: ${uploadedFile.name}`);
-            console.log(`[goToEditor] Current droppedFileBlobs keys:`, Array.from(droppedFileBlobs.keys()));
-
-
-            // Dispose and re-init scene only if it's not already initialized or needs a full reset
-            if (!scene || loadedModels.length > 0) { // If scene exists and has models, or not initialized
-                 disposeSceneResources(); // This will also call initScene()
-            } else {
-                 initScene(); // Just initialize if it's a fresh start
-            }
-
-
-            loadModel(uploadedFile);
         }
+
+        function loadRandomModel() {
+            const randomIndex = Math.floor(Math.random() * RANDOM_MODEL_URLS.length);
+            const modelUrl = RANDOM_MODEL_URLS[randomIndex];
+            const loader = new GLTFLoader();
+            loader.load(modelUrl, (gltf) => {
+                const randomModel = gltf.scene;
+                randomModel.name = `Random Model (${modelUrl.split('/').pop()})`;
+                scene.add(randomModel);
+                loadedModels.push(randomModel);
+                resetView();
+                addMessageToLog('System', `Random model "${randomModel.name}" loaded successfully.`);
+                speakResponse(`Random model loaded.`);
+            }, undefined, (error) => {
+                console.error('Error loading random model:', error);
+                addMessageToLog('System', `Error loading random model from ${modelUrl}. Starting with an empty scene.`);
+                speakResponse(`Error loading random model. Starting with an empty scene.`);
+            });
+        }
+
 
         function goBack() {
             console.log("[Navigation] Going back to upload page.");
@@ -954,12 +1045,16 @@
             droppedFileBlobs.clear();
             originalMaterials.clear();
             selectedObject = null;
-            fileInput.value = '';
+            fileInput.value = ''; // Clear file input value
             loadingMsg.textContent = 'Drag and Drop your .gltf or .glb file(s) here, or click to browse.';
             loadingMsg.style.display = 'none';
             loadingMsg.style.color = '';
             dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here';
             dropZone.style.borderColor = '#a0aec0';
+            // Hide dropZone and loadingMsg when returning to the upload page
+            dropZone.style.display = 'none';
+            dropZone.style.pointerEvents = 'none'; // Disable pointer events when hidden
+            loadingMsg.style.display = 'none';
             console.log("[Navigation] Returned to upload page. State reset.");
         }
 
@@ -984,13 +1079,15 @@
             if (!camera) {
                 const viewerDiv = cadCanvas.parentElement;
                 camera = new THREE.PerspectiveCamera(75, viewerDiv.clientWidth / viewerDiv.clientHeight, 0.1, 1000);
-                camera.position.set(0, 0, 50);
+                // Adjusted initial camera position for a more "twisted" or perspective view
+                camera.position.set(30, 30, 30); // Set camera at an angle
             }
             if (!controls) {
                 controls = new OrbitControls(camera, renderer.domElement);
                 controls.enableDamping = true;
                 controls.dampingFactor = 0.25;
                 controls.addEventListener('change', updateDynamicGrid); // Call on camera change
+                controls.target.set(0, 0, 0); // Ensure controls target the origin
             }
             if (!transformControls) {
                 transformControls = new TransformControls(camera, renderer.domElement);
@@ -1467,7 +1564,7 @@
                 speakResponse('View reset to fit all models.');
             } else if (controls && camera) {
                 // If no models loaded, reset to a default empty scene view
-                camera.position.set(0, 0, 50);
+                camera.position.set(30, 30, 30); // Reset to the initial perspective view
                 camera.lookAt(0, 0, 0);
                 controls.target.set(0, 0, 0);
                 controls.update();
@@ -1572,81 +1669,78 @@
             sendTextCommandBtn.disabled = true;
             textCommandInput.disabled = true;
             addMessageToLog('System', 'AI is thinking...'); // Add a "thinking" message
+            console.log("[sendAICommand] Sending command to AI:", command);
 
             // System instruction to guide the AI's response format
             const systemInstruction = `
-                You are an AI assistant for a 3D CAD editor. Your primary goal is to interpret user commands and return a structured JSON object that the frontend can execute. You can now work with multiple 3D models loaded in the scene simultaneously.
+                    You are an AI assistant for a 3D CAD editor. Your primary goal is to interpret user commands and return a structured JSON object that the frontend can execute. You can now work with multiple 3D models loaded in the scene simultaneously.
 
-                Here are the available actions and their expected JSON format:
+                    Here are the available actions and their expected JSON format:
 
-                1.  **Rotate Model/Part:**
-                    * User command: "rotate [selected/model] by [degrees] degrees around [x/y/z] axis"
-                    * JSON: \`{ "action": "rotateAxis", "value": { "axis": "x/y/z", "degrees": number } }\`
-                    * If no axis specified, default to 'y'. If no degrees, default to 90.
-                    * Example: \`{ "action": "rotateAxis", "value": { "axis": "y", "degrees": 90 } }\`
+                    1.  **Rotate Model/Part:**
+                        * User command: "rotate [selected/model] by [degrees] degrees around [x/y/z] axis"
+                        * JSON: \`{ "action": "rotateAxis", "value": { "axis": "x/y/z", "degrees": number } }\`
+                        * If no axis specified, default to 'y'. If no degrees, default to 90.
+                        * Example: \`{ "action": "rotateAxis", "value": { "axis": "y", "degrees": 90 } }\`
 
-                2.  **Scale Model/Part:**
-                    * User command: "scale [selected/model] by [factor]"
-                    * JSON: \`{ "action": "scale", "value": number }\` (scale factor, e.g., 0.5, 2)
-                    * Example: \`{ "action": "scale", "value": 1.5 }\`
+                    2.  **Scale Model/Part:**
+                        * User command: "scale [selected/model] by [factor]"
+                        * JSON: \`{ "action": "scale", "value": number }\` (scale factor, e.g., 0.5, 2)
+                        * Example: \`{ "action": "scale", "value": 1.5 }\`
 
-                3.  **Translate (Move) Model/Part:**
-                    * User command: "move [selected/model] [x] [y] [z]" (e.g., "move by 5 on X", "move to 10 2 3")
-                    * JSON: \`{ "action": "translate", "value": { "x": number, "y": number, "z": number } }\` (relative movement)
-                    * Example: \`{ "action": "translate", "value": { "x": 5, "y": 0, "z": 0 } }\`
+                    3.  **Translate (Move) Model/Part:**
+                        * User command: "move [selected/model] [x] [y] [z]" (e.g., "move by 5 on X", "move to 10 2 3")
+                        * JSON: \`{ "action": "translate", "value": { "x": number, "y": number, "z": number } }\` (relative movement)
+                        * Example: \`{ "action": "translate", "value": { "x": 5, "y": 0, "z": 0 } }\`
 
-                4.  **Select Specific Part by Name:**
-                    * User command: "select [part name]" (e.g., "select the missile", "select the leg")
-                    * JSON: \`{ "action": "selectPart", "value": "part name" }\`
-                    * This will search for the part across all loaded models.
-                    * Example: \`{ "action": "selectPart", "value": "fuselage" }\`
+                    4.  **Select Specific Part by Name:**
+                        * User command: "select [part name]" (e.g., "select the missile", "select the leg")
+                        * JSON: \`{ "action": "selectPart", "value": "part name" }\`
+                        * This will search for the part across all loaded models.
+                        * Example: \`{ "action": "selectPart", "value": "fuselage" }\`
 
-                5.  **Remove Selected Object:**
-                    * User command: "remove [selected object]", "delete [selected object]"
-                    * JSON: \`{ "action": "removeObject", "value": null }\`
+                    5.  **Remove Selected Object:**
+                        * User command: "remove [selected object]", "delete [selected object]"
+                        * JSON: \`{ "action": "removeObject", "value": null }\`
 
-                6.  **Reset View:**
-                    * User command: "reset view", "reset camera"
-                    * JSON: \`{ "action": "resetView", "value": null }\`
+                    6.  **Reset View:**
+                        * User command: "reset view", "reset camera"
+                        * JSON: \`{ "action": "resetView", "value": null }\`
 
-                7.  **Show Design Info:**
-                    * User command: "show design info", "what is this"
-                    * JSON: \`{ "action": "designInfo", "value": null }\`
-                    * This will show info for all loaded models.
+                    7.  **Show Design Info:**
+                        * User command: "show design info", "what is this"
+                        * JSON: \`{ "action": "designInfo", "value": null }\`
+                        * This will show info for all loaded models.
 
-                8.  **Go Back to Upload Screen (clears current scene):**
-                    * User command: "go back", "start new project"
-                    * JSON: \`{ "action": "goBack", "value": null }\`
+                    8.  **List Parts:**
+                        * User command: "list parts", "what are the parts"
+                        * JSON: \`{ "action": "listParts", "value": null }\`
+                        * This will list parts from all loaded models.
+                        * If the user asks for selection and you are unsure of the part name, suggest they use "list parts" first.
 
-                9.  **List Parts:**
-                    * User command: "list parts", "what are the parts"
-                    * JSON: \`{ "action": "listParts", "value": null }\`
-                    * This will list parts from all loaded models.
-                    * If the user asks for selection and you are unsure of the part name, suggest they use "list parts" first.
+                    9. **Identify Selected Object:**
+                        * User command: "identify selected object", "what is selected"
+                        * JSON: \`{ "action": "identifySelectedObject", "value": null }\`
 
-                10. **Identify Selected Object:**
-                    * User command: "identify selected object", "what is selected"
-                    * JSON: \`{ "action": "identifySelectedObject", "value": null }\`
+                    10. **Set Transform Mode:**
+                        * User command: "set mode to move", "activate rotate tool", "switch to scale"
+                        * JSON: \`{ "action": "setTransformMode", "value": "translate" | "rotate" | "scale" }\`
 
-                11. **Set Transform Mode:**
-                    * User command: "set mode to move", "activate rotate tool", "switch to scale"
-                    * JSON: \`{ "action": "setTransformMode", "value": "translate" | "rotate" | "scale" }\`
+                    11. **Conversational Response (if no specific CAD action is clear):**
+                        * JSON: \`{ "action": "conversational", "value": "Your conversational response here." }\`
 
-                12. **Conversational Response (if no specific CAD action is clear):**
-                    * JSON: \`{ "action": "conversational", "value": "Your conversational response here." }\`
+                    12. **Error Response (if command is unclear or cannot be fulfilled):**
+                        * JSON: \`{ "action": "error", "value": "Explanation of the error." }\`
 
-                13. **Error Response (if command is unclear or cannot be fulfilled):**
-                    * JSON: \`{ "action": "error", "value": "Explanation of the error." }\`
-
-                **Important Considerations for AI:**
-                * Always respond with a single JSON object.
-                * The \`value\` field should contain the necessary parameters for the action.
-                * For actions like \`rotateAxis\`, \`scale\`, \`translate\`, if the user provides incomplete information (e.g., "rotate by 90 degrees" without an axis), you can make a reasonable default (e.g., 'y' axis for rotation, 1 for scale, 0 for missing translate axes) or ask for clarification using a \`conversational\` action.
-                * For "select part", try to extract the most likely part name from the user's request.
-                * If the user asks for something not in the action list, use \`conversational\`.
-                * If the user asks for an action that requires a selected object, but the AI doesn't know if an object is selected, it should still return the action, and the frontend will handle the "no object selected" message.
-                * Ensure all JSON is valid and correctly formatted. Do not include any text outside the JSON block.
-            `;
+                    **Important Considerations for AI:**
+                    * Always respond with a single JSON object.
+                    * The \`value\` field should contain the necessary parameters for the action.
+                    * For actions like \`rotateAxis\`, \`scale\`, \`translate\`, if the user provides incomplete information (e.g., "rotate by 90 degrees" without an axis), you can make a reasonable default (e.g., 'y' axis for rotation, 1 for scale, 0 for missing translate axes) or ask for clarification using a \`conversational\` action.
+                    * For "select part", try to extract the most likely part name from the user's request.
+                    * If the user asks for something not in the action list, use \`conversational\`.
+                    * If the user asks for an action that requires a selected object, but the AI doesn't know if an object is selected, it should still return the action, and the frontend will handle the "no object selected" message.
+                    * Ensure all JSON is valid and correctly formatted. Do not include any text outside the JSON block.
+                `;
 
             const chatHistory = [
                 { role: "user", parts: [{ text: systemInstruction + "\n\nUser command: " + command }] }
@@ -1664,8 +1758,8 @@
                                 type: "ANY" // Can be string, number, or object based on action
                             },
                             message: { type: "STRING" } // Optional human-readable message
-                        },
-                        required: ["action"]
+                        }
+                        // Removed 'required: ["action"]' to make 'action' optional
                     }
                 }
             };
@@ -1682,16 +1776,20 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    console.error("[sendAICommand] API Response not OK:", response.status, errorData);
                     throw new Error(`Gemini API error: ${errorData.error.message || response.statusText}`);
                 }
 
                 const result = await response.json();
+                console.log("[sendAICommand] Raw AI response result:", result);
+
                 // Check for candidates and content before accessing
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                     return result; // Return the full result object for parsing in processAICommand
                 } else {
+                    console.error("[sendAICommand] Gemini API response format unexpected or empty. Result:", result);
                     throw new Error("Gemini API response format unexpected or empty.");
                 }
 
@@ -1710,17 +1808,24 @@
         }
 
         function processAICommand(aiResponse) {
-            console.log("Processing AI command:", aiResponse);
+            console.log("[processAICommand] Processing AI command:", aiResponse);
             // Assuming aiResponse.candidates[0].content.parts[0].text contains a JSON string
             if (aiResponse && aiResponse.candidates && aiResponse.candidates.length > 0 &&
                 aiResponse.candidates[0].content && aiResponse.candidates[0].content.parts &&
                 aiResponse.candidates[0].content.parts.length > 0) {
 
                 const responseText = aiResponse.candidates[0].content.parts[0].text;
+                console.log("[processAICommand] Raw response text:", responseText);
+
                 try {
                     const parsedResponse = JSON.parse(responseText);
+                    console.log("[processAICommand] Parsed AI response:", parsedResponse);
 
-                    if (parsedResponse.action) {
+                    // Handle cases where 'action' might be missing or is 'conversational'
+                    if (parsedResponse.action === 'conversational' || (!parsedResponse.action && parsedResponse.value)) {
+                        addMessageToLog('AI', parsedResponse.value);
+                        speakResponse(parsedResponse.value);
+                    } else if (typeof parsedResponse.action === 'string') {
                         switch (parsedResponse.action) {
                             case 'removeObject':
                                 removeObject();
@@ -1742,7 +1847,7 @@
                             case 'listParts':
                                 listParts();
                                 break;
-                            case 'selectPart': // Changed from selectPartByName to match AI instruction
+                            case 'selectPart':
                                 if (parsedResponse.value) {
                                     selectPartByName(parsedResponse.value);
                                 } else {
@@ -1754,16 +1859,12 @@
                                 addMessageToLog('AI', parsedResponse.message || 'An unknown error occurred.');
                                 speakResponse(parsedResponse.message || 'An unknown error occurred.');
                                 break;
-                            case 'conversational': // For general conversational responses
-                                addMessageToLog('AI', parsedResponse.value);
-                                speakResponse(parsedResponse.value);
-                                break;
                             default:
                                 addMessageToLog('AI', `Understood: "${parsedResponse.action}". However, I don't know how to perform this action.`);
                                 speakResponse(`I understand, but I don't know how to perform ${parsedResponse.action}.`);
                         }
                     } else if (parsedResponse.message) {
-                        // If no specific action, but a message is present (e.g., direct AI response)
+                        // Fallback for direct messages if action is not explicitly handled
                         addMessageToLog('AI', parsedResponse.message);
                         speakResponse(parsedResponse.message);
                     } else {
@@ -1771,12 +1872,13 @@
                         speakResponse('I received an unexpected response.');
                     }
                 } catch (jsonError) {
-                    console.error("Failed to parse AI response as JSON:", jsonError, "Response:", responseText);
-                    addMessageToLog('AI', `I received an uninterpretable response: "${responseText}".`);
+                    console.error("Failed to parse AI response as JSON:", jsonError, "Raw Response:", responseText);
+                    addMessageToLog('AI', `I received an uninterpretable response from the AI: "${responseText.substring(0, 100)}...". Please check the console for full details.`);
                     speakResponse('I received an uninterpretable response.');
                 }
             } else {
-                addMessageToLog('AI', 'I could not get a valid response from the AI service.');
+                console.error("[processAICommand] AI response structure is invalid or empty:", aiResponse);
+                addMessageToLog('AI', 'I could not get a valid response from the AI service. The response structure was unexpected.');
                 speakResponse('I could not get a valid response from the AI service.');
             }
         }
@@ -1889,6 +1991,12 @@
             cadViewer.style.backgroundColor = '#FFFFFF';
             cadViewer.style.backgroundImage = 'repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px)';
             cadViewer.style.backgroundSize = '20px 20px';
+
+            // Ensure the upload page is active and editor page is inactive on initial load
+            uploadPage.classList.add('page-active');
+            uploadPage.classList.remove('page-inactive');
+            editorPage.classList.add('page-inactive');
+            editorPage.classList.remove('page-active');
         };
 
     </script>
