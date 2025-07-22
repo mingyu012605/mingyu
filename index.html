@@ -16,8 +16,9 @@
             font-family: 'Inter', sans-serif;
             /* Authentic Fusion-like pure white background for the whole app */
             background-color: #FFFFFF; /* Pure white base color for Fusion 360 */
-            background-image: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), /* Visible darker grid lines */
-            repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), /* Visible darker grid lines */
+                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
             background-size: 20px 20px; /* Size of each grid cell */
             overflow: hidden; /* Keep overflow hidden for main body */
             display: flex;
@@ -274,16 +275,16 @@
             border-radius: 8px; /* Apply border-radius to individual buttons */
         }
 
-            .tab-button:hover {
-                background-color: #3a414e;
-                color: #e2e8f0;
-            }
+        .tab-button:hover {
+            background-color: #3a414e;
+            color: #e2e8f0;
+        }
 
-            .tab-button.active {
-                background-color: #DAA520; /* Active tab button - Dark Yellow */
-                color: white;
-                box-shadow: 0 2px 5px rgba(218, 165, 32, 0.3); /* Dark Yellow shadow */
-            }
+        .tab-button.active {
+            background-color: #DAA520; /* Active tab button - Dark Yellow */
+            color: white;
+            box-shadow: 0 2px 5px rgba(218, 165, 32, 0.3); /* Dark Yellow shadow */
+        }
 
         /* Small circular button for "Back to Upload" */
         #backToUploadCircleButton {
@@ -326,9 +327,9 @@
             box-sizing: border-box; /* Include padding in height */
         }
 
-            .tab-content.active {
-                display: flex; /* Show active tab content */
-            }
+        .tab-content.active {
+            display: flex; /* Show active tab content */
+        }
 
         #chatContent {
             /* No changes needed here, as parent .tab-content and children #aiLog and .ai-input-group handle flex distribution */
@@ -511,10 +512,10 @@
             outline: none;
         }
 
-            #cssCodeEditor:focus {
-                border-color: #DAA520; /* Dark Yellow */
-                box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.3); /* Dark Yellow */
-            }
+        #cssCodeEditor:focus {
+            border-color: #DAA520; /* Dark Yellow */
+            box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.3); /* Dark Yellow */
+        }
 
         #applyCssButton {
             width: 100%;
@@ -530,11 +531,103 @@
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
         }
 
-            #applyCssButton:hover {
-                background-color: #218838;
-                transform: translateY(-2px);
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
-            }
+        #applyCssButton:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+        }
+
+        /* --- Confirmation Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent dark overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top of everything */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            color: #1a202c;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            color: #4a5568;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-button.confirm {
+            background-color: #e53e3e; /* Red for destructive action */
+            color: white;
+        }
+
+        .modal-button.confirm:hover {
+            background-color: #c53030;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-button.cancel {
+            background-color: #a0aec0; /* Grey for cancel */
+            color: white;
+        }
+
+        .modal-button.cancel:hover {
+            background-color: #718096;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
     </style>
     <!-- Import Map for ES Modules -->
     <script type="importmap">
@@ -591,9 +684,9 @@
             <div class="right-panel">
                 <div class="tab-buttons">
                     <!-- Small circular "Back to Upload" button -->
-                    <button id="backToUploadCircleButton" onclick="window.goBack()">
+                    <button id="backToUploadCircleButton" onclick="window.goBackConfirmation()">
                         <!-- Left arrow SVG -->
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
                     </button>
                     <button class="tab-button active" id="uploadNewFileButton">Upload New File</button>
                     <button class="tab-button" id="saveButton">Save</button>
@@ -606,11 +699,11 @@
                     </div>
                     <div class="ai-input-group">
                         <input type="text" id="textCommandInput" placeholder="Type AI command or question..." />
+                        <button id="sendTextCommandBtn">Send</button>
                         <button id="integratedVoiceBtn">
                             <!-- Changed fill to white directly in SVG for consistent visibility -->
                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.64 6.44-6.2 6.93V21h-2v-3.07c-3.56-.49-6.2-3.4-6.2-6.93h-2c0 4.17 3.13 7.62 7.2 8.15V23h4v-2.85c4.07-.53 7.2-3.98 7.2-8.15h-2z" /></svg>
                         </button>
-                        <button id="sendTextCommandBtn">Send</button>
                     </div>
                 </div>
 
@@ -621,6 +714,18 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <!-- Confirmation Modal HTML -->
+    <div id="confirmationModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Confirm Navigation</h3>
+            <p>Are you sure you want to go back? Any unsaved changes in the editor will be lost.</p>
+            <div class="modal-buttons">
+                <button class="modal-button confirm" id="confirmGoBackButton">Yes, Go Back</button>
+                <button class="modal-button cancel" id="cancelGoBackButton">No, Stay Here</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -636,11 +741,11 @@
 
         // List of random GLB model URLs
         const RANDOM_MODEL_URLS = [
-            'https://threejs.org/examples/models/gltf/Horse.glb',
-            'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb',
-            'https://threejs.org/examples/models/gltf/DamagedHelmet/DamagedHelmet.gltf',
-            'https://threejs.org/examples/models/gltf/FlightHelmet/FlightHelmet.gltf',
-            'https://threejs.org/examples/models/gltf/LittlestTokyo.glb'
+            'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Box/glTF-Binary/Box.glb',
+            'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb',
+            'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb',
+            'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Avocado/glTF-Binary/Avocado.glb',
+            'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb'
         ];
 
         let uploadedFile = null, scene, camera, renderer, controls;
@@ -671,6 +776,13 @@
         const textCommandInput = document.getElementById('textCommandInput');
         const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
         const cadCanvas = document.getElementById('cadCanvas');
+        const cadViewer = document.getElementById('cadViewer'); // Reference to the cadViewer div
+
+        // Confirmation Modal elements
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmGoBackButton = document.getElementById('confirmGoBackButton');
+        const cancelGoBackButton = document.getElementById('cancelGoBackButton');
+
 
         // New button references on the upload page
         const loadRandomModelButton = document.getElementById('loadRandomModelButton'); // Renamed
@@ -685,18 +797,18 @@
         const codeEditorContent = document.getElementById('codeEditorContent');
         const cssCodeEditor = document.getElementById('cssCodeEditor');
         const applyCssButton = document.getElementById('applyCssButton');
-        const cadViewer = document.getElementById('cadViewer'); // Reference to the cadViewer div
 
 
         // --- Expose functions globally for HTML onclick attributes ---
         window.removeObject = removeObject;
         window.resetView = resetView;
         window.showDesignInfo = showDesignInfo;
-        window.goBack = goBack;
+        window.goBackConfirmation = goBackConfirmation; // Exposed for the button click
         window.selectPartByName = selectPartByName;
         window.setTransformMode = setTransformMode;
         window.listParts = listParts;
         window.saveModel = saveModel; // Expose saveModel globally
+        window.testAIConnection = testAIConnection; // Expose test function globally
 
         // --- Event Listeners for new buttons ---
         // The "Upload New File" button now directly triggers the file input click
@@ -921,11 +1033,18 @@
                     scene.remove(model);
                     model.traverse(function (object) {
                         if (object.isMesh) {
-                            if (object.geometry) object.geometry.dispose();
+                            if (object.geometry) {
+                                console.log(`[Dispose] Disposing geometry for mesh: ${object.name || object.uuid}`);
+                                object.geometry.dispose();
+                            }
                             if (object.material) {
                                 if (Array.isArray(object.material)) {
-                                    object.material.forEach(material => material.dispose());
+                                    object.material.forEach(material => {
+                                        console.log(`[Dispose] Disposing material for mesh: ${object.name || object.uuid}`);
+                                        material.dispose();
+                                    });
                                 } else {
+                                    console.log(`[Dispose] Disposing material for mesh: ${object.name || object.uuid}`);
                                     object.material.dispose();
                                 }
                             }
@@ -933,6 +1052,7 @@
                     });
                 });
                 loadedModels = []; // Clear the array of loaded models
+                console.log("[Dispose] All loaded models removed and disposed.");
 
                 // Remove grid helper and labels specifically if they exist
                 if (currentGridHelper) {
@@ -940,47 +1060,61 @@
                     currentGridHelper.geometry.dispose();
                     currentGridHelper.material.dispose();
                     currentGridHelper = null;
+                    console.log("[Dispose] Grid helper disposed.");
                 }
                 currentGridLabels.forEach(label => {
                     scene.remove(label);
                     if (label.material) label.material.dispose();
                     if (label.geometry) label.geometry.dispose();
+                    console.log("[Dispose] Grid label disposed.");
                 });
                 currentGridLabels = [];
 
+                // Remove scene-added lights
+                scene.children.filter(c => c.isLight && c.userData.isSceneLight).forEach(light => {
+                    scene.remove(light);
+                    console.log("[Dispose] Scene light disposed.");
+                });
+
+
                 // Dispose renderer and controls
                 if (renderer) {
-                    renderer.setAnimationLoop(null);
+                    renderer.setAnimationLoop(null); // Stop animation loop
                     renderer.dispose();
                     renderer = null;
+                    console.log("[Dispose] Renderer disposed.");
                 }
                 if (controls) {
                     controls.removeEventListener('change', updateDynamicGrid); // Remove listener
                     controls.dispose();
                     controls = null;
+                    console.log("[Dispose] OrbitControls disposed.");
                 }
                 if (cadCanvas) {
                     cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
                     cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
+                    console.log("[Dispose] Canvas event listeners removed.");
                 }
                 if (transformControls) {
                     transformControls.dispose();
                     transformControls = null;
+                    console.log("[Dispose] TransformControls disposed.");
                 }
-                // Re-initialize scene after disposal to ensure a clean state
-                initScene();
             }
             originalMaterials.clear(); // Clear original materials map
             selectedObject = null; // Clear selected object
-            console.log("[Dispose] Resources disposed and scene re-initialized.");
+            console.log("[Dispose] All Three.js resources fully disposed. Scene ready for re-initialization.");
         }
 
 
         function goToEditor(loadType = 'empty') { // Default to 'empty' if no type specified
             console.log(`[goToEditor] Attempting to go to editor with load type: ${loadType}.`);
 
-            // Dispose and re-init scene to ensure a clean state for new or loaded models
+            // Dispose of existing scene resources before setting up a new one
             disposeSceneResources();
+
+            // Re-initialize scene after disposal to ensure a clean state
+            initScene();
 
             if (loadType === 'random') {
                 console.log("[goToEditor] Loading a random model.");
@@ -1016,24 +1150,49 @@
             const randomIndex = Math.floor(Math.random() * RANDOM_MODEL_URLS.length);
             const modelUrl = RANDOM_MODEL_URLS[randomIndex];
             const loader = new GLTFLoader();
-            loader.load(modelUrl, (gltf) => {
-                const randomModel = gltf.scene;
-                randomModel.name = `Random Model (${modelUrl.split('/').pop()})`;
-                scene.add(randomModel);
-                loadedModels.push(randomModel);
-                resetView();
-                addMessageToLog('System', `Random model "${randomModel.name}" loaded successfully.`);
-                speakResponse(`Random model loaded.`);
-            }, undefined, (error) => {
-                console.error('Error loading random model:', error);
-                addMessageToLog('System', `Error loading random model from ${modelUrl}. Starting with an empty scene.`);
-                speakResponse(`Error loading random model. Starting with an empty scene.`);
-            });
+
+            try {
+                loader.load(modelUrl, (gltf) => {
+                    const randomModel = gltf.scene;
+                    randomModel.name = `Random Model (${modelUrl.split('/').pop()})`;
+                    scene.add(randomModel);
+                    loadedModels.push(randomModel);
+                    resetView();
+                    addMessageToLog('System', `Random model "${randomModel.name}" loaded successfully.`);
+                    speakResponse(`Random model loaded.`);
+                }, (xhr) => {
+                    // Progress callback
+                    console.log(`[Load Random Model Progress] ${modelUrl}: ${Math.round(xhr.loaded / xhr.total * 100)}% loaded`);
+                }, (error) => {
+                    // Error callback for GLTFLoader
+                    let errorDetails = '';
+                    if (error instanceof Error) {
+                        errorDetails = error.message;
+                        if (error.stack) errorDetails += `\nStack: ${error.stack}`;
+                    } else if (error && typeof error === 'object') {
+                        if (error.target && error.target.status) {
+                            errorDetails = `HTTP Error: ${error.target.status} - ${error.target.statusText}`;
+                        } else {
+                            errorDetails = JSON.stringify(error);
+                        }
+                    } else {
+                        errorDetails = String(error);
+                    }
+                    console.error('Error loading random model (GLTFLoader callback):', error); // Log the full error object
+                    addMessageToLog('System', `Error loading random model from ${modelUrl}. Details: ${errorDetails.substring(0, 100)}. Starting with an empty scene.`);
+                    speakResponse(`Error loading random model. Please check the console for details.`);
+                });
+            } catch (e) {
+                // Catch synchronous errors during loader.load call itself
+                console.error('Synchronous error during loadRandomModel:', e);
+                addMessageToLog('System', `Unexpected error during random model load initiation: ${e.message}.`);
+                speakResponse(`An unexpected error occurred while trying to load a random model.`);
+            }
         }
 
-
-        function goBack() {
-            console.log("[Navigation] Going back to upload page.");
+        // Renamed the original goBack to _actualGoBack to be called after confirmation
+        function _actualGoBack() {
+            console.log("[Navigation] Performing actual back navigation and reset.");
             editorPage.classList.remove('page-active');
             editorPage.classList.add('page-inactive');
             uploadPage.classList.remove('page-inactive');
@@ -1058,6 +1217,24 @@
             console.log("[Navigation] Returned to upload page. State reset.");
         }
 
+        // Function to show the confirmation modal
+        function goBackConfirmation() {
+            confirmationModal.classList.add('active');
+        }
+
+        // Event listeners for the confirmation modal buttons
+        confirmGoBackButton.addEventListener('click', () => {
+            confirmationModal.classList.remove('active');
+            _actualGoBack(); // Proceed with the actual navigation
+        });
+
+        cancelGoBackButton.addEventListener('click', () => {
+            confirmationModal.classList.remove('active');
+            addMessageToLog('System', 'Navigation cancelled. Staying in editor.');
+            speakResponse('Navigation cancelled.');
+        });
+
+
         // --- Three.js Scene Setup and Model Loading ---
         function initScene() {
             console.log("[initScene] Initializing Three.js scene...");
@@ -1066,70 +1243,96 @@
                 addMessageToLog('System', "Error: Three.js library failed to load. Please check console for details.");
                 return;
             }
-            // Only create new scene, renderer, camera, controls if they don't exist
-            if (!scene) {
-                scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xFFFFFF); // Pure white background
-            }
-            if (!renderer) {
-                renderer = new THREE.WebGLRenderer({ canvas: cadCanvas, antialias: true });
-                renderer.setPixelRatio(window.devicePixelRatio);
-                renderer.xr.enabled = true;
-            }
-            if (!camera) {
+
+            try {
+                // Ensure canvas exists
+                if (!cadCanvas) {
+                    console.error("CAD Canvas element not found!");
+                    addMessageToLog('System', "Error: CAD Canvas element not found. Cannot initialize 3D scene.");
+                    return;
+                }
+
+                // Initialize if not already initialized or if disposed
+                if (!scene) {
+                    scene = new THREE.Scene();
+                    scene.background = new THREE.Color(0xFFFFFF); // Pure white background
+                    console.log("[initScene] New THREE.Scene created.");
+                }
+                if (!renderer) {
+                    renderer = new THREE.WebGLRenderer({ canvas: cadCanvas, antialias: true });
+                    renderer.setPixelRatio(window.devicePixelRatio);
+                    renderer.xr.enabled = true;
+                    console.log("[initScene] New THREE.WebGLRenderer created.");
+                }
+                if (!camera) {
+                    const viewerDiv = cadCanvas.parentElement;
+                    camera = new THREE.PerspectiveCamera(75, viewerDiv.clientWidth / viewerDiv.clientHeight, 0.1, 1000);
+                    camera.position.set(30, 30, 30); // Set camera at an angle
+                    console.log("[initScene] New THREE.PerspectiveCamera created.");
+                }
+                if (!controls) {
+                    controls = new OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.dampingFactor = 0.25;
+                    controls.addEventListener('change', updateDynamicGrid); // Call on camera change
+                    controls.target.set(0, 0, 0); // Ensure controls target the origin
+                    console.log("[initScene] New OrbitControls created.");
+                }
+                if (!transformControls) {
+                    transformControls = new TransformControls(camera, renderer.domElement);
+                    scene.add(transformControls);
+                    transformControls.addEventListener('dragging-changed', function (event) {
+                        controls.enabled = !event.value;
+                    });
+                    console.log("[initScene] New TransformControls created.");
+                }
+
+                // Ensure renderer size is correct on init/re-init
                 const viewerDiv = cadCanvas.parentElement;
-                camera = new THREE.PerspectiveCamera(75, viewerDiv.clientWidth / viewerDiv.clientHeight, 0.1, 1000);
-                // Adjusted initial camera position for a more "twisted" or perspective view
-                camera.position.set(30, 30, 30); // Set camera at an angle
+                renderer.setSize(viewerDiv.clientWidth, viewerDiv.clientHeight);
+                camera.aspect = viewerDiv.clientWidth / viewerDiv.clientHeight;
+                camera.updateProjectionMatrix();
+                console.log("[initScene] Renderer size and camera aspect updated.");
+
+
+                // Call updateDynamicGrid initially to set up the first grid
+                updateDynamicGrid();
+
+                // Add lighting (ensure unique lights or dispose old ones)
+                // Remove only lights that were specifically added by initScene previously
+                scene.children.filter(c => c.isLight && c.userData.isSceneLight).forEach(light => scene.remove(light));
+
+                const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient light
+                ambientLight.userData.isSceneLight = true; // Mark as scene-added light
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Full intensity directional light
+                directionalLight.position.set(1, 1, 1).normalize();
+                directionalLight.userData.isSceneLight = true;
+                scene.add(directionalLight);
+
+                const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.7); // Additional light from another angle
+                directionalLight2.position.set(-1, -1, -1).normalize();
+                directionalLight2.userData.isSceneLight = true;
+                scene.add(directionalLight2);
+                console.log("[initScene] Lighting added.");
+
+                raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+                // Remove previous listeners before adding new ones to prevent duplicates on re-init
+                cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
+                cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
+                cadCanvas.addEventListener('mousedown', onCanvasClick, false);
+                cadCanvas.addEventListener('touchstart', onCanvasClick, false);
+                console.log("[initScene] Canvas event listeners attached.");
+
+                console.log("[initScene] Three.js scene initialized successfully.");
+                animate();
+            } catch (error) {
+                console.error("Error during Three.js scene initialization:", error);
+                addMessageToLog('System', `Error initializing 3D scene: ${error.message}. Please try refreshing the page.`);
+                speakResponse(`Error initializing 3D scene. Please try refreshing the page.`);
             }
-            if (!controls) {
-                controls = new OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-                controls.dampingFactor = 0.25;
-                controls.addEventListener('change', updateDynamicGrid); // Call on camera change
-                controls.target.set(0, 0, 0); // Ensure controls target the origin
-            }
-            if (!transformControls) {
-                transformControls = new TransformControls(camera, renderer.domElement);
-                scene.add(transformControls);
-                transformControls.addEventListener('dragging-changed', function (event) {
-                    controls.enabled = !event.value;
-                });
-            }
-
-            // Ensure renderer size is correct on init/re-init
-            const viewerDiv = cadCanvas.parentElement;
-            renderer.setSize(viewerDiv.clientWidth, viewerDiv.clientHeight);
-            camera.aspect = viewerDiv.clientWidth / viewerDiv.clientHeight;
-            camera.updateProjectionMatrix();
-
-
-            // Call updateDynamicGrid initially to set up the first grid
-            updateDynamicGrid();
-
-            // Increased lighting for better visibility
-            // Remove existing lights before adding new ones to prevent duplicates on re-init
-            scene.children.filter(c => c.isLight).forEach(light => scene.remove(light));
-
-            const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient light
-            scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Full intensity directional light
-            directionalLight.position.set(1, 1, 1).normalize();
-            scene.add(directionalLight);
-            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.7); // Additional light from another angle
-            directionalLight2.position.set(-1, -1, -1).normalize();
-            scene.add(directionalLight2);
-
-
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
-            // Remove previous listeners before adding new ones to prevent duplicates on re-init
-            cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
-            cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
-            cadCanvas.addEventListener('mousedown', onCanvasClick, false);
-            cadCanvas.addEventListener('touchstart', onCanvasClick, false);
-            console.log("[initScene] Three.js scene initialized.");
-            animate();
         }
 
         // Function to create a text sprite
@@ -1353,8 +1556,13 @@
 
         // --- Model Interaction (Selection, Transformation, Information) ---
         function onCanvasClick(event) {
+            console.log(`[onCanvasClick] Event type: ${event.type}, Button: ${event.button}`);
+
             // Only process left-click (mouse button 0) or touchstart
-            if (event.type === 'mousedown' && event.button !== 0) return;
+            if (event.type === 'mousedown' && event.button !== 0) {
+                console.log("[onCanvasClick] Not a left-click or touchstart, skipping.");
+                return;
+            }
 
             // If TransformControls are currently active and dragging, do not process selection
             if (transformControls && transformControls.dragging) {
@@ -1371,6 +1579,8 @@
                 initialPointer.x = event.clientX;
                 initialPointer.y = event.clientY;
             }
+            console.log(`[onCanvasClick] Initial Pointer: X=${initialPointer.x}, Y=${initialPointer.y}`);
+
 
             // Add a temporary mouseup/touchend listener to check for drag
             const onPointerUp = (upEvent) => {
@@ -1380,21 +1590,23 @@
                         finalPointer.x = upEvent.changedTouches[0].clientX;
                         finalPointer.y = upEvent.changedTouches[0].clientY;
                     } else {
-                        finalPointer.x = initialPointer.x;
+                        finalPointer.x = initialPointer.x; // Fallback if no changedTouches (e.g., tap)
                         finalPointer.y = initialPointer.y;
                     }
                 } else {
                     finalPointer.x = upEvent.clientX;
                     finalPointer.y = upEvent.clientY;
                 }
+                console.log(`[onCanvasClick] Final Pointer: X=${finalPointer.x}, Y=${finalPointer.y}`);
+
 
                 // Calculate distance moved
                 const deltaX = Math.abs(initialPointer.x - finalPointer.x);
-                const deltaY = Math.abs(initialPointer.y - finalPointer.y);
+                const deltaY = Math.abs(initialPointer.y - finalPointer.y); // Corrected typo
                 const dragThreshold = 5; // Pixels threshold for detecting a drag
 
                 if (deltaX > dragThreshold || deltaY > dragThreshold) {
-                    console.log("[onCanvasClick] Detected drag, skipping selection.");
+                    console.log("[onCanvasClick] Detected drag (deltaX: " + deltaX + ", deltaY: " + deltaY + "), skipping selection.");
                 } else {
                     // It was a click, proceed with raycasting
                     console.log("[onCanvasClick] Detected click, processing selection.");
@@ -1402,6 +1614,8 @@
                     const rect = renderer.domElement.getBoundingClientRect();
                     mouse.x = ((initialPointer.x - rect.left) / rect.width) * 2 - 1;
                     mouse.y = -((initialPointer.y - rect.top) / rect.height) * 2 + 1;
+                    console.log(`[onCanvasClick] Normalized Mouse Coords: X=${mouse.x.toFixed(2)}, Y=${mouse.y.toFixed(2)}`);
+
 
                     raycaster.setFromCamera(mouse, camera);
 
@@ -1413,8 +1627,11 @@
                             }
                         });
                     });
+                    console.log(`[onCanvasClick] Objects to intersect count: ${objectsToIntersect.length}`);
 
                     const intersects = raycaster.intersectObjects(objectsToIntersect, true);
+                    console.log(`[onCanvasClick] Intersects found: ${intersects.length}`);
+
 
                     if (intersects.length > 0) {
                         const intersectedObject = intersects[0].object;
@@ -1523,57 +1740,68 @@
         }
 
         function resetView() {
-            if (controls && camera && loadedModels.length > 0) {
-                // Calculate bounding box of all loaded models
-                const overallBbox = new THREE.Box3();
+            if (!controls || !camera) {
+                addMessageToLog('System', 'Three.js components not initialized for view reset.');
+                speakResponse('Cannot reset view, editor components not ready.');
+                return;
+            }
+
+            const overallBbox = new THREE.Box3();
+            if (loadedModels.length > 0) {
                 loadedModels.forEach(model => {
                     overallBbox.union(new THREE.Box3().setFromObject(model));
                 });
-
-                if (overallBbox.isEmpty()) {
-                    console.warn("[resetView] Overall bounding box is empty. Cannot reset view.");
-                    addMessageToLog('System', 'No visible models to reset view to.');
-                    speakResponse('No visible models to reset view to.');
-                    return;
-                }
-
-                const center = overallBbox.getCenter(new THREE.Vector3());
-                const size = overallBbox.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-
-                console.log("[resetView] Overall Bounding Box:", overallBbox);
-                console.log("[resetView] Center:", center);
-                console.log("[resetView] Size:", size);
-                console.log("[resetView] Max Dimension:", maxDim);
-
-                // Adjust camera position based on the largest dimension of the combined bounding box
-                const fov = camera.fov * (Math.PI / 180);
-                const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-
-                // Position camera to view the entire scene, slightly offset for perspective
-                const newCameraPosition = center.clone().add(new THREE.Vector3(maxDim * 0.8, maxDim * 0.8, maxDim * 0.8)); // Adjusted multiplier for better initial view
-                camera.position.copy(newCameraPosition);
-                camera.lookAt(center);
-                controls.target.copy(center); // Orbit controls should orbit around the center of all models
-                controls.update();
-
-                console.log("[resetView] New Camera Position:", camera.position);
-                console.log("[resetView] Controls Target:", controls.target);
-
-                addMessageToLog('AI', 'View reset to fit all models.');
-                speakResponse('View reset to fit all models.');
-            } else if (controls && camera) {
-                // If no models loaded, reset to a default empty scene view
-                camera.position.set(30, 30, 30); // Reset to the initial perspective view
-                camera.lookAt(0, 0, 0);
-                controls.target.set(0, 0, 0);
-                controls.update();
+            } else {
+                // If no models, set a default bounding box around the origin for a sensible view
+                overallBbox.min.set(-10, -10, -10);
+                overallBbox.max.set(10, 10, 10);
                 addMessageToLog('System', 'No models loaded. Resetting to default view.');
                 speakResponse('No models loaded. Resetting to default view.');
-            } else {
-                addMessageToLog('System', 'Three.js components not initialized for view reset.');
-                speakResponse('Cannot reset view, editor components not ready.');
             }
+
+            if (overallBbox.isEmpty()) {
+                console.warn("[resetView] Overall bounding box is empty after default. Cannot reset view.");
+                addMessageToLog('System', 'No visible models to reset view to.');
+                speakResponse('No visible models to reset view to.');
+                return;
+            }
+
+            const center = overallBbox.getCenter(new THREE.Vector3());
+            const size = overallBbox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            console.log("[resetView] Overall Bounding Box:", overallBbox);
+            console.log("[resetView] Center:", center);
+            console.log("[resetView] Size:", size);
+            console.log("[resetView] Max Dimension:", maxDim);
+
+            // Calculate optimal distance to fit the entire bounding box
+            const fov = camera.fov * (Math.PI / 180);
+            let distance = maxDim / (2 * Math.tan(fov / 2));
+
+            // Add some padding to the distance
+            distance *= 1.2; // 20% padding
+
+            // Position camera at an angle looking at the center
+            const newCameraPosition = new THREE.Vector3(
+                center.x + distance,
+                center.y + distance,
+                center.z + distance
+            );
+
+            camera.position.copy(newCameraPosition);
+            camera.lookAt(center);
+            controls.target.copy(center); // Orbit controls should orbit around the center of all models
+            controls.update();
+
+            console.log("[resetView] New Camera Position:", camera.position);
+            console.log("[resetView] Controls Target:", controls.target);
+
+            if (loadedModels.length > 0) {
+                addMessageToLog('AI', 'View reset to fit all models.');
+                speakResponse('View reset to fit all models.');
+            }
+            // If no models, the message was already logged earlier.
         }
 
         function showDesignInfo() {
@@ -1658,6 +1886,7 @@
 
         // --- AI Chat and Voice Commands ---
         function addMessageToLog(sender, message) {
+            console.log(`[DEBUG] addMessageToLog called: Sender=${sender}, Message=${message}`); // Debugging log
             const messageElement = document.createElement('p');
             messageElement.classList.add(sender === 'User' ? 'user-message' : sender === 'AI' ? 'ai-response' : 'system-message');
             messageElement.textContent = `${sender}: ${message}`;
@@ -1665,86 +1894,91 @@
             aiLog.scrollTop = aiLog.scrollHeight; // Auto-scroll to bottom
         }
 
+        // --- Gemini API Configuration ---
+        // The API key is automatically provided by the Canvas environment for Gemini models.
+        const GEMINI_API_KEY = ""; // Leave this as an empty string. Canvas will inject the key at runtime.
+        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+        const GEMINI_MODEL = "gemini-2.0-flash";
+
         async function sendAICommand(command) {
             sendTextCommandBtn.disabled = true;
             textCommandInput.disabled = true;
-            addMessageToLog('System', 'AI is thinking...'); // Add a "thinking" message
-            console.log("[sendAICommand] Sending command to AI:", command);
+            addMessageToLog('System', 'AI is thinking...');
+            console.log("[sendAICommand] Sending command to Gemini AI:", command);
 
-            // System instruction to guide the AI's response format
+            // System instruction for Gemini
             const systemInstruction = `
-                    You are an AI assistant for a 3D CAD editor. Your primary goal is to interpret user commands and return a structured JSON object that the frontend can execute. You can now work with multiple 3D models loaded in the scene simultaneously.
+                You are an AI assistant for a 3D CAD editor. Your primary goal is to interpret user commands and return a structured JSON object that the frontend can execute. You can now work with multiple 3D models loaded in the scene simultaneously.
 
-                    Here are the available actions and their expected JSON format:
+                Here are the available actions and their expected JSON format:
 
-                    1.  **Rotate Model/Part:**
-                        * User command: "rotate [selected/model] by [degrees] degrees around [x/y/z] axis"
-                        * JSON: \`{ "action": "rotateAxis", "value": { "axis": "x/y/z", "degrees": number } }\`
-                        * If no axis specified, default to 'y'. If no degrees, default to 90.
-                        * Example: \`{ "action": "rotateAxis", "value": { "axis": "y", "degrees": 90 } }\`
+                1.  **Rotate Model/Part:**
+                    * User command: "rotate [selected/model] by [degrees] degrees around [x/y/z] axis"
+                    * JSON: \`{ "action": "rotateAxis", "value": { "axis": "x/y/z", "degrees": number } }\`
+                    * If no axis specified, default to 'y'. If no degrees, default to 90.
+                    * Example: \`{ "action": "rotateAxis", "value": { "axis": "y", "degrees": 90 } }\`
 
-                    2.  **Scale Model/Part:**
-                        * User command: "scale [selected/model] by [factor]"
-                        * JSON: \`{ "action": "scale", "value": number }\` (scale factor, e.g., 0.5, 2)
-                        * Example: \`{ "action": "scale", "value": 1.5 }\`
+                2.  **Scale Model/Part:**
+                    * User command: "scale [selected/model] by [factor]"
+                    * JSON: \`{ "action": "scale", "value": number }\` (scale factor, e.g., 0.5, 2)
+                    * Example: \`{ "action": "scale", "value": 1.5 }\`
 
-                    3.  **Translate (Move) Model/Part:**
-                        * User command: "move [selected/model] [x] [y] [z]" (e.g., "move by 5 on X", "move to 10 2 3")
-                        * JSON: \`{ "action": "translate", "value": { "x": number, "y": number, "z": number } }\` (relative movement)
-                        * Example: \`{ "action": "translate", "value": { "x": 5, "y": 0, "z": 0 } }\`
+                3.  **Translate (Move) Model/Part:**
+                    * User command: "move [selected/model] [x] [y] [z]" (e.g., "move by 5 on X", "move to 10 2 3")
+                    * JSON: \`{ "action": "translate", "value": { "x": number, "y": number, "z": number } }\` (relative movement)
+                    * Example: \`{ "action": "translate", "value": { "x": 5, "y": 0, "z": 0 } }\`
 
-                    4.  **Select Specific Part by Name:**
-                        * User command: "select [part name]" (e.g., "select the missile", "select the leg")
-                        * JSON: \`{ "action": "selectPart", "value": "part name" }\`
-                        * This will search for the part across all loaded models.
-                        * Example: \`{ "action": "selectPart", "value": "fuselage" }\`
+                4.  **Select Specific Part by Name:**
+                    * User command: "select [part name]" (e.g., "select the missile", "select the leg")
+                    * JSON: \`{ "action": "selectPart", "value": "part name" }\`
+                    * This will search for the part across all loaded models.
+                    * Example: \`{ "action": "selectPart", "value": "fuselage" }\`
 
-                    5.  **Remove Selected Object:**
-                        * User command: "remove [selected object]", "delete [selected object]"
-                        * JSON: \`{ "action": "removeObject", "value": null }\`
+                5.  **Remove Selected Object:**
+                    * User command: "remove [selected object]", "delete [selected object]"
+                    * JSON: \`{ "action": "removeObject", "value": null }\`
 
-                    6.  **Reset View:**
-                        * User command: "reset view", "reset camera"
-                        * JSON: \`{ "action": "resetView", "value": null }\`
+                6.  **Reset View:**
+                    * User command: "reset view", "reset camera"
+                    * JSON: \`{ "action": "resetView", "value": null }\`
 
-                    7.  **Show Design Info:**
-                        * User command: "show design info", "what is this"
-                        * JSON: \`{ "action": "designInfo", "value": null }\`
-                        * This will show info for all loaded models.
+                7.  **Show Design Info:**
+                    * User command: "show design info", "what is this"
+                    * JSON: \`{ "action": "designInfo", "value": null }\`
+                    * This will show info for all loaded models.
 
-                    8.  **List Parts:**
-                        * User command: "list parts", "what are the parts"
-                        * JSON: \`{ "action": "listParts", "value": null }\`
-                        * This will list parts from all loaded models.
-                        * If the user asks for selection and you are unsure of the part name, suggest they use "list parts" first.
+                8.  **List Parts:**
+                    * User command: "list parts", "what are the parts"
+                    * JSON: \`{ "action": "listParts", "value": null }\`
+                    * This will list parts from all loaded models.
+                    * If the user asks for selection and you are unsure of the part name, suggest they use "list parts" first.
 
-                    9. **Identify Selected Object:**
-                        * User command: "identify selected object", "what is selected"
-                        * JSON: \`{ "action": "identifySelectedObject", "value": null }\`
+                9. **Identify Selected Object:**
+                    * User command: "identify selected object", "what is selected"
+                    * JSON: \`{ "action": "identifySelectedObject", "value": null }\`
 
-                    10. **Set Transform Mode:**
-                        * User command: "set mode to move", "activate rotate tool", "switch to scale"
-                        * JSON: \`{ "action": "setTransformMode", "value": "translate" | "rotate" | "scale" }\`
+                10. **Set Transform Mode:**
+                    * User command: "set mode to move", "activate rotate tool", "switch to scale"
+                    * JSON: \`{ "action": "setTransformMode", "value": "translate" | "rotate" | "scale" }\`
 
-                    11. **Conversational Response (if no specific CAD action is clear):**
-                        * JSON: \`{ "action": "conversational", "value": "Your conversational response here." }\`
+                11. **Conversational Response (if no specific CAD action is clear):**
+                    * JSON: \`{ "action": "conversational", "value": "Your conversational response here." }\`
 
-                    12. **Error Response (if command is unclear or cannot be fulfilled):**
-                        * JSON: \`{ "action": "error", "value": "Explanation of the error." }\`
+                12. **Error Response (if command is unclear or cannot be fulfilled):**
+                    * JSON: \`{ "action": "error", "value": "Explanation of the error." }\`
 
-                    **Important Considerations for AI:**
-                    * Always respond with a single JSON object.
-                    * The \`value\` field should contain the necessary parameters for the action.
-                    * For actions like \`rotateAxis\`, \`scale\`, \`translate\`, if the user provides incomplete information (e.g., "rotate by 90 degrees" without an axis), you can make a reasonable default (e.g., 'y' axis for rotation, 1 for scale, 0 for missing translate axes) or ask for clarification using a \`conversational\` action.
-                    * For "select part", try to extract the most likely part name from the user's request.
-                    * If the user asks for something not in the action list, use \`conversational\`.
-                    * If the user asks for an action that requires a selected object, but the AI doesn't know if an object is selected, it should still return the action, and the frontend will handle the "no object selected" message.
-                    * Ensure all JSON is valid and correctly formatted. Do not include any text outside the JSON block.
-                `;
+                **Important Considerations for AI:**
+                * Always respond with a single JSON object.
+                * The \`value\` field should contain the necessary parameters for the action.
+                * For actions like \`rotateAxis\`, \`scale\`, \`translate\`, if the user provides incomplete information (e.g., "rotate by 90 degrees" without an axis), you can make a reasonable default (e.g., 'y' axis for rotation, 1 for scale, 0 for missing translate axes) or ask for clarification using a \`conversational\` action.
+                * For "select part", try to extract the most likely part name from the user's request.
+                * If the user asks for something not in the action list, use \`conversational\`.
+                * If the user asks for an action that requires a selected object, but the AI doesn't know if an object is selected, it should still return the action, and the frontend will handle the "no object selected" message.
+                * Ensure all JSON is valid and correctly formatted. Do not include any text outside the JSON block.
+            `;
 
-            const chatHistory = [
-                { role: "user", parts: [{ text: systemInstruction + "\n\nUser command: " + command }] }
-            ];
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: systemInstruction + "\n\nUser command: " + command }] });
 
             const payload = {
                 contents: chatHistory,
@@ -1758,32 +1992,35 @@
                                 type: "ANY" // Can be string, number, or object based on action
                             },
                             message: { type: "STRING" } // Optional human-readable message
-                        }
-                        // Removed 'required: ["action"]' to make 'action' optional
+                        },
+                        required: ["action"]
                     }
                 }
             };
 
             const apiKey = ""; // Canvas will automatically provide this in runtime
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `${GEMINI_API_URL}?key=${apiKey}`;
 
             try {
+                console.log("[sendAICommand] Fetching from Gemini API:", apiUrl, "with payload:", payload);
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
+                console.log("[sendAICommand] Gemini API response received. Status:", response.status, "OK:", response.ok);
+
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("[sendAICommand] API Response not OK:", response.status, errorData);
+                    console.error("[sendAICommand] Gemini API Response not OK. Status:", response.status, "Status Text:", response.statusText, "Error Data:", errorData);
                     throw new Error(`Gemini API error: ${errorData.error.message || response.statusText}`);
                 }
 
                 const result = await response.json();
-                console.log("[sendAICommand] Raw AI response result:", result);
+                console.log("[sendAICommand] Raw Gemini response result:", result);
 
-                // Check for candidates and content before accessing
+                // Gemini response structure: result.candidates[0].content.parts[0].text
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
@@ -1795,8 +2032,18 @@
 
             } catch (error) {
                 console.error("Error communicating with Gemini API:", error);
-                // Return an error object that processAICommand can handle
-                return { candidates: [{ content: { parts: [{ text: JSON.stringify({ action: "error", value: `API communication failed: ${error.message}`, message: `I'm sorry, I couldn't reach the AI service. Please try again.` }) }] } }] };
+                return {
+                    candidates: [{
+                        content: {
+                            parts: [{
+                                text: JSON.stringify({
+                                    action: "conversational",
+                                    value: `I'm sorry, I couldn't reach the AI service. Please try again. Error: ${error.message}`
+                                })
+                            }]
+                        }
+                    }]
+                };
             } finally {
                 sendTextCommandBtn.disabled = false;
                 textCommandInput.disabled = false;
@@ -1807,79 +2054,158 @@
             }
         }
 
+        // New temporary function to test AI connection directly
+        async function testAIConnection() {
+            console.log("[testAIConnection] Attempting to test AI connection with a simple 'hello'.");
+            const testCommand = "hello";
+            const messages = [
+                { role: "user", parts: [{ text: "You are a helpful assistant. Respond with a simple greeting in JSON format: {\"action\": \"conversational\", \"value\": \"Hello there!\"}\n\nUser command: " + testCommand }] }
+            ];
+
+            const payload = {
+                contents: messages,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            action: { type: "STRING" },
+                            value: { type: "STRING" }
+                        },
+                        required: ["action", "value"]
+                    }
+                }
+            };
+
+            const apiKey = ""; // Canvas will automatically provide this in runtime
+            const apiUrl = `${GEMINI_API_URL}?key=${apiKey}`;
+
+            try {
+                console.log("[testAIConnection] Sending test fetch request to Gemini...");
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log("[testAIConnection] Test API response received. Status:", response.status, "OK:", response.ok);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("[testAIConnection] Test API Response not OK. Status:", response.status, "Status Text:", response.statusText, "Error Data:", errorData);
+                    addMessageToLog('System', `Test AI connection failed: API error ${response.status}. Check console for details.`);
+                    return;
+                }
+
+                const result = await response.json();
+                console.log("[testAIConnection] Raw result from test AI connection:", result);
+
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
+                    const responseText = result.candidates[0].content.parts[0].text;
+                    try {
+                        const parsed = JSON.parse(responseText);
+                        console.log("[testAIConnection] Parsed response from test AI connection:", parsed);
+                        addMessageToLog('System', `Test AI connection successful! AI responded: "${parsed.value || parsed.message || JSON.stringify(parsed)}"`);
+                    } catch (e) {
+                        console.error("[testAIConnection] Failed to parse test AI response as JSON:", e, "Raw:", responseText);
+                        addMessageToLog('System', `Test AI connection successful, but response parsing failed. Raw response: "${responseText.substring(0, 100)}..."`);
+                    }
+                } else {
+                    console.warn("[testAIConnection] Test AI response format unexpected or empty. Result:", result);
+                    addMessageToLog('System', 'Test AI connection: Unexpected response format.');
+                }
+            } catch (error) {
+                console.error("[testAIConnection] Error during test AI connection:", error);
+                addMessageToLog('System', `Test AI connection failed due to network error: ${error.message}.`);
+            }
+        }
+
+
         function processAICommand(aiResponse) {
             console.log("[processAICommand] Processing AI command:", aiResponse);
-            // Assuming aiResponse.candidates[0].content.parts[0].text contains a JSON string
+            let responseText = '';
             if (aiResponse && aiResponse.candidates && aiResponse.candidates.length > 0 &&
                 aiResponse.candidates[0].content && aiResponse.candidates[0].content.parts &&
                 aiResponse.candidates[0].content.parts.length > 0) {
-
-                const responseText = aiResponse.candidates[0].content.parts[0].text;
-                console.log("[processAICommand] Raw response text:", responseText);
-
-                try {
-                    const parsedResponse = JSON.parse(responseText);
-                    console.log("[processAICommand] Parsed AI response:", parsedResponse);
-
-                    // Handle cases where 'action' might be missing or is 'conversational'
-                    if (parsedResponse.action === 'conversational' || (!parsedResponse.action && parsedResponse.value)) {
-                        addMessageToLog('AI', parsedResponse.value);
-                        speakResponse(parsedResponse.value);
-                    } else if (typeof parsedResponse.action === 'string') {
-                        switch (parsedResponse.action) {
-                            case 'removeObject':
-                                removeObject();
-                                break;
-                            case 'resetView':
-                                resetView();
-                                break;
-                            case 'showDesignInfo':
-                                showDesignInfo();
-                                break;
-                            case 'setTransformMode':
-                                if (parsedResponse.value) {
-                                    setTransformMode(parsedResponse.value);
-                                } else {
-                                    addMessageToLog('AI', 'Please specify a transform mode (translate, rotate, scale).');
-                                    speakResponse('Please specify a transform mode like translate, rotate, or scale.');
-                                }
-                                break;
-                            case 'listParts':
-                                listParts();
-                                break;
-                            case 'selectPart':
-                                if (parsedResponse.value) {
-                                    selectPartByName(parsedResponse.value);
-                                } else {
-                                    addMessageToLog('AI', 'Please specify a part name to select.');
-                                    speakResponse('Please tell me which part to select.');
-                                }
-                                break;
-                            case 'error':
-                                addMessageToLog('AI', parsedResponse.message || 'An unknown error occurred.');
-                                speakResponse(parsedResponse.message || 'An unknown error occurred.');
-                                break;
-                            default:
-                                addMessageToLog('AI', `Understood: "${parsedResponse.action}". However, I don't know how to perform this action.`);
-                                speakResponse(`I understand, but I don't know how to perform ${parsedResponse.action}.`);
-                        }
-                    } else if (parsedResponse.message) {
-                        // Fallback for direct messages if action is not explicitly handled
-                        addMessageToLog('AI', parsedResponse.message);
-                        speakResponse(parsedResponse.message);
-                    } else {
-                        addMessageToLog('AI', `Unexpected AI response format: ${responseText}`);
-                        speakResponse('I received an unexpected response.');
-                    }
-                } catch (jsonError) {
-                    console.error("Failed to parse AI response as JSON:", jsonError, "Raw Response:", responseText);
-                    addMessageToLog('AI', `I received an uninterpretable response from the AI: "${responseText.substring(0, 100)}...". Please check the console for full details.`);
-                    speakResponse('I received an uninterpretable response.');
-                }
+                responseText = aiResponse.candidates[0].content.parts[0].text;
             } else {
                 console.error("[processAICommand] AI response structure is invalid or empty:", aiResponse);
                 addMessageToLog('AI', 'I could not get a valid response from the AI service. The response structure was unexpected.');
                 speakResponse('I could not get a valid response from the AI service.');
+                return;
+            }
+
+            console.log("[processAICommand] Raw response text:", responseText);
+
+            let parsedResponse;
+            try {
+                // Attempt to parse the response as JSON.
+                // If it's not pure JSON, try to extract JSON from within the text.
+                if (responseText.includes('{') && responseText.includes('}')) {
+                    const jsonStartIndex = responseText.indexOf('{');
+                    const jsonEndIndex = responseText.lastIndexOf('}') + 1;
+                    const jsonString = responseText.substring(jsonStartIndex, jsonEndIndex);
+                    parsedResponse = JSON.parse(jsonString);
+                } else {
+                    // If no JSON structure is found, treat the entire response as conversational.
+                    parsedResponse = { action: "conversational", value: responseText.trim() };
+                }
+                console.log("[processAICommand] Parsed AI response:", parsedResponse);
+
+                // Handle cases where 'action' might be missing or is 'conversational'
+                if (parsedResponse.action === 'conversational' || (!parsedResponse.action && parsedResponse.value)) {
+                    addMessageToLog('AI', parsedResponse.value);
+                    speakResponse(parsedResponse.value);
+                } else if (typeof parsedResponse.action === 'string') {
+                    switch (parsedResponse.action) {
+                        case 'removeObject':
+                            removeObject();
+                            break;
+                        case 'resetView':
+                            resetView();
+                            break;
+                        case 'showDesignInfo':
+                            showDesignInfo();
+                            break;
+                        case 'setTransformMode':
+                            if (parsedResponse.value) {
+                                setTransformMode(parsedResponse.value);
+                            } else {
+                                addMessageToLog('AI', 'Please specify a transform mode (translate, rotate, scale).');
+                                speakResponse('Please specify a transform mode like translate, rotate, or scale.');
+                            }
+                            break;
+                        case 'listParts':
+                            listParts();
+                            break;
+                        case 'selectPart':
+                            if (parsedResponse.value) {
+                                selectPartByName(parsedResponse.value);
+                            } else {
+                                addMessageToLog('AI', 'Please specify a part name to select.');
+                                speakResponse('Please tell me which part to select.');
+                            }
+                            break;
+                        case 'error':
+                            addMessageToLog('AI', parsedResponse.message || 'An unknown error occurred.');
+                            speakResponse(parsedResponse.message || 'An unknown error occurred.');
+                            break;
+                        default:
+                            addMessageToLog('AI', `Understood: "${parsedResponse.action}". However, I don't know how to perform this action.`);
+                            speakResponse(`I understand, but I don't know how to perform ${parsedResponse.action}.`);
+                    }
+                } else if (parsedResponse.message) {
+                    // Fallback for direct messages if action is not explicitly handled
+                    addMessageToLog('AI', parsedResponse.message);
+                    speakResponse(parsedResponse.message);
+                } else {
+                    addMessageToLog('AI', `Unexpected AI response format: ${responseText}`);
+                    speakResponse('I received an unexpected response.');
+                }
+            } catch (jsonError) {
+                console.error("Failed to parse AI response as JSON:", jsonError, "Raw Response:", responseText);
+                addMessageToLog('AI', `I received an uninterpretable response from the AI: "${responseText.substring(0, 100)}...". Please check the console for full details.`);
+                speakResponse('I received an uninterpretable response.');
             }
         }
 
