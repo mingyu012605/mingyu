@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI VR CAD Editor</title>
+    <!-- Using Inter font from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         /* Global Styles */
@@ -13,11 +14,11 @@
             width: 100%;
             height: 100%;
             font-family: 'Inter', sans-serif;
-            /* Changed background to Fusion-like dark grid */
-            background-color: #2E3339; /* Dark base color closer to Fusion 360 */
+            /* Authentic Fusion-like pure white background for the whole app */
+            background-color: #FFFFFF; /* Pure white base color for Fusion 360 */
             background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.05) 20px), /* Very subtle white grid lines */
-                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.05) 20px);
+                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), /* Visible darker grid lines */
+                repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
             background-size: 20px 20px; /* Size of each grid cell */
             overflow: hidden;
             display: flex;
@@ -45,7 +46,7 @@
             header svg {
                 height: 35px;
                 width: 35px;
-                fill: #007bff;
+                fill: #DAA520; /* Accent color for the logo - Dark Yellow */
                 transition: transform 0.3s ease;
             }
 
@@ -138,9 +139,9 @@
         }
 
             #dropZone:hover {
-                border-color: #007bff;
-                background-color: #e6f0ff;
-                color: #0056b3;
+                border-color: #DAA520; /* Accent color on hover - Dark Yellow */
+                background-color: #FFF8DC; /* Light yellow background on hover */
+                color: #B8860B; /* Darker yellow text */
             }
 
         #fileInput {
@@ -172,12 +173,12 @@
         }
 
             .button.primary {
-                background-color: #007bff;
+                background-color: #DAA520; /* Primary button - Dark Yellow */
                 color: white;
             }
 
                 .button.primary:hover {
-                    background-color: #0056b3;
+                    background-color: #B8860B; /* Darker yellow on hover */
                     transform: translateY(-3px);
                     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
                 }
@@ -196,7 +197,7 @@
         #loadingMsg {
             display: none;
             margin-top: 25px;
-            color: #007bff;
+            color: #DAA520; /* Dark Yellow */
             font-size: 1.15em;
             font-weight: 600;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -204,7 +205,7 @@
 
         /* Editor Page */
         #editorPage {
-            background-color: #2E3339; /* Matched to body background */
+            background-color: #FFFFFF; /* Pure white background - authentic Fusion */
             display: flex;
             flex-direction: row;
             justify-content: flex-start;
@@ -214,7 +215,7 @@
             position: relative;
         }
 
-        /* NEW: Right Panel for Chat */
+        /* Right Panel for Chat and Code Editor */
         .right-panel {
             width: 350px;
             background-color: #1a202c;
@@ -224,22 +225,82 @@
             border-left: 1px solid #2d3748;
             box-shadow: -4px 0 10px rgba(0, 0, 0, 0.3);
             flex-shrink: 0;
-            overflow-y: auto;
             color: #e2e8f0;
+            /* Ensure right-panel takes full available height */
+            height: 100%; /* Important for inner flex children to distribute space */
         }
 
             .right-panel h2 {
                 color: #ffffff;
                 margin-bottom: 25px;
                 font-size: 1.9em;
-                border-bottom: 2px solid #007bff;
+                border-bottom: 2px solid #DAA520; /* Accent color border - Dark Yellow */
                 padding-bottom: 12px;
                 font-weight: 700;
             }
 
+        /* Tab buttons for chat/code editor */
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #2d3748;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+            gap: 10px; /* Added gap to prevent overlap */
+        }
+
+        .tab-button {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: none;
+            background-color: transparent;
+            color: #a0aec0;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            text-align: center;
+        }
+
+        .tab-button:hover {
+            background-color: #3a414e;
+            color: #e2e8f0;
+        }
+
+        .tab-button.active {
+            background-color: #DAA520; /* Active tab button - Dark Yellow */
+            color: white;
+            box-shadow: 0 2px 5px rgba(218, 165, 32, 0.3); /* Dark Yellow shadow */
+        }
+
+        /* Tab content areas */
+        .tab-content {
+            flex-grow: 1;
+            display: none; /* Hidden by default */
+            flex-direction: column; /* Ensure content stacks vertically */
+            overflow-y: auto; /* Allow internal scrolling */
+            padding-top: 5px; /* Small padding for content */
+        }
+
+        .tab-content.active {
+            display: flex; /* Show active tab content */
+        }
+
+        #chatContent {
+            height: 100%; /* Take full height of parent when active */
+            display: flex; /* Make chatContent a flex container */
+            flex-direction: column; /* Stack children vertically */
+            justify-content: space-between; /* Push input to bottom */
+        }
+
+        #codeEditorContent {
+            height: 100%; /* Take full height of parent when active */
+        }
+
         #cadViewer {
             flex-grow: 1;
-            background-color: #2E3339; /* Matched to body background */
+            background-color: #FFFFFF; /* Pure white background - authentic Fusion */
             position: relative;
         }
 
@@ -250,25 +311,31 @@
         }
 
         #aiLog {
-            flex-grow: 1;
+            flex-grow: 1; /* Allow aiLog to grow and take available space */
+            flex-shrink: 1; /* Allow aiLog to shrink if needed */
             background-color: #2d3748;
             border-radius: 10px;
             padding: 15px;
             color: #e2e8f0;
             overflow-y: auto;
-            height: 400px;
-            min-height: 250px;
-            flex-shrink: 1;
+            /* Removed min-height to allow dynamic growth */
             line-height: 1.5;
             margin-bottom: 15px;
         }
 
+        .user-message, .ai-response, .system-message {
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            word-wrap: break-word; /* Ensure long words wrap */
+            max-width: 85%; /* Slightly reduce max-width for better look */
+        }
+
         .user-message {
-            background-color: #007bff;
+            background-color: #DAA520; /* Accent color for user messages - Dark Yellow */
             color: white;
             text-align: right;
             align-self: flex-end;
-            max-width: 80%;
             margin-left: auto;
         }
 
@@ -277,7 +344,6 @@
             color: #e2e8f0;
             text-align: left;
             align-self: flex-start;
-            max-width: 80%;
             margin-right: auto;
         }
 
@@ -297,7 +363,7 @@
             align-items: center;
             gap: 10px;
             flex-shrink: 0;
-            margin-top: auto;
+            margin-top: auto; /* Pushes this group to the bottom of its flex container */
         }
 
         #textCommandInput {
@@ -317,13 +383,13 @@
             }
 
             #textCommandInput:focus {
-                border-color: #007bff;
-                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 123, 255, 0.3);
+                border-color: #DAA520; /* Accent color on focus - Dark Yellow */
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.3); /* Focus ring - Dark Yellow */
             }
 
         #sendTextCommandBtn {
             padding: 12px 20px;
-            background-color: #007bff;
+            background-color: #DAA520; /* Send button - Dark Yellow */
             color: white;
             border: none;
             border-radius: 8px;
@@ -335,7 +401,7 @@
         }
 
             #sendTextCommandBtn:hover {
-                background-color: #0056b3;
+                background-color: #B8860B; /* Darker yellow on hover */
                 transform: translateY(-2px);
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
@@ -376,8 +442,8 @@
                 }
 
             #integratedVoiceBtn.active-voice-btn {
-                background-color: #e53e3e;
-                box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4);
+                background-color: #e53e3e; /* Red when active */
+                box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4); /* Red glow when active */
             }
 
                 #integratedVoiceBtn.active-voice-btn svg {
@@ -388,11 +454,11 @@
         .top-right-button {
             position: absolute;
             top: 20px;
-            right: 20px;
+            right: 370px; /* Adjusted to be outside the 350px wide right-panel + 20px margin */
             padding: 8px 15px;
             font-size: 0.9em;
             z-index: 100;
-            background-color: #007bff;
+            background-color: #DAA520; /* Back to Upload button - Dark Yellow */
             color: white;
             border: none;
             border-radius: 8px;
@@ -403,11 +469,56 @@
         }
 
             .top-right-button:hover {
-                background-color: #0056b3;
+                background-color: #B8860B; /* Darker yellow on hover */
                 transform: translateY(-2px);
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
+
+        /* Code Editor Specific Styles */
+        #cssCodeEditor {
+            width: 100%;
+            flex-grow: 1; /* Allows it to fill available height */
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Monaspace Neon', 'Fira Code', 'Consolas', monospace; /* Monospace font for code */
+            font-size: 0.9em;
+            color: #e2e8f0;
+            resize: vertical; /* Allow vertical resizing */
+            min-height: 150px;
+            box-sizing: border-box; /* Include padding in width/height */
+            margin-bottom: 15px; /* Space before button */
+            outline: none;
+        }
+
+        #cssCodeEditor:focus {
+            border-color: #DAA520; /* Dark Yellow */
+            box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.3); /* Dark Yellow */
+        }
+
+        #applyCssButton {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: #28a745; /* Green for apply/preview */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        #applyCssButton:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+        }
+
     </style>
+    <!-- Import Map for ES Modules -->
     <script type="importmap">
         {
             "imports": {
@@ -419,9 +530,10 @@
 </head>
 <body>
     <header>
+        <!-- New Innovative Logo SVG -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 1L2 6v12l10 5 10-5V6L12 1zm0 2.31L18.47 6 12 9.31 5.53 6 12 3.31zM4 7.69l6 3.15v6.52L4 13.84V7.69zm8 11.01L6.47 16 12 12.69l5.53 3.31L12 18.7zM20 13.84l-6 3.15V10.84l6-3.15v6.15z" />
-            <circle cx="12" cy="12" r="2" fill="#007bff" />
+            <circle cx="12" cy="12" r="2" fill="#DAA520" /> <!-- Dark Yellow -->
             <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="#fff" />
         </svg>
         AI VR CAD Editor
@@ -444,21 +556,37 @@
             <main id="cadViewer">
                 <canvas id="cadCanvas"></canvas>
             </main>
+            <!-- This "Back to Upload" button is a floating button, distinct from the ones in the right panel. -->
             <button class="top-right-button" onclick="window.goBack()">
                 <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#FFFFFF"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-13v4H7.5L12 16.5 16.5 12H13V7z" /></svg>
                 Back to Upload
             </button>
+
+            <!-- NEW: Right-side chat panel with updated buttons -->
             <div class="right-panel">
-                <h2>AI Chat Log</h2>
-                <div id="aiLog">
-                    <p class="system-message">System: AI Chat Log Initialized.</p>
+                <div class="tab-buttons">
+                    <button class="tab-button active" id="uploadNewFileButton">Upload New File</button>
+                    <button class="tab-button" id="saveButton">Save</button>
                 </div>
-                <div class="ai-input-group">
-                    <input type="text" id="textCommandInput" placeholder="Type AI command or question..." />
-                    <button id="integratedVoiceBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.64 6.44-6.2 6.93V21h-2v-3.07c-3.56-.49-6.2-3.4-6.2-6.93h-2c0 4.17 3.13 7.62 7.2 8.15V23h4v-2.85c4.07-.53 7.2-3.98 7.2-8.15h-2z" /></svg>
-                    </button>
-                    <button id="sendTextCommandBtn">Send</button>
+
+                <!-- Chat Content remains visible by default -->
+                <div id="chatContent" class="tab-content active">
+                    <div id="aiLog">
+                        <p class="system-message">System: AI Chat Log Initialized.</p>
+                    </div>
+                    <div class="ai-input-group">
+                        <input type="text" id="textCommandInput" placeholder="Type AI command or question..." />
+                        <button id="integratedVoiceBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.64 6.44-6.2 6.93V21h-2v-3.07c-3.56-.49-6.2-3.4-6.2-6.93h-2c0 4.17 3.13 7.62 7.2 8.15V23h4v-2.85c4.07-.53 7.2-3.98 7.2-8.15h-2z" /></svg>
+                        </button>
+                        <button id="sendTextCommandBtn">Send</button>
+                    </div>
+                </div>
+
+                <!-- Code Editor Content is now hidden by default without a direct button -->
+                <div id="codeEditorContent" class="tab-content">
+                    <textarea id="cssCodeEditor" placeholder="Enter CSS for CAD viewer background..."></textarea>
+                    <button id="applyCssButton">Preview CSS</button>
                 </div>
             </div>
         </section>
@@ -475,7 +603,8 @@
         // Global map to store dropped files by their relative path (e.g., "scene.bin", "textures/image.png")
         const droppedFileBlobs = new Map();
 
-        let uploadedFile = null, scene, camera, renderer, mesh, controls;
+        // Removed 'mesh' from global declaration as we now handle multiple models
+        let uploadedFile = null, scene, camera, renderer, controls;
         let recognition;
         let synth;
         let isVoiceAssistActive = false;
@@ -484,6 +613,13 @@
         let selectedObject = null; // This will hold the currently selected THREE.Mesh part
         const originalMaterials = new Map(); // Map to store original materials by object UUID
         let transformControls;
+
+        // Variables for dynamic grid
+        let currentGridHelper = null;
+        let currentGridLabels = [];
+
+        // Global array to store all loaded GLTF scenes
+        let loadedModels = []; // This will now hold all top-level GLTF scenes
 
         // Get references to HTML elements
         const fileInput = document.getElementById('fileInput');
@@ -498,6 +634,16 @@
         const cadCanvas = document.getElementById('cadCanvas');
         const loadEditorButton = document.getElementById('loadEditorButton');
 
+        // Updated button references
+        const uploadNewFileButton = document.getElementById('uploadNewFileButton');
+        const saveButton = document.getElementById('saveButton');
+        const chatContent = document.getElementById('chatContent');
+        const codeEditorContent = document.getElementById('codeEditorContent');
+        const cssCodeEditor = document.getElementById('cssCodeEditor');
+        const applyCssButton = document.getElementById('applyCssButton');
+        const cadViewer = document.getElementById('cadViewer'); // Reference to the cadViewer div
+
+
         // --- Expose functions globally for HTML onclick attributes ---
         window.removeObject = removeObject;
         window.resetView = resetView;
@@ -506,6 +652,49 @@
         window.selectPartByName = selectPartByName;
         window.setTransformMode = setTransformMode;
         window.listParts = listParts;
+        window.saveModel = saveModel; // Expose saveModel globally
+
+        // --- Event Listeners for new buttons ---
+        // The "Upload New File" button now directly triggers the file input click
+        uploadNewFileButton.addEventListener('click', () => {
+            fileInput.click(); // Programmatically click the hidden file input
+            addMessageToLog('System', 'Clicking "Upload New File" will open file dialog to add another model to the scene.');
+        });
+        saveButton.addEventListener('click', saveModel);
+
+        // --- Placeholder Save Model Function ---
+        function saveModel() {
+            addMessageToLog('System', 'Save functionality is a placeholder. To implement actual model saving (e.g., to GLTF/GLB), a GLTFExporter would be required, which involves more complex Three.js serialization.');
+            speakResponse('Save feature is not fully implemented yet.');
+            console.warn("Save Model: Placeholder function executed. Actual GLTF/GLB export not implemented.");
+        }
+
+        // --- Apply CSS Function (remains the same, but now accessed via AI command or direct console) ---
+        applyCssButton.addEventListener('click', () => {
+            const cssText = cssCodeEditor.value;
+            try {
+                // Clear existing inline styles to prevent conflicts
+                cadViewer.style.cssText = '';
+
+                // Apply the new CSS properties
+                const lines = cssText.split(';');
+                lines.forEach(line => {
+                    const parts = line.split(':');
+                    if (parts.length === 2) {
+                        const prop = parts[0].trim();
+                        const value = parts[1].trim();
+                        if (prop && value) {
+                            cadViewer.style[prop] = value;
+                        }
+                    }
+                });
+                addMessageToLog('System', 'CAD viewer background CSS applied successfully.');
+            } catch (error) {
+                addMessageToLog('System', `Error applying CSS: ${error.message}`);
+                console.error("Error applying CSS:", error);
+            }
+        });
+
 
         // --- File Input and Page Navigation ---
         dropZone.addEventListener('dragover', e => {
@@ -525,6 +714,9 @@
             loadingMsg.style.color = '#007bff';
             loadingMsg.style.display = 'block';
 
+            // When dropping, assume it's a new set of files for a new model
+            // If already in editor, this means adding a new model. If on upload page, it's the first model.
+            // Clear previous single-file context (important for correct URL resolution)
             droppedFileBlobs.clear();
             let mainModelFile = null;
 
@@ -537,7 +729,7 @@
                     const fullPath = path ? `${path}/${file.name}` : file.name;
                     droppedFileBlobs.set(fullPath, file);
                     console.log(`[Drop Handler] Stored file: ${fullPath}, Type: ${file.type}, Size: ${file.size} bytes`);
-                    if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
+                    if (!mainModelFile && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
                         mainModelFile = file;
                     }
                 } else if (entry.isDirectory) {
@@ -565,7 +757,7 @@
                     const file = e.dataTransfer.files[i];
                     droppedFileBlobs.set(file.name, file);
                     console.log(`[Drop Handler] Stored file (flat): ${file.name}, Type: ${file.type}, Size: ${file.size} bytes`);
-                    if (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb')) {
+                    if (!mainModelFile && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
                         mainModelFile = file;
                     }
                 }
@@ -574,7 +766,17 @@
             if (mainModelFile) {
                 uploadedFile = mainModelFile;
                 console.log("[Drop Handler] Identified main model file:", uploadedFile.name);
-                validateFile(uploadedFile);
+                if (validateFile(uploadedFile)) {
+                    // If already in editor, load the model directly
+                    if (editorPage.classList.contains('page-active')) {
+                        loadModel(uploadedFile);
+                    } else {
+                        // On upload page, just validate and wait for "Load Editor" button click
+                        loadingMsg.textContent = `File selected: ${uploadedFile.name}. Click 'Load Model & Go to Editor'.`;
+                        loadingMsg.style.color = '#007bff';
+                        loadingMsg.style.display = 'block';
+                    }
+                }
                 console.log("[Drop Handler] All dropped files (keys in map):", Array.from(droppedFileBlobs.keys()));
             } else {
                 loadingMsg.textContent = '❌ No .gltf or .glb file found among dropped items!';
@@ -593,12 +795,25 @@
                 loadingMsg.style.color = '#007bff';
                 loadingMsg.style.display = 'block';
 
+                // For file input, always clear previous context as it's typically a single file upload
                 droppedFileBlobs.clear();
+
                 const file = fileInput.files[0];
                 droppedFileBlobs.set(file.name, file);
                 uploadedFile = file;
                 console.log("[File Input] Selected file:", uploadedFile.name, `Type: ${uploadedFile.type}, Size: ${uploadedFile.size} bytes`);
-                validateFile(uploadedFile);
+
+                if (validateFile(uploadedFile)) {
+                    // If already in editor, load the model directly
+                    if (editorPage.classList.contains('page-active')) {
+                        loadModel(uploadedFile);
+                    } else {
+                        // On upload page, just validate and wait for "Load Editor" button click
+                        loadingMsg.textContent = `File selected: ${uploadedFile.name}. Click 'Load Model & Go to Editor'.`;
+                        loadingMsg.style.color = '#007bff';
+                        loadingMsg.style.display = 'block';
+                    }
+                }
                 console.log("[File Input] Dropped file (keys in map):", Array.from(droppedFileBlobs.keys()));
             } else {
                 console.log("[File Input] No file selected via input.");
@@ -616,9 +831,6 @@
             console.log("[Validation] Validating file:", file ? file.name : "null");
             if (file && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
                 console.log("[Validation] File is a valid GLTF/GLB.");
-                loadingMsg.textContent = `File selected: ${file.name}. Click 'Load Model & Go to Editor' or drop more files if needed.`;
-                loadingMsg.style.color = '#007bff';
-                loadingMsg.style.display = 'block';
                 return true;
             } else {
                 console.error("[Validation] Unsupported file type! Please upload a .gltf or .glb file.");
@@ -633,38 +845,63 @@
         function disposeSceneResources() {
             console.log("[Dispose] Disposing Three.js resources...");
             if (scene) {
-                scene.traverse(function (object) {
-                    if (object.isMesh) {
-                        if (object.geometry) object.geometry.dispose();
-                        if (object.material) {
-                            if (Array.isArray(object.material)) {
-                                object.material.forEach(material => material.dispose());
-                            } else {
-                                object.material.dispose();
+                // Remove all loaded models and dispose their resources
+                loadedModels.forEach(model => {
+                    scene.remove(model);
+                    model.traverse(function (object) {
+                        if (object.isMesh) {
+                            if (object.geometry) object.geometry.dispose();
+                            if (object.material) {
+                                if (Array.isArray(object.material)) {
+                                    object.material.forEach(material => material.dispose());
+                                } else {
+                                    object.material.dispose();
+                                }
                             }
                         }
-                    }
+                    });
                 });
-                scene = null;
+                loadedModels = []; // Clear the array of loaded models
+
+                // Remove grid helper and labels specifically if they exist
+                if (currentGridHelper) {
+                    scene.remove(currentGridHelper);
+                    currentGridHelper.geometry.dispose();
+                    currentGridHelper.material.dispose();
+                    currentGridHelper = null;
+                }
+                currentGridLabels.forEach(label => {
+                    scene.remove(label);
+                    if (label.material) label.material.dispose();
+                    if (label.geometry) label.geometry.dispose();
+                });
+                currentGridLabels = [];
+
+                // Dispose renderer and controls
+                if (renderer) {
+                    renderer.setAnimationLoop(null);
+                    renderer.dispose();
+                    renderer = null;
+                }
+                if (controls) {
+                    controls.removeEventListener('change', updateDynamicGrid); // Remove listener
+                    controls.dispose();
+                    controls = null;
+                }
+                if (cadCanvas) {
+                    cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
+                    cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
+                }
+                if (transformControls) {
+                    transformControls.dispose();
+                    transformControls = null;
+                }
+                // Re-initialize scene after disposal to ensure a clean state
+                initScene();
             }
-            if (renderer) {
-                renderer.setAnimationLoop(null);
-                renderer.dispose();
-                renderer = null;
-            }
-            if (controls) {
-                controls.dispose();
-                controls = null;
-            }
-            if (cadCanvas) {
-                cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
-                cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
-            }
-            if (transformControls) {
-                transformControls.dispose();
-                transformControls = null;
-            }
-            console.log("[Dispose] Resources disposed.");
+            originalMaterials.clear(); // Clear original materials map
+            selectedObject = null; // Clear selected object
+            console.log("[Dispose] Resources disposed and scene re-initialized.");
         }
 
 
@@ -693,8 +930,13 @@
             console.log(`[goToEditor] Current droppedFileBlobs keys:`, Array.from(droppedFileBlobs.keys()));
 
 
-            disposeSceneResources();
-            initScene();
+            // Dispose and re-init scene only if it's not already initialized or needs a full reset
+            if (!scene || loadedModels.length > 0) { // If scene exists and has models, or not initialized
+                 disposeSceneResources(); // This will also call initScene()
+            } else {
+                 initScene(); // Just initialize if it's a fresh start
+            }
+
 
             loadModel(uploadedFile);
         }
@@ -707,7 +949,7 @@
             uploadPage.classList.add('page-active');
             stopVoiceAssist();
             window.removeEventListener('resize', onWindowResize, false);
-            disposeSceneResources();
+            disposeSceneResources(); // This will clear all models and re-initialize the scene
             uploadedFile = null;
             droppedFileBlobs.clear();
             originalMaterials.clear();
@@ -729,36 +971,210 @@
                 addMessageToLog('System', "Error: Three.js library failed to load. Please check console for details.");
                 return;
             }
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x222222);
+            // Only create new scene, renderer, camera, controls if they don't exist
+            if (!scene) {
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xFFFFFF); // Pure white background
+            }
+            if (!renderer) {
+                renderer = new THREE.WebGLRenderer({ canvas: cadCanvas, antialias: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.xr.enabled = true;
+            }
+            if (!camera) {
+                const viewerDiv = cadCanvas.parentElement;
+                camera = new THREE.PerspectiveCamera(75, viewerDiv.clientWidth / viewerDiv.clientHeight, 0.1, 1000);
+                camera.position.set(0, 0, 50);
+            }
+            if (!controls) {
+                controls = new OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.25;
+                controls.addEventListener('change', updateDynamicGrid); // Call on camera change
+            }
+            if (!transformControls) {
+                transformControls = new TransformControls(camera, renderer.domElement);
+                scene.add(transformControls);
+                transformControls.addEventListener('dragging-changed', function (event) {
+                    controls.enabled = !event.value;
+                });
+            }
+
+            // Ensure renderer size is correct on init/re-init
             const viewerDiv = cadCanvas.parentElement;
-            const width = viewerDiv.clientWidth;
-            const height = viewerDiv.clientHeight;
-            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-            camera.position.set(0, 0, 50);
-            renderer = new THREE.WebGLRenderer({ canvas: cadCanvas, antialias: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(width, height);
-            renderer.xr.enabled = true;
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.25;
-            transformControls = new TransformControls(camera, renderer.domElement);
-            scene.add(transformControls);
-            transformControls.addEventListener('dragging-changed', function (event) {
-                controls.enabled = !event.value;
-            });
-            const ambientLight = new THREE.AmbientLight(0x404040);
+            renderer.setSize(viewerDiv.clientWidth, viewerDiv.clientHeight);
+            camera.aspect = viewerDiv.clientWidth / viewerDiv.clientHeight;
+            camera.updateProjectionMatrix();
+
+
+            // Call updateDynamicGrid initially to set up the first grid
+            updateDynamicGrid();
+
+            // Increased lighting for better visibility
+            // Remove existing lights before adding new ones to prevent duplicates on re-init
+            scene.children.filter(c => c.isLight).forEach(light => scene.remove(light));
+
+            const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient light
             scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Full intensity directional light
             directionalLight.position.set(1, 1, 1).normalize();
             scene.add(directionalLight);
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.7); // Additional light from another angle
+            directionalLight2.position.set(-1, -1, -1).normalize();
+            scene.add(directionalLight2);
+
+
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
-            renderer.domElement.addEventListener('mousedown', onCanvasClick, false);
-            renderer.domElement.addEventListener('touchstart', onCanvasClick, false);
+            // Remove previous listeners before adding new ones to prevent duplicates on re-init
+            cadCanvas.removeEventListener('mousedown', onCanvasClick, false);
+            cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
+            cadCanvas.addEventListener('mousedown', onCanvasClick, false);
+            cadCanvas.addEventListener('touchstart', onCanvasClick, false);
             console.log("[initScene] Three.js scene initialized.");
             animate();
+        }
+
+        // Function to create a text sprite
+        function makeTextSprite(message, parameters) {
+            if (parameters === undefined) parameters = {};
+            const fontface = parameters.fontface || 'Arial';
+            const fontsize = parameters.fontsize || 40;
+            const borderThickness = 0; // Removed border
+            const borderColor = parameters.borderColor || { r: 0, g: 0, b: 0, a: 0.0 }; // Transparent border
+            const backgroundColor = parameters.backgroundColor || { r: 255, g: 255, b: 255, a: 0.0 }; // Transparent background
+            const textColor = parameters.textColor || { r: 0, g: 0, b: 0, a: 1.0 };
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = "Bold " + fontsize + "px " + fontface;
+            const metrics = context.measureText(message);
+            const textWidth = metrics.width;
+
+            // Adjust canvas size to fit text
+            canvas.width = textWidth + borderThickness * 2;
+            canvas.height = fontsize + borderThickness * 2;
+
+            context.font = "Bold " + fontsize + "px " + fontface;
+            context.textBaseline = "middle"; // Center vertically
+            context.textAlign = "center";   // Center horizontally
+
+            // background color (if not transparent)
+            if (backgroundColor.a > 0) {
+                context.fillStyle = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
+                context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            context.fillStyle = "rgba(" + textColor.r + ", " + textColor.g + ", " + textColor.b + ", " + textColor.a + ")";
+            context.fillText(message, canvas.width / 2, canvas.height / 2);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.userData.isGridLabel = true; // Mark as grid label for easy removal
+            return sprite;
+        }
+
+        function updateDynamicGrid() {
+            // Clear existing grid and labels
+            if (currentGridHelper) {
+                scene.remove(currentGridHelper);
+                currentGridHelper.geometry.dispose();
+                currentGridHelper.material.dispose();
+                currentGridHelper = null;
+            }
+            currentGridLabels.forEach(label => {
+                scene.remove(label);
+                if (label.material) label.material.dispose();
+                if (label.geometry) label.geometry.dispose();
+            });
+            currentGridLabels = [];
+
+            // Calculate distance to the center of the orbit (controls.target is usually 0,0,0)
+            const distance = camera.position.distanceTo(controls.target);
+
+            let gridSize, divisions, labelInterval, labelFontSize, labelScaleFactor;
+            let gridLineColor = 0xbbbbbb; // Light grey for grid lines
+            let centerLineColor = 0x888888; // Slightly darker for center lines
+            // Very light grey for "less bright" effect on pure white background
+            let labelTextColor = { r: 180, g: 180, b: 180, a: 1.0 };
+
+            // Define grid levels based on camera distance
+            // Further reduced labelScaleFactor and labelFontSize for all levels
+            if (distance < 5) { // Very close zoom
+                gridSize = 20;
+                divisions = 20; // 1 unit per division
+                labelInterval = 2; // Labels every 2 units
+                labelFontSize = 10; // Very small base font size
+                labelScaleFactor = 0.02; // Very small scale factor
+            } else if (distance < 20) { // Close zoom
+                gridSize = 50;
+                divisions = 25; // 2 units per division
+                labelInterval = 5; // Labels every 5 units
+                labelFontSize = 12; // Very small base font size
+                labelScaleFactor = 0.025; // Very small scale factor
+            } else if (distance < 80) { // Medium zoom
+                gridSize = 100;
+                divisions = 20; // 5 units per division
+                labelInterval = 10; // Labels every 10 units
+                labelFontSize = 14; // Small base font size
+                labelScaleFactor = 0.03; // Small scale factor
+            } else if (distance < 250) { // Further zoom
+                gridSize = 250;
+                divisions = 25; // 10 units per division
+                labelInterval = 25; // Labels every 25 units
+                labelFontSize = 16; // Small base font size
+                labelScaleFactor = 0.035; // Small scale factor
+            } else if (distance < 600) { // Even further zoom
+                gridSize = 600;
+                divisions = 30; // 20 units per division
+                labelInterval = 50; // Labels every 50 units
+                labelFontSize = 18; // Slightly larger base font size
+                labelScaleFactor = 0.04; // Slightly larger scale factor
+            }
+            else { // Very far zoom
+                gridSize = 1000;
+                divisions = 25; // 40 units per division
+                labelInterval = 100; // Labels every 100 units
+                labelFontSize = 20; // Slightly larger base font size
+                labelScaleFactor = 0.045; // Slightly larger scale factor
+            }
+
+            // Create new GridHelper
+            const newGridHelper = new THREE.GridHelper(gridSize, divisions, centerLineColor, gridLineColor);
+            newGridHelper.material.opacity = 0.2;
+            newGridHelper.material.transparent = true;
+            newGridHelper.name = 'gridHelper';
+            scene.add(newGridHelper);
+            currentGridHelper = newGridHelper;
+
+            // Create new labels
+            const labelOffset = 0.5; // Kept small and fixed for now
+            // Only add labels if the current grid density makes sense for them
+            if (labelInterval <= gridSize / 5) { // Arbitrary threshold to avoid too many labels
+                for (let i = -gridSize / 2; i <= gridSize / 2; i += labelInterval) {
+                    // Skip origin and potentially very small numbers if interval is large
+                    if (i === 0 || (labelInterval > 10 && Math.abs(i) < labelInterval)) continue;
+
+                    // X-axis labels
+                    const xLabel = makeTextSprite(i.toString(), { textColor: labelTextColor, fontsize: labelFontSize });
+                    // Position along Z-edge, adjusted by label size, and slightly offset to prevent overlap with grid lines
+                    xLabel.position.set(i, labelOffset, -gridSize / 2 - (labelFontSize * labelScaleFactor * 0.75));
+                    xLabel.scale.set(labelFontSize * labelScaleFactor, labelFontSize * labelScaleFactor, 1); // Scale based on font size and factor
+                    scene.add(xLabel);
+                    currentGridLabels.push(xLabel);
+
+                    // Z-axis labels
+                    const zLabel = makeTextSprite(i.toString(), { textColor: labelTextColor, fontsize: labelFontSize });
+                    // Position along X-edge, adjusted by label size, and slightly offset
+                    zLabel.position.set(-gridSize / 2 - (labelFontSize * labelScaleFactor * 0.75), labelOffset, i);
+                    zLabel.scale.set(labelFontSize * labelScaleFactor, labelFontSize * labelScaleFactor, 1);
+                    scene.add(zLabel);
+                    currentGridLabels.push(zLabel);
+                }
+            }
         }
 
         function animate() {
@@ -786,6 +1202,7 @@
                 } else {
                     const potentialPaths = Array.from(droppedFileBlobs.keys()).filter(key => key.endsWith(fileName));
                     if (potentialPaths.length > 0) {
+                        potentialPaths.sort((a, b) => a.length - b.length)[0]; // Use the shortest path if multiple
                         resolvedPath = potentialPaths.sort((a, b) => a.length - b.length)[0];
                         console.log(`[URLModifier] Resolved relative path to: ${resolvedPath}`);
                     }
@@ -807,44 +1224,23 @@
                 loader.manager = fileLoader.manager;
                 loader.parse(contents, '', (gltf) => {
                     console.log("[GLTFLoader] .gltf/.glb parsing successful.");
-                    if (mesh) {
-                        scene.remove(mesh);
-                        mesh.traverse(obj => {
-                            if (obj.isMesh) {
-                                if (obj.geometry) obj.geometry.dispose();
-                                if (obj.material) {
-                                    if (Array.isArray(obj.material)) {
-                                        obj.material.forEach(m => m.dispose());
-                                    } else {
-                                        m.dispose();
-                                    }
-                                }
-                            }
-                        });
-                    }
-                    clearSelection();
-                    mesh = gltf.scene;
-                    scene.add(mesh);
-                    console.log("[GLTFLoader] gltf.scene object:", mesh);
-                    console.log("[GLTFLoader] gltf.scene children count:", mesh.children.length);
-                    const bbox = new THREE.Box3().setFromObject(mesh);
-                    const center = bbox.getCenter(new THREE.Vector3());
-                    mesh.position.sub(center);
-                    const size = bbox.getSize(new THREE.Vector3());
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    const desiredMaxDim = 40;
-                    const scaleFactor = desiredMaxDim / maxDim;
-                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                    const newBbox = new THREE.Box3().setFromObject(mesh);
-                    const newSize = newBbox.getSize(new THREE.Vector3());
-                    const newMaxDim = Math.max(newSize.x, newSize.y, newSize.z);
-                    camera.position.set(newMaxDim * 1.5, newMaxDim * 1.5, newMaxDim * 1.5);
-                    camera.lookAt(0, 0, 0);
-                    controls.update();
+
+                    const newModel = gltf.scene;
+                    newModel.name = file.name; // Assign the file name to the model for identification
+                    scene.add(newModel); // Add the new model to the scene
+
+                    loadedModels.push(newModel); // Store the new model in our array
+
+                    console.log(`[loadModel] Model '${file.name}' added to scene. Total models: ${loadedModels.length}`);
+                    console.log("[loadModel] New model bounding box:", new THREE.Box3().setFromObject(newModel));
+
+                    // Call resetView to adjust camera and controls to fit all loaded models
+                    resetView();
+
                     loadingMsg.style.display = 'none';
-                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
-                    speakResponse(`Model loaded successfully.`);
-                    console.log("[loadModel] Model successfully added to scene.");
+                    addMessageToLog('System', `Model '${file.name}' loaded successfully. Total models: ${loadedModels.length}`);
+                    speakResponse(`Model loaded successfully. You now have ${loadedModels.length} models in the scene.`);
+                    console.log("[loadModel] Model successfully added to scene. Current loadedModels:", loadedModels);
                 }, (xhr) => {
                     loadingMsg.textContent = `Loading ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
                 }, (error) => {
@@ -860,28 +1256,91 @@
 
         // --- Model Interaction (Selection, Transformation, Information) ---
         function onCanvasClick(event) {
-            console.log("[onCanvasClick] Canvas click detected.");
-            if (event.type === 'touchstart') {
-                mouse.x = (event.touches[0].clientX / renderer.domElement.clientWidth) * 2 - 1;
-                mouse.y = -(event.touches[0].clientY / renderer.domElement.clientHeight) * 2 + 1;
-            } else {
-                mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-                mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-            }
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(mesh.children, true);
+            // Only process left-click (mouse button 0) or touchstart
+            if (event.type === 'mousedown' && event.button !== 0) return;
 
-            if (intersects.length > 0) {
-                const intersectedObject = intersects[0].object;
-                console.log("[onCanvasClick] Object intersected:", intersectedObject.name || "Unnamed Object", intersectedObject.uuid);
-                selectObject(intersectedObject);
-            } else {
-                console.log("[onCanvasClick] No object intersected.");
-                clearSelection();
+            // If TransformControls are currently active and dragging, do not process selection
+            if (transformControls && transformControls.dragging) {
+                console.log("[onCanvasClick] TransformControls are dragging, skipping selection.");
+                return;
             }
+
+            // Capture initial pointer position for drag detection
+            const initialPointer = new THREE.Vector2();
+            if (event.type === 'touchstart') {
+                initialPointer.x = event.touches[0].clientX;
+                initialPointer.y = event.touches[0].clientY;
+            } else {
+                initialPointer.x = event.clientX;
+                initialPointer.y = event.clientY;
+            }
+
+            // Add a temporary mouseup/touchend listener to check for drag
+            const onPointerUp = (upEvent) => {
+                const finalPointer = new THREE.Vector2();
+                if (upEvent.type === 'touchend') {
+                    if (upEvent.changedTouches && upEvent.changedTouches.length > 0) {
+                        finalPointer.x = upEvent.changedTouches[0].clientX;
+                        finalPointer.y = upEvent.changedTouches[0].clientY;
+                    } else {
+                        finalPointer.x = initialPointer.x;
+                        finalPointer.y = initialPointer.y;
+                    }
+                } else {
+                    finalPointer.x = upEvent.clientX;
+                    finalPointer.y = upEvent.clientY;
+                }
+
+                // Calculate distance moved
+                const deltaX = Math.abs(initialPointer.x - finalPointer.x);
+                const deltaY = Math.abs(initialPointer.y - finalPointer.y);
+                const dragThreshold = 5; // Pixels threshold for detecting a drag
+
+                if (deltaX > dragThreshold || deltaY > dragThreshold) {
+                    console.log("[onCanvasClick] Detected drag, skipping selection.");
+                } else {
+                    // It was a click, proceed with raycasting
+                    console.log("[onCanvasClick] Detected click, processing selection.");
+                    // Normalize mouse coordinates for raycasting
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    mouse.x = ((initialPointer.x - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = -((initialPointer.y - rect.top) / rect.height) * 2 + 1;
+
+                    raycaster.setFromCamera(mouse, camera);
+
+                    const objectsToIntersect = [];
+                    loadedModels.forEach(modelGroup => { // Iterate through each loaded model group
+                        modelGroup.traverse((obj) => {
+                            if (obj.isMesh && !obj.userData.isGridLabel) { // Exclude grid labels
+                                objectsToIntersect.push(obj);
+                            }
+                        });
+                    });
+
+                    const intersects = raycaster.intersectObjects(objectsToIntersect, true);
+
+                    if (intersects.length > 0) {
+                        const intersectedObject = intersects[0].object;
+                        console.log("[onCanvasClick] Object intersected:", intersectedObject.name || "Unnamed Object", intersectedObject.uuid);
+                        selectObject(intersectedObject);
+                    } else {
+                        console.log("[onCanvasClick] No object intersected.");
+                        clearSelection();
+                    }
+                }
+
+                // Clean up the temporary listeners
+                renderer.domElement.removeEventListener('mouseup', onPointerUp);
+                renderer.domElement.removeEventListener('touchend', onPointerUp);
+            };
+
+            // Attach temporary listeners
+            renderer.domElement.addEventListener('mouseup', onPointerUp, { once: true });
+            renderer.domElement.addEventListener('touchend', onPointerUp, { once: true });
         }
 
         function selectObject(object) {
+            // If there was a previously selected object, revert its material
             if (selectedObject && originalMaterials.has(selectedObject.uuid)) {
                 selectedObject.material = originalMaterials.get(selectedObject.uuid);
                 originalMaterials.delete(selectedObject.uuid);
@@ -889,13 +1348,16 @@
 
             if (object) {
                 selectedObject = object;
-                // Store original material
+                // Store original material (can be an array or single material)
                 originalMaterials.set(selectedObject.uuid, selectedObject.material);
 
-                // Create a new material for highlighting, preserving original properties
-                const highlightMaterial = selectedObject.material.clone();
-                highlightMaterial.emissive = new THREE.Color(0x00ffff); // Cyan highlight
-                highlightMaterial.emissiveIntensity = 0.5;
+                // Create a new MeshBasicMaterial for highlighting
+                // MeshBasicMaterial is not affected by lights, so it will always appear bright
+                const highlightMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x1e90ff, // Dodger Blue
+                    side: THREE.DoubleSide // Ensure both sides are visible
+                });
+
                 selectedObject.material = highlightMaterial;
 
                 transformControls.attach(selectedObject); // Attach controls to the selected object
@@ -918,16 +1380,17 @@
         }
 
         function removeObject() {
-            if (selectedObject && mesh) {
+            if (selectedObject) { // Check if something is selected
                 const objectToRemoveName = selectedObject.name || "Unnamed Part";
                 const objectToRemoveUUID = selectedObject.uuid;
 
                 // Detach transform controls before removing
                 transformControls.detach();
 
-                // Remove the selected object from its parent
-                if (selectedObject.parent) {
-                    selectedObject.parent.remove(selectedObject);
+                // Find the parent of the selected object in the scene graph
+                let parent = selectedObject.parent;
+                if (parent) {
+                    parent.remove(selectedObject);
                     // Dispose of its resources (geometry, material, textures)
                     if (selectedObject.geometry) selectedObject.geometry.dispose();
                     if (selectedObject.material) {
@@ -937,10 +1400,20 @@
                             selectedObject.material.dispose();
                         }
                     }
-                    console.log(`[Remove Object] Removed object: ${objectToRemoveName} (UUID: ${objectToRemoveUUID})`);
+
+                    // Also check if the removed object was a top-level loaded model, and remove it from loadedModels array
+                    const index = loadedModels.indexOf(selectedObject);
+                    if (index > -1) {
+                        loadedModels.splice(index, 1);
+                        console.log(`[Remove Object] Removed top-level model: ${objectToRemoveName}. Remaining models: ${loadedModels.length}`);
+                    } else {
+                        console.log(`[Remove Object] Removed object: ${objectToRemoveName} (UUID: ${objectToRemoveUUID})`);
+                    }
+
                     addMessageToLog('AI', `Removed ${objectToRemoveName}.`);
                     speakResponse(`Removed ${objectToRemoveName}.`);
                     selectedObject = null; // Clear selected object after removal
+                    resetView(); // Re-adjust view after removing an object
                 } else {
                     console.warn(`[Remove Object] Selected object ${objectToRemoveName} has no parent to remove from.`);
                     addMessageToLog('System', `Cannot remove ${objectToRemoveName}: No parent found.`);
@@ -953,37 +1426,77 @@
         }
 
         function resetView() {
-            if (controls && camera && mesh) {
-                controls.reset(); // Reset orbit controls
-                const bbox = new THREE.Box3().setFromObject(mesh);
-                const size = bbox.getSize(new THREE.Vector3());
+            if (controls && camera && loadedModels.length > 0) {
+                // Calculate bounding box of all loaded models
+                const overallBbox = new THREE.Box3();
+                loadedModels.forEach(model => {
+                    overallBbox.union(new THREE.Box3().setFromObject(model));
+                });
+
+                if (overallBbox.isEmpty()) {
+                    console.warn("[resetView] Overall bounding box is empty. Cannot reset view.");
+                    addMessageToLog('System', 'No visible models to reset view to.');
+                    speakResponse('No visible models to reset view to.');
+                    return;
+                }
+
+                const center = overallBbox.getCenter(new THREE.Vector3());
+                const size = overallBbox.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-                camera.position.set(maxDim * 1.5, maxDim * 1.5, maxDim * 1.5);
-                camera.lookAt(0, 0, 0);
+
+                console.log("[resetView] Overall Bounding Box:", overallBbox);
+                console.log("[resetView] Center:", center);
+                console.log("[resetView] Size:", size);
+                console.log("[resetView] Max Dimension:", maxDim);
+
+                // Adjust camera position based on the largest dimension of the combined bounding box
+                const fov = camera.fov * (Math.PI / 180);
+                const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+
+                // Position camera to view the entire scene, slightly offset for perspective
+                const newCameraPosition = center.clone().add(new THREE.Vector3(maxDim * 0.8, maxDim * 0.8, maxDim * 0.8)); // Adjusted multiplier for better initial view
+                camera.position.copy(newCameraPosition);
+                camera.lookAt(center);
+                controls.target.copy(center); // Orbit controls should orbit around the center of all models
                 controls.update();
-                addMessageToLog('AI', 'View reset.');
-                speakResponse('View reset.');
+
+                console.log("[resetView] New Camera Position:", camera.position);
+                console.log("[resetView] Controls Target:", controls.target);
+
+                addMessageToLog('AI', 'View reset to fit all models.');
+                speakResponse('View reset to fit all models.');
+            } else if (controls && camera) {
+                // If no models loaded, reset to a default empty scene view
+                camera.position.set(0, 0, 50);
+                camera.lookAt(0, 0, 0);
+                controls.target.set(0, 0, 0);
+                controls.update();
+                addMessageToLog('System', 'No models loaded. Resetting to default view.');
+                speakResponse('No models loaded. Resetting to default view.');
             } else {
-                addMessageToLog('System', 'No model loaded to reset view.');
-                speakResponse('No model loaded.');
+                addMessageToLog('System', 'Three.js components not initialized for view reset.');
+                speakResponse('Cannot reset view, editor components not ready.');
             }
         }
 
         function showDesignInfo() {
-            if (mesh) {
-                let info = `Model Name: ${uploadedFile ? uploadedFile.name : 'N/A'}\n`;
-                info += `Number of Meshes: ${mesh.children.filter(c => c.isMesh).length}\n`;
-                info += `Total Objects: ${mesh.children.length}\n`;
+            if (loadedModels.length > 0) {
+                let info = `Total Models Loaded: ${loadedModels.length}\n`;
+                loadedModels.forEach((model, index) => {
+                    info += `\nModel ${index + 1} (${model.name || 'Unnamed Model'}):\n`;
+                    info += `  Number of Meshes: ${model.children.filter(c => c.isMesh).length}\n`;
+                    info += `  Total Objects: ${model.children.length}\n`;
+                });
 
-                const bbox = new THREE.Box3().setFromObject(mesh);
-                const size = bbox.getSize(new THREE.Vector3());
-                info += `Bounding Box Size: X=${size.x.toFixed(2)}, Y=${size.y.toFixed(2)}, Z=${size.z.toFixed(2)}\n`;
+                const sceneBbox = new THREE.Box3().setFromObject(scene);
+                const sceneSize = sceneBbox.getSize(new THREE.Vector3());
+                info += `\nOverall Scene Bounding Box Size: X=${sceneSize.x.toFixed(2)}, Y=${sceneSize.y.toFixed(2)}, Z=${sceneSize.z.toFixed(2)}\n`;
 
                 addMessageToLog('AI', info);
-                speakResponse('Design information displayed.');
+                speakResponse('Design information displayed for all loaded models.');
             } else {
-                addMessageToLog('System', 'No model loaded to show design information.');
-                speakResponse('No model loaded.');
+                addMessageToLog('System', 'No models loaded to show design information.');
+                speakResponse('No models loaded.');
             }
         }
 
@@ -999,39 +1512,50 @@
         }
 
         function listParts() {
-            if (mesh && mesh.children.length > 0) {
-                let parts = "Parts in model:\n";
-                mesh.traverse(obj => {
-                    if (obj.isMesh && obj.name) {
-                        parts += `- ${obj.name}\n`;
+            if (loadedModels.length > 0) {
+                let parts = "Parts in loaded models:\n";
+                loadedModels.forEach((model, modelIndex) => {
+                    parts += `\n--- Model ${modelIndex + 1} (${model.name || 'Unnamed Model'}) ---\n`;
+                    let modelHasParts = false;
+                    model.traverse(obj => {
+                        if (obj.isMesh && obj.name) {
+                            parts += `- ${obj.name}\n`;
+                            modelHasParts = true;
+                        }
+                    });
+                    if (!modelHasParts) {
+                        parts += "No named parts found in this model.\n";
                     }
                 });
-                if (parts === "Parts in model:\n") {
-                    parts += "No named parts found. Objects might be unnamed meshes.";
-                }
                 addMessageToLog('AI', parts);
-                speakResponse('Listed parts in the model.');
+                speakResponse('Listed parts in the models.');
             } else {
-                addMessageToLog('System', 'No model loaded or no parts to list.');
-                speakResponse('No model loaded or no parts to list.');
+                addMessageToLog('System', 'No models loaded or no parts to list.');
+                speakResponse('No models loaded or no parts to list.');
             }
         }
 
         function selectPartByName(partName) {
-            if (mesh) {
-                const foundObject = mesh.traverse((obj) => {
-                    if (obj.isMesh && obj.name === partName) {
-                        selectObject(obj);
-                        return;
-                    }
-                });
-                if (!selectedObject || selectedObject.name !== partName) {
-                    addMessageToLog('System', `Part "${partName}" not found.`);
+            if (loadedModels.length > 0) {
+                let foundObject = null;
+                for (const model of loadedModels) {
+                    model.traverse((obj) => {
+                        if (obj.isMesh && obj.name === partName) {
+                            foundObject = obj;
+                        }
+                    });
+                    if (foundObject) break; // Stop searching once found
+                }
+
+                if (foundObject) {
+                    selectObject(foundObject);
+                } else {
+                    addMessageToLog('System', `Part "${partName}" not found in any loaded models.`);
                     speakResponse(`Part ${partName} not found.`);
                 }
             } else {
-                addMessageToLog('System', 'No model loaded to select parts from.');
-                speakResponse('No model loaded.');
+                addMessageToLog('System', 'No models loaded to select parts from.');
+                speakResponse('No models loaded.');
             }
         }
 
@@ -1045,32 +1569,139 @@
         }
 
         async function sendAICommand(command) {
-            addMessageToLog('User', command);
+            sendTextCommandBtn.disabled = true;
+            textCommandInput.disabled = true;
             addMessageToLog('System', 'AI is thinking...'); // Add a "thinking" message
 
+            // System instruction to guide the AI's response format
+            const systemInstruction = `
+                You are an AI assistant for a 3D CAD editor. Your primary goal is to interpret user commands and return a structured JSON object that the frontend can execute. You can now work with multiple 3D models loaded in the scene simultaneously.
+
+                Here are the available actions and their expected JSON format:
+
+                1.  **Rotate Model/Part:**
+                    * User command: "rotate [selected/model] by [degrees] degrees around [x/y/z] axis"
+                    * JSON: \`{ "action": "rotateAxis", "value": { "axis": "x/y/z", "degrees": number } }\`
+                    * If no axis specified, default to 'y'. If no degrees, default to 90.
+                    * Example: \`{ "action": "rotateAxis", "value": { "axis": "y", "degrees": 90 } }\`
+
+                2.  **Scale Model/Part:**
+                    * User command: "scale [selected/model] by [factor]"
+                    * JSON: \`{ "action": "scale", "value": number }\` (scale factor, e.g., 0.5, 2)
+                    * Example: \`{ "action": "scale", "value": 1.5 }\`
+
+                3.  **Translate (Move) Model/Part:**
+                    * User command: "move [selected/model] [x] [y] [z]" (e.g., "move by 5 on X", "move to 10 2 3")
+                    * JSON: \`{ "action": "translate", "value": { "x": number, "y": number, "z": number } }\` (relative movement)
+                    * Example: \`{ "action": "translate", "value": { "x": 5, "y": 0, "z": 0 } }\`
+
+                4.  **Select Specific Part by Name:**
+                    * User command: "select [part name]" (e.g., "select the missile", "select the leg")
+                    * JSON: \`{ "action": "selectPart", "value": "part name" }\`
+                    * This will search for the part across all loaded models.
+                    * Example: \`{ "action": "selectPart", "value": "fuselage" }\`
+
+                5.  **Remove Selected Object:**
+                    * User command: "remove [selected object]", "delete [selected object]"
+                    * JSON: \`{ "action": "removeObject", "value": null }\`
+
+                6.  **Reset View:**
+                    * User command: "reset view", "reset camera"
+                    * JSON: \`{ "action": "resetView", "value": null }\`
+
+                7.  **Show Design Info:**
+                    * User command: "show design info", "what is this"
+                    * JSON: \`{ "action": "designInfo", "value": null }\`
+                    * This will show info for all loaded models.
+
+                8.  **Go Back to Upload Screen (clears current scene):**
+                    * User command: "go back", "start new project"
+                    * JSON: \`{ "action": "goBack", "value": null }\`
+
+                9.  **List Parts:**
+                    * User command: "list parts", "what are the parts"
+                    * JSON: \`{ "action": "listParts", "value": null }\`
+                    * This will list parts from all loaded models.
+                    * If the user asks for selection and you are unsure of the part name, suggest they use "list parts" first.
+
+                10. **Identify Selected Object:**
+                    * User command: "identify selected object", "what is selected"
+                    * JSON: \`{ "action": "identifySelectedObject", "value": null }\`
+
+                11. **Set Transform Mode:**
+                    * User command: "set mode to move", "activate rotate tool", "switch to scale"
+                    * JSON: \`{ "action": "setTransformMode", "value": "translate" | "rotate" | "scale" }\`
+
+                12. **Conversational Response (if no specific CAD action is clear):**
+                    * JSON: \`{ "action": "conversational", "value": "Your conversational response here." }\`
+
+                13. **Error Response (if command is unclear or cannot be fulfilled):**
+                    * JSON: \`{ "action": "error", "value": "Explanation of the error." }\`
+
+                **Important Considerations for AI:**
+                * Always respond with a single JSON object.
+                * The \`value\` field should contain the necessary parameters for the action.
+                * For actions like \`rotateAxis\`, \`scale\`, \`translate\`, if the user provides incomplete information (e.g., "rotate by 90 degrees" without an axis), you can make a reasonable default (e.g., 'y' axis for rotation, 1 for scale, 0 for missing translate axes) or ask for clarification using a \`conversational\` action.
+                * For "select part", try to extract the most likely part name from the user's request.
+                * If the user asks for something not in the action list, use \`conversational\`.
+                * If the user asks for an action that requires a selected object, but the AI doesn't know if an object is selected, it should still return the action, and the frontend will handle the "no object selected" message.
+                * Ensure all JSON is valid and correctly formatted. Do not include any text outside the JSON block.
+            `;
+
+            const chatHistory = [
+                { role: "user", parts: [{ text: systemInstruction + "\n\nUser command: " + command }] }
+            ];
+
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            action: { type: "STRING" },
+                            value: {
+                                type: "ANY" // Can be string, number, or object based on action
+                            },
+                            message: { type: "STRING" } // Optional human-readable message
+                        },
+                        required: ["action"]
+                    }
+                }
+            };
+
+            const apiKey = ""; // Canvas will automatically provide this in runtime
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
             try {
-                // Adjusting endpoint to match the local server setup
-                const response = await fetch('/ai-command', {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ command: command })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+                    const errorData = await response.json();
+                    throw new Error(`Gemini API error: ${errorData.error.message || response.statusText}`);
                 }
 
                 const result = await response.json();
-                processAICommand(result);
+                // Check for candidates and content before accessing
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result; // Return the full result object for parsing in processAICommand
+                } else {
+                    throw new Error("Gemini API response format unexpected or empty.");
+                }
 
             } catch (error) {
-                console.error("Error sending AI command:", error);
-                addMessageToLog('System', `Error communicating with AI service: ${error.message}. Please ensure the backend server is running.`);
-                speakResponse(`I'm sorry, I couldn't communicate with the AI service.`);
+                console.error("Error communicating with Gemini API:", error);
+                // Return an error object that processAICommand can handle
+                return { candidates: [{ content: { parts: [{ text: JSON.stringify({ action: "error", value: `API communication failed: ${error.message}`, message: `I'm sorry, I couldn't reach the AI service. Please try again.` }) }] } }] };
             } finally {
-                // Remove the "thinking" message
+                sendTextCommandBtn.disabled = false;
+                textCommandInput.disabled = false;
                 const lastLogMessage = aiLog.lastChild;
                 if (lastLogMessage && lastLogMessage.textContent.includes('AI is thinking...')) {
                     aiLog.removeChild(lastLogMessage);
@@ -1111,7 +1742,7 @@
                             case 'listParts':
                                 listParts();
                                 break;
-                            case 'selectPartByName':
+                            case 'selectPart': // Changed from selectPartByName to match AI instruction
                                 if (parsedResponse.value) {
                                     selectPartByName(parsedResponse.value);
                                 } else {
@@ -1123,7 +1754,7 @@
                                 addMessageToLog('AI', parsedResponse.message || 'An unknown error occurred.');
                                 speakResponse(parsedResponse.message || 'An unknown error occurred.');
                                 break;
-                            case 'speak': // For general conversational responses
+                            case 'conversational': // For general conversational responses
                                 addMessageToLog('AI', parsedResponse.value);
                                 speakResponse(parsedResponse.value);
                                 break;
@@ -1244,11 +1875,21 @@
                 camera.aspect = viewerDiv.clientWidth / viewerDiv.clientHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(viewerDiv.clientWidth, viewerDiv.clientHeight);
+                updateDynamicGrid(); // Update grid on resize as well
+                resetView(); // Also re-adjust camera to fit models on resize
             }
         }
 
         window.addEventListener('resize', onWindowResize, false);
 
+        // Initialize scene when the window loads
+        window.onload = () => {
+            initScene();
+            // Set initial CSS for the CAD viewer background
+            cadViewer.style.backgroundColor = '#FFFFFF';
+            cadViewer.style.backgroundImage = 'repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px)';
+            cadViewer.style.backgroundSize = '20px 20px';
+        };
 
     </script>
 </body>
