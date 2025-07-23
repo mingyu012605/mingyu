@@ -247,6 +247,23 @@
                 font-weight: 700;
             }
 
+        /* Top buttons container for Leave, Upload, Save */
+        .top-editor-buttons {
+            display: flex;
+            justify-content: flex-end; /* Align to the right */
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .top-editor-buttons .button {
+            padding: 8px 15px; /* Smaller padding for these buttons */
+            font-size: 0.9em; /* Smaller font size */
+            width: auto; /* Allow buttons to size based on content */
+            flex-shrink: 0;
+        }
+
+
         /* Tab buttons for chat/code editor */
         .tab-buttons {
             display: flex;
@@ -287,10 +304,10 @@
             }
 
         /* Small circular button for "Back to Upload" */
-        #backToUploadCircleButton {
-            width: 40px; /* Small size */
+        #leaveButton { /* Renamed ID */
+            width: auto; /* Allow width to adjust to content */
             height: 40px; /* Small size */
-            border-radius: 50%; /* Circular shape */
+            border-radius: 8px; /* Changed to rounded rectangle for text */
             background-color: #DAA520; /* Dark Yellow */
             color: white;
             border: none;
@@ -298,23 +315,56 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8em; /* Smaller font size if text is present */
+            font-size: 0.9em; /* Smaller font size */
+            font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
             flex-shrink: 0; /* Prevent shrinking */
+            padding: 0 10px; /* Add padding for text */
         }
 
-            #backToUploadCircleButton:hover {
+            #leaveButton:hover {
                 background-color: #B8860B; /* Darker yellow on hover */
                 transform: translateY(-2px);
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
 
-            #backToUploadCircleButton svg {
-                fill: #FFFFFF;
-                height: 20px;
-                width: 20px;
-            }
+            /* Removed SVG style for leaveButton */
+
+        /* Undo/Redo Buttons */
+        .undo-redo-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: flex-start; /* Align to the left */
+        }
+
+        .undo-redo-buttons button {
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .undo-redo-buttons button:hover {
+            background-color: #6c757d;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+        }
+
+        .undo-redo-buttons button svg {
+            fill: white;
+            height: 20px;
+            width: 20px;
+        }
 
 
         /* Tab content areas */
@@ -538,36 +588,6 @@
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
 
-        /* New View Controls Section - REMOVED */
-        /* .view-controls {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #2d3748;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .view-control-button {
-            background-color: #4a5568;
-            color: #e2e8f0;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .view-control-button:hover {
-            background-color: #DAA520;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        } */
-
         /* Style for the static view axes helper */
         #viewAxesContainer {
             position: absolute;
@@ -709,27 +729,11 @@
 
             <!-- NEW: Right-side chat panel with updated buttons -->
             <div class="right-panel">
-                <div class="tab-buttons">
-                    <!-- Small circular "Back to Upload" button -->
-                    <button id="backToUploadCircleButton" onclick="window.goBack()">
-                        <!-- Left arrow SVG -->
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" /></svg>
-                    </button>
-                    <button class="tab-button active" id="uploadNewFileButton">Upload New File</button>
-                    <button class="tab-button" id="saveButton">Save</button>
+                <div class="top-editor-buttons">
+                    <button class="button primary" id="leaveButton" onclick="window.goBack()">Leave</button>
+                    <button class="button primary" id="uploadNewFileButton">Upload New File</button>
+                    <button class="button secondary" id="saveButton">Save</button>
                 </div>
-
-                <!-- Removed View Controls Section -->
-                <!-- <div class="view-controls">
-                    <button class="view-control-button" id="topViewBtn">Top View</button>
-                    <button class="view-control-button" id="bottomViewBtn">Bottom View</button>
-                    <button class="view-control-button" id="frontViewBtn">Front View</button>
-                    <button class="view-control-button" id="backViewBtn">Back View</button>
-                    <button class="view-control-button" id="rightViewBtn">Right View</button>
-                    <button class="view-control-button" id="leftViewBtn">Left View</button>
-                    <button class="view-control-button" id="isometricViewBtn">Isometric View</button>
-                    <button class="view-control-button" id="fitAllViewBtn">Fit All</button>
-                </div> -->
 
                 <!-- Object Properties Section -->
                 <div class="object-properties-controls">
@@ -740,6 +744,16 @@
                         <button class="view-control-button" id="applyObjectColorBtn">Apply Color</button>
                     </div>
                     <!-- More properties can be added here later -->
+                </div>
+
+                <!-- Undo/Redo Buttons -->
+                <div class="undo-redo-buttons">
+                    <button id="undoButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.61-3.61c1.39-1.16 3.16-1.89 5.11-1.89 3.73 0 6.84 2.55 7.73 6h2.08c-.9-4.5-4.77-8-9.81-8z"/></svg>
+                    </button>
+                    <button id="redoButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M18.41 16.59L22 13V4h-9l3.61 3.61c-1.39 1.16-3.16 1.89-5.11 1.89-3.73 0-6.84-2.55-7.73-6H2.27c.9 4.5 4.77 8 9.81 8 2.65 0 5.05-.99 6.9-2.6z"/></svg>
+                    </button>
                 </div>
 
                 <!-- Chat Content remains visible by default -->
@@ -828,8 +842,11 @@
         const editExistingModelButton = document.getElementById('editExistingModelButton');
 
         // Updated button references on editor page
+        const leaveButton = document.getElementById('leaveButton'); // Renamed ID
         const uploadNewFileButton = document.getElementById('uploadNewFileButton');
         const saveButton = document.getElementById('saveButton');
+        const undoButton = document.getElementById('undoButton'); // New Undo button
+        const redoButton = document.getElementById('redoButton'); // New Redo button
         const chatContent = document.getElementById('chatContent');
         const codeEditorContent = document.getElementById('codeEditorContent');
         const cssCodeEditor = document.getElementById('cssCodeEditor');
@@ -890,6 +907,19 @@
             // Do NOT show dropZone or loadingMsg here. The fileInput 'change' listener will handle cleanup.
             fileInput.click(); // Programmatically click the hidden file input
             addMessageToLog('System', 'Please select a .gltf or .glb file.');
+        });
+
+        // --- Undo/Redo Placeholder Functions ---
+        undoButton.addEventListener('click', () => {
+            addMessageToLog('System', 'Undo functionality is a placeholder. A full undo/redo system requires complex state management.');
+            speakResponse('Undo is not yet implemented.');
+            console.warn("Undo: Placeholder function executed.");
+        });
+
+        redoButton.addEventListener('click', () => {
+            addMessageToLog('System', 'Redo functionality is a placeholder. A full undo/redo system requires complex state management.');
+            speakResponse('Redo is not yet implemented.');
+            console.warn("Redo: Placeholder function executed.");
         });
 
 
@@ -1339,7 +1369,7 @@
             directionalLight.position.set(1, 1, 1).normalize();
             scene.add(directionalLight);
             const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.7); // Additional light from another angle
-            directionalLight2.position.set(-1, -1, -1).normalize();
+            directionalLight2.position.set(-1, -1).normalize();
             scene.add(directionalLight2);
 
 
@@ -2352,6 +2382,7 @@
                     mesh.name = 'Cube';
                     break;
                 case 'sphere':
+                case 'ball': /* Added 'ball' alias */
                     geometry = new THREE.SphereGeometry(0.5, 32, 32); // Radius 0.5
                     mesh = new THREE.Mesh(geometry, material);
                     mesh.name = 'Sphere';
@@ -2361,9 +2392,19 @@
                     mesh = new THREE.Mesh(geometry, material);
                     mesh.name = 'Cylinder';
                     break;
+                case 'cone': // Added cone
+                    geometry = new THREE.ConeGeometry(0.5, 1, 32); // Radius 0.5, height 1
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = 'Cone';
+                    break;
+                case 'pyramid': // Added pyramid (using ConeGeometry with 4 segments)
+                    geometry = new THREE.ConeGeometry(0.5, 1, 4); // Radius 0.5, height 1, 4 radial segments for a square base
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = 'Pyramid';
+                    break;
                 default:
-                    addMessageToLog('AI', `I don't know how to create a "${type}" shape. Try "box", "sphere", or "cylinder".`);
-                    speakResponse(`I don't know how to create a ${type} shape. Try box, sphere, or cylinder.`);
+                    addMessageToLog('AI', `I don't know how to create a "${type}" shape. Try "box", "sphere", "cylinder", "cone", or "pyramid".`);
+                    speakResponse(`I don't know how to create a ${type} shape. Try box, sphere, cylinder, cone, or pyramid.`);
                     return;
             }
 
@@ -2401,8 +2442,8 @@
                             if (parsedResponse.value) {
                                 createPrimitive(parsedResponse.value);
                             } else {
-                                addMessageToLog('AI', 'Please specify a shape type (e.g., "box", "sphere", "cylinder").');
-                                speakResponse('Please specify a shape type like box, sphere, or cylinder.');
+                                addMessageToLog('AI', 'Please specify a shape type (e.g., "box", "sphere", "cylinder", "cone", "pyramid").');
+                                speakResponse('Please specify a shape type like box, sphere, cylinder, cone, or pyramid.');
                             }
                             break;
                         case 'removeObject':
@@ -2636,16 +2677,6 @@
 
             // Automatically test AI connection on load
             testAIConnection(); // Still call to log backend status to console
-
-            // Removed event listeners for view control buttons as the HTML is removed
-            // topViewBtn.addEventListener('click', setTopView);
-            // bottomViewBtn.addEventListener('click', setBottomView);
-            // frontViewBtn.addEventListener('click', setFrontView);
-            // backViewBtn.addEventListener('click', setBackView);
-            // rightViewBtn.addEventListener('click', setRightView);
-            // leftViewBtn.addEventListener('click', setLeftView);
-            // isometricViewBtn.addEventListener('click', setIsometricView);
-            // fitAllViewBtn.addEventListener('click', resetView);
 
             // Add event listener for object color change
             applyObjectColorBtn.addEventListener('click', () => {
