@@ -17,7 +17,7 @@
             /* Authentic Fusion-like pure white background for the whole app */
             background-color: #FFFFFF; /* Pure white base color for Fusion 360 */
             background-image: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), /* Visible darker grid lines */
-            repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
+            repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);\
             background-size: 20px 20px; /* Size of each grid cell */
             overflow: hidden; /* Keep overflow hidden for main body */
             display: flex;
@@ -54,9 +54,6 @@
                 transform: rotate(5deg) scale(1.05);
             }
 
-        /* API Key Status Indicator - REMOVED */
-
-
         /* Page Container & Transitions */
         .page-container {
             display: flex;
@@ -82,7 +79,7 @@
 
         .page-active {
             opacity: 1;
-            pointer-events: auto;
+            pointer-events: auto !important; /* Ensure it's clickable */
             z-index: 1;
         }
 
@@ -408,10 +405,14 @@
             align-items: center;
             gap: 10px;
             flex-shrink: 0;
-            margin-top: auto; /* Pushes this group to the bottom of its flex container */
             padding-top: 10px; /* Add some padding above the input group */
-            /* Ensure it doesn't get pushed out by content above */
             box-sizing: border-box;
+            /* Ensure it stays at the bottom */
+            position: sticky;
+            bottom: 0;
+            background-color: #1a202c; /* Match right panel background */
+            z-index: 10; /* Ensure it's above chat log content */
+            padding-bottom: 10px; /* Add padding at the very bottom */
         }
 
         #textCommandInput {
@@ -485,14 +486,10 @@
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             }
 
-                #integratedVoiceBtn:hover svg {
-                    fill: #e2e8f0;
+                #integratedVoiceBtn.active-voice-btn {
+                    background-color: #e53e3e; /* Red when active */
+                    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4); /* Red glow when active */
                 }
-
-            #integratedVoiceBtn.active-voice-btn {
-                background-color: #e53e3e; /* Red when active */
-                box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4); /* Red glow when active */
-            }
 
                 #integratedVoiceBtn.active-voice-btn svg {
                     fill: white;
@@ -540,6 +537,122 @@
                 transform: translateY(-2px);
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
+
+        /* New View Controls Section - REMOVED */
+        /* .view-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #2d3748;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .view-control-button {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .view-control-button:hover {
+            background-color: #DAA520;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        } */
+
+        /* Style for the static view axes helper */
+        #viewAxesContainer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 100px; /* Smaller size for the helper */
+            height: 100px;
+            z-index: 5; /* Ensure it's above the CAD canvas */
+            pointer-events: auto; /* Enable clicks on this container */
+            background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s ease; /* For click feedback */
+        }
+
+        /* Object Properties Section Styles */
+        .object-properties-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #2d3748;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            color: #e2e8f0;
+        }
+
+        .object-properties-controls h3 {
+            color: #ffffff;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #4a5568;
+            padding-bottom: 5px;
+        }
+
+        .object-properties-controls .property-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .object-properties-controls label {
+            flex-shrink: 0;
+            font-weight: 600;
+        }
+
+        #objectColorPicker {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 80px; /* Fixed width for color picker */
+            height: 35px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            overflow: hidden; /* Hide default border */
+        }
+
+        #objectColorPicker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        #objectColorPicker::-webkit-color-swatch {
+            border: 1px solid #4a5568;
+            border-radius: 5px;
+        }
+
+        #objectColorPicker::-moz-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        #objectColorPicker::-moz-color-swatch {
+            border: 1px solid #4a5568;
+            border-radius: 5px;
+        }
+
+        #applyObjectColorBtn {
+            /* Reuse view-control-button styles */
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
     </style>
     <!-- Import Map for ES Modules -->
     <script type="importmap">
@@ -591,6 +704,7 @@
         <section id="editorPage" class="page page-inactive">
             <main id="cadViewer">
                 <canvas id="cadCanvas"></canvas>
+                <div id="viewAxesContainer"></div> <!-- Container for the static view axes -->
             </main>
 
             <!-- NEW: Right-side chat panel with updated buttons -->
@@ -603,6 +717,29 @@
                     </button>
                     <button class="tab-button active" id="uploadNewFileButton">Upload New File</button>
                     <button class="tab-button" id="saveButton">Save</button>
+                </div>
+
+                <!-- Removed View Controls Section -->
+                <!-- <div class="view-controls">
+                    <button class="view-control-button" id="topViewBtn">Top View</button>
+                    <button class="view-control-button" id="bottomViewBtn">Bottom View</button>
+                    <button class="view-control-button" id="frontViewBtn">Front View</button>
+                    <button class="view-control-button" id="backViewBtn">Back View</button>
+                    <button class="view-control-button" id="rightViewBtn">Right View</button>
+                    <button class="view-control-button" id="leftViewBtn">Left View</button>
+                    <button class="view-control-button" id="isometricViewBtn">Isometric View</button>
+                    <button class="view-control-button" id="fitAllViewBtn">Fit All</button>
+                </div> -->
+
+                <!-- Object Properties Section -->
+                <div class="object-properties-controls">
+                    <h3>Object Properties</h3>
+                    <div class="property-group">
+                        <label for="objectColorPicker">Color:</label>
+                        <input type="color" id="objectColorPicker" value="#1e90ff" />
+                        <button class="view-control-button" id="applyObjectColorBtn">Apply Color</button>
+                    </div>
+                    <!-- More properties can be added here later -->
                 </div>
 
                 <!-- Chat Content remains visible by default -->
@@ -634,7 +771,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { VRButton } from 'three/addons/webxr/VRButton.js';
+        import { VRButton } from 'three/addons/webxr/VRButton.js'; // Corrected syntax here
         import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
         // Global map to store dropped files by their relative path (e.g., "scene.bin", "textures/image.png")
@@ -656,7 +793,8 @@
         let raycaster;
         let mouse;
         let selectedObject = null; // This will hold the currently selected THREE.Mesh part
-        const originalMaterials = new Map(); // Map to store original materials by object UUID
+        // Stores original material properties for deselection, now includes color and emissive
+        const originalMaterialProperties = new Map(); // Stores { color?: THREE.Color, emissive?: THREE.Color, emissiveIntensity?: number }
         let transformControls;
 
         // Variables for dynamic grid
@@ -665,6 +803,10 @@
 
         // Global array to store all loaded GLTF scenes
         let loadedModels = []; // This will now hold all top-level GLTF scenes
+
+        // New scene and camera for the static view axes helper
+        let viewAxesScene, viewAxesCamera, viewAxesRenderer;
+        let viewAxesHelper; // The actual AxesHelper object
 
         // Get references to HTML elements
         const fileInput = document.getElementById('fileInput');
@@ -678,7 +820,7 @@
         const sendTextCommandBtn = document.getElementById('sendTextCommandBtn');
         const cadCanvas = document.getElementById('cadCanvas');
         const cadViewer = document.getElementById('cadViewer'); // Reference to the cadViewer div
-        // Removed apiKeyStatusSpan reference
+        const viewAxesContainer = document.getElementById('viewAxesContainer'); // Container for the static view axes
 
         // New button references on the upload page
         const loadRandomModelButton = document.getElementById('loadRandomModelButton');
@@ -689,9 +831,23 @@
         const uploadNewFileButton = document.getElementById('uploadNewFileButton');
         const saveButton = document.getElementById('saveButton');
         const chatContent = document.getElementById('chatContent');
-        const codeEditorContent = document.getElementById('codeEditorContent');
+        const codeEditorContent = document.getElementById('codeEditorContent'); // Corrected syntax here
         const cssCodeEditor = document.getElementById('cssCodeEditor');
         const applyCssButton = document.getElementById('applyCssButton');
+
+        // New view control buttons - these are now unused in the HTML but kept for reference if AI commands use them
+        const topViewBtn = document.getElementById('topViewBtn');
+        const bottomViewBtn = document.getElementById('bottomViewBtn');
+        const frontViewBtn = document.getElementById('frontViewBtn');
+        const backViewBtn = document.getElementById('backViewBtn');
+        const rightViewBtn = document.getElementById('rightViewBtn');
+        const leftViewBtn = document.getElementById('leftViewBtn');
+        const isometricViewBtn = document.getElementById('isometricViewBtn');
+        const fitAllViewBtn = document.getElementById('fitAllViewBtn');
+
+        // New object properties UI elements
+        const objectColorPicker = document.getElementById('objectColorPicker');
+        const applyObjectColorBtn = document.getElementById('applyObjectColorBtn');
 
 
         // --- Expose functions globally for HTML onclick attributes ---
@@ -707,35 +863,33 @@
         // --- Event Listeners for new buttons ---
         // The "Upload New File" button now directly triggers the file input click
         uploadNewFileButton.addEventListener('click', () => {
+            console.log("[Upload New File] button clicked."); // Debug log
             fileInput.click(); // Programmatically click the hidden file input
             addMessageToLog('System', 'Clicking "Upload New File" will open file dialog to add another model to the scene.');
         });
-        saveButton.addEventListener('click', saveModel);
+        saveButton.addEventListener('click', () => {
+            console.log("[Save] button clicked."); // Debug log
+            saveModel();
+        });
 
         // --- New Event Listeners for Upload Page Buttons ---
         loadRandomModelButton.addEventListener('click', () => {
-            console.log("[Load Random Model] button clicked.");
+            console.log("[Load Random Model] button clicked. Calling goToEditor('random')."); // Added log
             uploadedFile = null; // Ensure no previous file is considered for explicit upload
             goToEditor('random'); // Go to editor and load a random model
         });
 
         createNewEmptyModelButton.addEventListener('click', () => {
-            console.log("[Create Empty Model] button clicked.");
+            console.log("[Create Empty Model] button clicked. Calling goToEditor('empty')."); // Added log
             uploadedFile = null; // Ensure no previous file is considered
             goToEditor('empty'); // Go to editor with an empty scene
         });
 
         editExistingModelButton.addEventListener('click', () => {
-            console.log("[Edit Existing Model] button clicked.");
-            // Show the dropZone and trigger file input if needed
-            dropZone.style.display = 'flex'; // Make dropZone visible for interaction
-            dropZone.style.pointerEvents = 'auto'; // Enable pointer events when visible
-            loadingMsg.textContent = 'Please select a .gltf or .glb file, or drag and drop.';
-            loadingMsg.style.color = '#007bff';
-            loadingMsg.style.display = 'block';
-
-            // Programmatically click the hidden file input to open file dialog
-            fileInput.click();
+            console.log("[Edit Existing Model] button clicked. Opening file dialog."); // Log for debugging
+            // Do NOT show dropZone or loadingMsg here. The fileInput 'change' listener will handle cleanup.
+            fileInput.click(); // Programmatically click the hidden file input
+            addMessageToLog('System', 'Please select a .gltf or .glb file.');
         });
 
 
@@ -748,6 +902,7 @@
 
         // --- Apply CSS Function (remains the same, but now accessed via AI command or direct console) ---
         applyCssButton.addEventListener('click', () => {
+            console.log("[Apply CSS] button clicked."); // Debug log
             const cssText = cssCodeEditor.value;
             try {
                 // Clear existing inline styles to prevent conflicts
@@ -778,10 +933,14 @@
             e.preventDefault();
             dropZone.textContent = 'Release to drop your .gltf or .glb file(s)';
             dropZone.style.borderColor = '#007bff';
+            dropZone.style.display = 'flex'; // Show dropZone on dragover
+            dropZone.style.pointerEvents = 'auto'; // Enable pointer events
         });
         dropZone.addEventListener('dragleave', () => {
             dropZone.textContent = 'Drag and Drop your .gltf or .glb file(s) here';
             dropZone.style.borderColor = '#a0aec0';
+            dropZone.style.display = 'none'; // Hide dropZone on dragleave
+            dropZone.style.pointerEvents = 'none'; // Disable pointer events
         });
         dropZone.addEventListener('drop', async e => {
             e.preventDefault();
@@ -790,6 +949,11 @@
             loadingMsg.textContent = 'Processing dropped files...';
             loadingMsg.style.color = '#007bff';
             loadingMsg.style.display = 'block';
+
+            // Always hide dropZone after a drop attempt, regardless of outcome
+            dropZone.style.display = 'none';
+            dropZone.style.pointerEvents = 'none';
+
 
             // When dropping, assume it's a new set of files for a new model
             // If already in editor, this means adding a new model. If on upload page, it's the first model.
@@ -861,45 +1025,62 @@
                 loadingMsg.style.color = 'red';
                 loadingMsg.style.display = 'block';
                 uploadedFile = null;
-                console.error("[Drop Handler] No GLTF/GLB file found in dropped items.");
+                setTimeout(() => { // Hide message after a delay
+                    loadingMsg.style.display = 'none';
+                    loadingMsg.textContent = '';
+                }, 3000);
             }
             console.log("[Drop Handler] uploadedFile after drop processing:", uploadedFile ? uploadedFile.name : "null");
         });
 
         fileInput.addEventListener('change', () => {
             console.log("[File Input] Change event detected. Files:", fileInput.files);
+
+            // Always ensure dropZone is hidden and non-interactive when file dialog closes
+            dropZone.style.display = 'none';
+            dropZone.style.pointerEvents = 'none';
+            loadingMsg.style.display = 'none'; // Hide any previous loading message
+            loadingMsg.textContent = ''; // Clear previous message
+
             if (fileInput.files.length > 0) {
-                loadingMsg.textContent = 'Processing selected file...';
-                loadingMsg.style.color = '#007bff';
-                loadingMsg.style.display = 'block';
-
-                // For file input, always clear previous context as it's typically a single file upload
-                droppedFileBlobs.clear();
-
                 const file = fileInput.files[0];
-                droppedFileBlobs.set(file.name, file);
                 uploadedFile = file;
                 console.log("[File Input] Selected file:", uploadedFile.name, `Type: ${uploadedFile.type}, Size: ${uploadedFile.size} bytes`);
 
                 if (validateFile(uploadedFile)) {
-                    // If already in editor, load the model directly
+                    loadingMsg.textContent = `Processing selected file: ${uploadedFile.name}...`;
+                    loadingMsg.style.color = '#007bff';
+                    loadingMsg.style.display = 'block'; // Show loading message *only* if a file is valid
+
+                    droppedFileBlobs.clear(); // Clear previous context
+                    droppedFileBlobs.set(file.name, file); // Store the selected file
+
                     if (editorPage.classList.contains('page-active')) {
                         loadModel(uploadedFile);
                     } else {
-                        // On upload page, just validate and then go to editor with the uploaded file
                         loadingMsg.textContent = `File selected: ${uploadedFile.name}. Loading editor...`;
                         loadingMsg.style.color = '#007bff';
                         loadingMsg.style.display = 'block';
                         goToEditor('uploaded');
                     }
+                } else {
+                    // Validation failed, message already set by validateFile
+                    setTimeout(() => { // Hide message after a delay
+                        loadingMsg.style.display = 'none';
+                        loadingMsg.textContent = '';
+                    }, 3000);
                 }
-                console.log("[File Input] Dropped file (keys in map):", Array.from(droppedFileBlobs.keys()));
             } else {
-                console.log("[File Input] No file selected via input.");
+                console.log("[File Input] No file selected via input (e.g., dialog cancelled or no file chosen).");
                 uploadedFile = null;
-                loadingMsg.textContent = 'No file selected. Please choose a .gltf or .glb file.';
-                loadingMsg.style.color = 'orange';
-                loadingMsg.style.display = 'block';
+                // No need to show a message if nothing was selected, just clear any previous ones.
+                // loadingMsg.textContent = 'No file selected.';
+                // loadingMsg.style.color = 'orange';
+                // loadingMsg.style.display = 'block';
+                // setTimeout(() => {
+                //     loadingMsg.style.display = 'none';
+                //     loadingMsg.textContent = '';
+                // }, 3000);
             }
             console.log("[File Input] uploadedFile after change processing:", uploadedFile ? uploadedFile.name : "null");
         });
@@ -911,9 +1092,9 @@
                 return true;
             } else {
                 console.error("[Validation] Unsupported file type! Please upload a .gltf or .glb file.");
+                // Set message for the caller to display/hide
                 loadingMsg.textContent = '❌ Unsupported file type! Please upload a .gltf or .glb file.';
                 loadingMsg.style.color = 'red';
-                loadingMsg.style.display = 'block';
                 uploadedFile = null;
                 return false;
             }
@@ -930,7 +1111,7 @@
                             if (object.geometry) object.geometry.dispose();
                             if (object.material) {
                                 if (Array.isArray(object.material)) {
-                                    object.material.forEach(material => material.dispose());
+                                    object.material.forEach(mat => mat.dispose());
                                 } else {
                                     object.material.dispose();
                                 }
@@ -954,7 +1135,7 @@
                 });
                 currentGridLabels = [];
 
-                // Dispose renderer and controls
+                // Dispose renderer and controls only if they exist
                 if (renderer) {
                     renderer.setAnimationLoop(null);
                     renderer.dispose();
@@ -973,17 +1154,48 @@
                     transformControls.dispose();
                     transformControls = null;
                 }
+                // Dispose view axes helper and its scene/camera/renderer only if they exist
+                if (viewAxesHelper) {
+                    // Iterate through children of viewAxesHelper (the axis meshes)
+                    viewAxesHelper.children.forEach(child => {
+                        if (child.isMesh) {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    child.material.forEach(mat => mat.dispose());
+                                } else {
+                                    child.material.dispose();
+                                }
+                            }
+                        }
+                    });
+                    viewAxesScene.remove(viewAxesHelper); // Remove the group itself
+                    viewAxesHelper = null;
+                }
+                if (viewAxesRenderer) {
+                    viewAxesRenderer.setAnimationLoop(null);
+                    viewAxesRenderer.dispose();
+                    viewAxesRenderer = null;
+                }
+                if (viewAxesCamera) {
+                    viewAxesCamera = null;
+                }
+                // Clear the container for the view axes helper
+                if (viewAxesContainer) {
+                    viewAxesContainer.innerHTML = '';
+                }
+
                 // Re-initialize scene after disposal to ensure a clean state
                 initScene();
             }
-            originalMaterials.clear(); // Clear original materials map
+            originalMaterialProperties.clear(); // Clear original material properties map
             selectedObject = null; // Clear selected object
             console.log("[Dispose] Resources disposed and scene re-initialized.");
         }
 
 
         function goToEditor(loadType = 'empty') { // Default to 'empty' if no type specified
-            console.log(`[goToEditor] Attempting to go to editor with load type: ${loadType}.`);
+            console.log(`[goToEditor] Function called with load type: ${loadType}.`); // Added log
 
             // Dispose and re-init scene to ensure a clean state for new or loaded models
             disposeSceneResources();
@@ -1016,11 +1228,13 @@
 
             editorPage.classList.remove('page-inactive');
             editorPage.classList.add('page-active');
+            console.log("[goToEditor] Page transition complete. Editor page is now active."); // Added log
         }
 
         function loadRandomModel() {
             const randomIndex = Math.floor(Math.random() * RANDOM_MODEL_URLS.length);
             const modelUrl = RANDOM_MODEL_URLS[randomIndex];
+            console.log(`[loadRandomModel] Attempting to load random model from URL: ${modelUrl}`); // Added log
             const loader = new GLTFLoader();
             loader.load(modelUrl, (gltf) => {
                 const randomModel = gltf.scene;
@@ -1030,10 +1244,12 @@
                 resetView();
                 addMessageToLog('System', `Random model "${randomModel.name}" loaded successfully.`);
                 speakResponse(`Random model loaded.`);
+                console.log(`[loadRandomModel] Random model "${randomModel.name}" loaded successfully.`); // Added log
             }, undefined, (error) => {
                 console.error('Error loading random model:', error);
                 addMessageToLog('System', `Error loading random model from ${modelUrl}. Starting with an empty scene.`);
                 speakResponse(`Error loading random model. Starting with an empty scene.`);
+                console.error(`[loadRandomModel] Error loading random model from ${modelUrl}:`, error); // Added log
             });
         }
 
@@ -1049,7 +1265,7 @@
             disposeSceneResources(); // This will clear all models and re-initialize the scene
             uploadedFile = null;
             droppedFileBlobs.clear();
-            originalMaterials.clear();
+            originalMaterialProperties.clear(); // Clear this map too
             selectedObject = null;
             fileInput.value = ''; // Clear file input value
             loadingMsg.textContent = 'Drag and Drop your .gltf or .glb file(s) here, or click to browse.';
@@ -1059,9 +1275,10 @@
             dropZone.style.borderColor = '#a0aec0';
             // Hide dropZone and loadingMsg when returning to the upload page
             dropZone.style.display = 'none';
-            dropZone.style.pointerEvents = 'none'; // Disable pointer events when hidden
+            dropZone.style.pointerEvents = 'none';
             loadingMsg.style.display = 'none';
             console.log("[Navigation] Returned to upload page. State reset.");
+            addMessageToLog('System', 'Welcome back! Choose an option to get started.');
         }
 
         // --- Three.js Scene Setup and Model Loading ---
@@ -1134,6 +1351,8 @@
             cadCanvas.removeEventListener('touchstart', onCanvasClick, false);
             cadCanvas.addEventListener('mousedown', onCanvasClick, false);
             cadCanvas.addEventListener('touchstart', onCanvasClick, false);
+
+            initViewAxesHelper(); // Initialize the static view axes helper
             console.log("[initScene] Three.js scene initialized.");
             animate();
         }
@@ -1284,6 +1503,10 @@
             renderer.setAnimationLoop(() => {
                 controls.update();
                 renderer.render(scene, camera);
+                // Render the static view axes helper scene
+                if (viewAxesRenderer && viewAxesScene && viewAxesCamera) {
+                     viewAxesRenderer.render(viewAxesScene, viewAxesCamera);
+                }
             });
         }
 
@@ -1358,6 +1581,10 @@
         }
 
         // --- Model Interaction (Selection, Transformation, Information) ---
+        let mouseDownX = 0;
+        let mouseDownY = 0;
+        const CLICK_TOLERANCE = 3; // Max pixels difference for a click to be registered
+
         function onCanvasClick(event) {
             // Only process left-click (mouse button 0) or touchstart
             if (event.type === 'mousedown' && event.button !== 0) return;
@@ -1368,46 +1595,48 @@
                 return;
             }
 
-            // Capture initial pointer position for drag detection
-            const initialPointer = new THREE.Vector2();
+            // Store initial pointer position on mousedown/touchstart
             if (event.type === 'touchstart') {
-                initialPointer.x = event.touches[0].clientX;
-                initialPointer.y = event.touches[0].clientY;
+                mouseDownX = event.touches[0].clientX;
+                mouseDownY = event.touches[0].clientY;
             } else {
-                initialPointer.x = event.clientX;
-                initialPointer.y = event.clientY;
+                mouseDownX = event.clientX;
+                mouseDownY = event.clientY;
             }
+            console.log(`[onCanvasClick] Mouse/Touch Down: Initial(${mouseDownX}, ${mouseDownY})`);
 
-            // Add a temporary mouseup/touchend listener to check for drag
+            // Add a temporary mouseup/touchend listener to check for drag vs click
             const onPointerUp = (upEvent) => {
-                const finalPointer = new THREE.Vector2();
+                let currentX, currentY;
                 if (upEvent.type === 'touchend') {
+                    // For touchend, use changedTouches as touches array might be empty
                     if (upEvent.changedTouches && upEvent.changedTouches.length > 0) {
-                        finalPointer.x = upEvent.changedTouches[0].clientX;
-                        finalPointer.y = upEvent.changedTouches[0].clientY;
+                        currentX = upEvent.changedTouches[0].clientX;
+                        currentY = upEvent.changedTouches[0].clientY;
                     } else {
-                        finalPointer.x = initialPointer.x;
-                        finalPointer.y = initialPointer.y;
+                        // Fallback if changedTouches is also empty (unlikely but safe)
+                        currentX = mouseDownX;
+                        currentY = mouseDownY;
                     }
                 } else {
-                    finalPointer.x = upEvent.clientX;
-                    finalPointer.y = upEvent.clientY;
+                    currentX = upEvent.clientX;
+                    currentY = upEvent.clientY;
                 }
 
-                // Calculate distance moved
-                const deltaX = Math.abs(initialPointer.x - finalPointer.x);
-                const deltaY = Math.abs(initialPointer.y - finalPointer.y);
-                const dragThreshold = 5; // Pixels threshold for detecting a drag
+                const deltaX = Math.abs(mouseDownX - currentX);
+                const deltaY = Math.abs(mouseDownY - currentY);
 
-                if (deltaX > dragThreshold || deltaY > dragThreshold) {
-                    console.log("[onCanvasClick] Detected drag, skipping selection.");
+                console.log(`[onCanvasClick] Mouse/Touch Up: Final(${currentX}, ${currentY}). DeltaX=${deltaX}, DeltaY=${deltaY}. Tolerance=${CLICK_TOLERANCE}`);
+
+                if (deltaX > CLICK_TOLERANCE || deltaY > CLICK_TOLERANCE) {
+                    console.log("[onCanvasClick] Detected drag (movement exceeded tolerance), skipping selection.");
                 } else {
                     // It was a click, proceed with raycasting
-                    console.log("[onCanvasClick] Detected click, processing selection.");
-                    // Normalize mouse coordinates for raycasting
+                    console.log("[onCanvasClick] Detected click (movement within tolerance), processing selection.");
+                    // Normalize mouse coordinates for raycasting using the initial mousedown position
                     const rect = renderer.domElement.getBoundingClientRect();
-                    mouse.x = ((initialPointer.x - rect.left) / rect.width) * 2 - 1;
-                    mouse.y = -((initialPointer.y - rect.top) / rect.height) * 2 + 1;
+                    mouse.x = ((mouseDownX - rect.left) / rect.width) * 2 - 1;
+                    mouse.y = -((mouseDownY - rect.top) / rect.height) * 2 + 1;
 
                     raycaster.setFromCamera(mouse, camera);
 
@@ -1437,33 +1666,64 @@
                 renderer.domElement.removeEventListener('touchend', onPointerUp);
             };
 
-            // Attach temporary listeners
+            // Attach temporary listeners for mouseup/touchend
             renderer.domElement.addEventListener('mouseup', onPointerUp, { once: true });
             renderer.domElement.addEventListener('touchend', onPointerUp, { once: true });
         }
 
         function selectObject(object) {
-            // If there was a previously selected object, revert its material
-            if (selectedObject && originalMaterials.has(selectedObject.uuid)) {
-                selectedObject.material = originalMaterials.get(selectedObject.uuid);
-                originalMaterials.delete(selectedObject.uuid);
+            // If there was a previously selected object, revert its highlight
+            if (selectedObject && originalMaterialProperties.has(selectedObject.uuid)) {
+                const originalProps = originalMaterialProperties.get(selectedObject.uuid);
+                const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+                materials.forEach(mat => {
+                    if (mat) {
+                        if (originalProps.hasOwnProperty('emissive')) {
+                            mat.emissive.copy(originalProps.emissive);
+                            mat.emissiveIntensity = originalProps.emissiveIntensity;
+                        }
+                        if (originalProps.hasOwnProperty('color')) {
+                            mat.color.copy(originalProps.color);
+                        }
+                        mat.needsUpdate = true;
+                    }
+                });
+                originalMaterialProperties.delete(selectedObject.uuid);
             }
 
             if (object) {
                 selectedObject = object;
-                // Store original material (can be an array or single material)
-                originalMaterials.set(selectedObject.uuid, selectedObject.material);
+                const highlightColor = new THREE.Color(0x1e90ff); // Dodger Blue for highlight
 
-                // Create a new MeshBasicMaterial for highlighting
-                // MeshBasicMaterial is not affected by lights, so it will always appear bright
-                const highlightMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x1e90ff, // Dodger Blue
-                    side: THREE.DoubleSide // Ensure both sides are visible
+                const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+                materials.forEach(mat => {
+                    if (mat && mat.isMaterial) {
+                        // Store original material properties before modifying
+                        const propsToStore = {};
+                        if (mat.emissive !== undefined) {
+                            propsToStore.emissive = mat.emissive.clone();
+                            propsToStore.emissiveIntensity = mat.emissiveIntensity;
+                        }
+                        if (mat.color !== undefined) {
+                            propsToStore.color = mat.color.clone();
+                        }
+                        originalMaterialProperties.set(selectedObject.uuid, propsToStore);
+
+                        // Apply highlight
+                        if (mat.emissive !== undefined) {
+                            mat.emissive.copy(highlightColor);
+                            mat.emissiveIntensity = 0.5; // Adjust intensity as needed
+                        } else if (mat.color !== undefined) {
+                            // If no emissive, change the main color
+                            mat.color.copy(highlightColor);
+                        } else {
+                            console.warn(`Material for ${object.name || 'Unnamed Part'} (UUID: ${object.uuid}) does not have an emissive or color property. Highlighting might not be work as expected.`);
+                        }
+                        mat.needsUpdate = true;
+                    }
                 });
 
-                selectedObject.material = highlightMaterial;
-
-                transformControls.attach(selectedObject); // Attach controls to the selected object
+                transformControls.attach(selectedObject);
                 addMessageToLog('System', `Selected: ${object.name || 'Unnamed Part'} (UUID: ${object.uuid})`);
                 speakResponse(`Selected ${object.name || 'a part'}.`);
             } else {
@@ -1472,9 +1732,22 @@
         }
 
         function clearSelection() {
-            if (selectedObject && originalMaterials.has(selectedObject.uuid)) {
-                selectedObject.material = originalMaterials.get(selectedObject.uuid);
-                originalMaterials.delete(selectedObject.uuid);
+            if (selectedObject && originalMaterialProperties.has(selectedObject.uuid)) {
+                const originalProps = originalMaterialProperties.get(selectedObject.uuid);
+                const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+                materials.forEach(mat => {
+                    if (mat) {
+                        if (originalProps.hasOwnProperty('emissive')) {
+                            mat.emissive.copy(originalProps.emissive);
+                            mat.emissiveIntensity = originalProps.emissiveIntensity;
+                        }
+                        if (originalProps.hasOwnProperty('color')) {
+                            mat.color.copy(originalProps.color);
+                        }
+                        mat.needsUpdate = true;
+                    }
+                });
+                originalMaterialProperties.delete(selectedObject.uuid);
                 selectedObject = null;
             }
             transformControls.detach(); // Detach controls when selection is cleared
@@ -1662,6 +1935,221 @@
             }
         }
 
+        // --- Camera View Functions (now including negative axes) ---
+        function setCameraView(position, target) {
+            if (camera && controls) {
+                camera.position.copy(position);
+                controls.target.copy(target);
+                controls.update(); // Update controls after changing camera position/target
+                addMessageToLog('System', `Camera view set to [${position.x.toFixed(2)}, ${position.y.toFixed(2)}, ${position.z.toFixed(2)}] looking at [${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)}].`);
+            } else {
+                addMessageToLog('System', 'Three.js components not initialized for view change.');
+            }
+        }
+
+        function getSceneCenterAndDistance() {
+            const bbox = new THREE.Box3().setFromObject(scene);
+            const center = bbox.getCenter(new THREE.Vector3());
+            const size = bbox.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const cameraDistance = maxDim * 1.5; // Adjust as needed for comfortable viewing
+            return { center, cameraDistance };
+        }
+
+        function setTopView() {
+            const { center, cameraDistance } = getSceneCenterAndDistance();
+            setCameraView(new THREE.Vector3(center.x, center.y + cameraDistance, center.z), center);
+            speakResponse('Switched to top view.');
+        }
+
+        function setBottomView() {
+            const { center, cameraDistance } = getSceneCenterAndDistance();
+            setCameraView(new THREE.Vector3(center.x, center.y - cameraDistance, center.z), center);
+            speakResponse('Switched to bottom view.');
+        }
+
+        function setFrontView() {
+            const { center, cameraDistance } = getSceneCenterAndDistance();
+            setCameraView(new THREE.Vector3(center.x, center.y, center.z + cameraDistance), center);
+            speakResponse('Switched to front view.');
+        }
+
+        function setBackView() {
+            const { center, cameraDistance } = getSceneCenterAndDistance();
+            setCameraView(new THREE.Vector3(center.x, center.y, center.z - cameraDistance), center);
+            speakResponse('Switched to back view.');
+        }
+
+        function setRightView() {
+            const { center, cameraDistance } = getSceneCenterAndDistance();
+            setCameraView(new THREE.Vector3(center.x + cameraDistance, center.y, center.z), center);
+            speakResponse('Switched to right view.');
+        }
+
+        function setLeftView() {
+            const { center, cameraDistance } = getSceneCenterAndDistance();
+            setCameraView(new THREE.Vector3(center.x - cameraDistance, center.y, center.z), center);
+            speakResponse('Switched to left view.');
+        }
+
+        function setIsometricView() {
+            // This will be similar to resetView, but explicitly for isometric
+            // If models are loaded, it will fit them, otherwise a default isometric
+            resetView(); // resetView already provides an isometric-like fit or default
+            speakResponse('Switched to isometric view.');
+        }
+
+        // --- Static View Axes Helper ---
+        let viewAxesRaycaster;
+        let viewAxesMouse;
+        let viewAxesSceneRendered = false; // Flag to ensure it's rendered only once
+
+        function initViewAxesHelper() {
+            if (viewAxesSceneRendered) return; // Prevent re-initialization
+
+            viewAxesScene = new THREE.Scene();
+            viewAxesCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 10); // Small FOV, aspect 1:1 for container
+            viewAxesCamera.position.set(1.5, 1.5, 1.5); // Fixed position for isometric view of axes
+            viewAxesCamera.lookAt(0, 0, 0);
+
+            viewAxesRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Alpha true for transparent background
+            viewAxesRenderer.setPixelRatio(window.devicePixelRatio);
+            viewAxesRenderer.setSize(viewAxesContainer.clientWidth, viewAxesContainer.clientHeight);
+            viewAxesRenderer.domElement.style.width = '100%';
+            viewAxesRenderer.domElement.style.height = '100%';
+            viewAxesContainer.appendChild(viewAxesRenderer.domElement);
+
+            // Create a custom AxesHelper with clickable parts
+            viewAxesHelper = new THREE.Group();
+            const axisLength = 1.0;
+            const axisRadius = 0.08; // Made axes thicker for easier clicking
+            const arrowLength = 0.2;
+            const arrowRadius = 0.08;
+
+            // X-axis (Red)
+            const xAxisMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const xAxisCylinder = new THREE.Mesh(new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8), xAxisMaterial);
+            xAxisCylinder.rotation.z = -Math.PI / 2;
+            xAxisCylinder.position.x = axisLength / 2;
+            xAxisCylinder.userData.axis = 'x';
+            xAxisCylinder.userData.direction = 'positive';
+            viewAxesHelper.add(xAxisCylinder);
+
+            const negXAxisCylinder = new THREE.Mesh(new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8), xAxisMaterial);
+            negXAxisCylinder.rotation.z = Math.PI / 2;
+            negXAxisCylinder.position.x = -axisLength / 2;
+            negXAxisCylinder.userData.axis = 'x';
+            negXAxisCylinder.userData.direction = 'negative';
+            viewAxesHelper.add(negXAxisCylinder);
+
+            // Y-axis (Green)
+            const yAxisMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const yAxisCylinder = new THREE.Mesh(new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8), yAxisMaterial);
+            yAxisCylinder.position.y = axisLength / 2;
+            yAxisCylinder.userData.axis = 'y';
+            yAxisCylinder.userData.direction = 'positive';
+            viewAxesHelper.add(yAxisCylinder);
+
+            const negYAxisCylinder = new THREE.Mesh(new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8), yAxisMaterial);
+            negYAxisCylinder.rotation.z = Math.PI; // Rotate to point downwards
+            negYAxisCylinder.position.y = -axisLength / 2;
+            negYAxisCylinder.userData.axis = 'y';
+            negYAxisCylinder.userData.direction = 'negative';
+            viewAxesHelper.add(negYAxisCylinder);
+
+            // Z-axis (Blue)
+            const zAxisMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+            const zAxisCylinder = new THREE.Mesh(new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8), zAxisMaterial);
+            zAxisCylinder.rotation.x = Math.PI / 2;
+            zAxisCylinder.position.z = axisLength / 2;
+            zAxisCylinder.userData.axis = 'z';
+            zAxisCylinder.userData.direction = 'positive';
+            viewAxesHelper.add(zAxisCylinder);
+
+            const negZAxisCylinder = new THREE.Mesh(new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 8), zAxisMaterial);
+            negZAxisCylinder.rotation.x = -Math.PI / 2;
+            negZAxisCylinder.position.z = -axisLength / 2;
+            negZAxisCylinder.userData.axis = 'z';
+            negZAxisCylinder.userData.direction = 'negative';
+            viewAxesHelper.add(negZAxisCylinder);
+
+            viewAxesScene.add(viewAxesHelper);
+
+            // Add labels (X, Y, Z)
+            const labelScale = 0.2; // Adjust label size
+            const labelOffset = 0.7; // Offset from axis end
+
+            const xLabel = makeTextSprite('X', { textColor: { r: 255, g: 0, b: 0, a: 1.0 }, fontsize: 60 });
+            xLabel.position.set(axisLength + labelOffset, 0, 0);
+            xLabel.scale.set(labelScale, labelScale, 1);
+            viewAxesScene.add(xLabel);
+
+            const yLabel = makeTextSprite('Y', { textColor: { r: 0, g: 255, b: 0, a: 1.0 }, fontsize: 60 });
+            yLabel.position.set(0, axisLength + labelOffset, 0);
+            yLabel.scale.set(labelScale, labelScale, 1);
+            viewAxesScene.add(yLabel);
+
+            const zLabel = makeTextSprite('Z', { textColor: { r: 0, g: 0, b: 255, a: 1.0 }, fontsize: 60 });
+            zLabel.position.set(0, 0, axisLength + labelOffset);
+            zLabel.scale.set(labelScale, labelScale, 1);
+            viewAxesScene.add(zLabel);
+
+
+            viewAxesRaycaster = new THREE.Raycaster();
+            viewAxesMouse = new THREE.Vector2();
+
+            viewAxesContainer.addEventListener('click', onViewAxesClick, false);
+
+            viewAxesSceneRendered = true;
+        }
+
+        function onViewAxesClick(event) {
+            event.preventDefault(); // Prevent default browser behavior
+
+            // Calculate mouse position in normalized device coordinates (NDC)
+            // (-1 to +1) for both X and Y
+            const rect = viewAxesRenderer.domElement.getBoundingClientRect();
+            viewAxesMouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            viewAxesMouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            viewAxesRaycaster.setFromCamera(viewAxesMouse, viewAxesCamera);
+
+            // Check for intersections with the individual axis meshes
+            const intersects = viewAxesRaycaster.intersectObjects(viewAxesHelper.children, true);
+
+            if (intersects.length > 0) {
+                const intersectedObject = intersects[0].object;
+                const axis = intersectedObject.userData.axis;
+                const direction = intersectedObject.userData.direction;
+
+                console.log(`[ViewAxesClick] Clicked on ${direction} ${axis}-axis.`);
+                addMessageToLog('System', `View axis clicked: ${direction} ${axis}-axis.`);
+
+                // Temporary visual feedback on the container
+                viewAxesContainer.style.backgroundColor = '#DAA520'; // Accent yellow
+                setTimeout(() => {
+                    viewAxesContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.3)'; // Revert to original gray
+                }, 200); // Flash for 200ms
+
+                // Map to corresponding view functions
+                if (axis === 'x') {
+                    if (direction === 'positive') setRightView();
+                    else setLeftView();
+                } else if (axis === 'y') {
+                    if (direction === 'positive') setTopView();
+                    else setBottomView();
+                } else if (axis === 'z') {
+                    if (direction === 'positive') setFrontView();
+                    else setBackView();
+                }
+            } else {
+                console.log("[ViewAxesClick] No axis clicked. Falling back to Isometric view.");
+                addMessageToLog('System', 'View axes helper clicked, but no specific axis. Resetting to Isometric view.');
+                setIsometricView(); // If clicked anywhere on the helper but not an axis, go isometric
+            }
+        }
+
+
         // --- AI Chat and Voice Commands ---
         function addMessageToLog(sender, message) {
             const messageElement = document.createElement('p');
@@ -1755,6 +2243,66 @@
             }
         }
 
+        // Function to change the color of the selected object
+        function changeObjectColor(colorValue) {
+            if (!selectedObject) {
+                addMessageToLog('System', 'No object selected. Please select an object first.');
+                speakResponse('No object selected. Please select an object first.');
+                return;
+            }
+
+            try {
+                const newColor = new THREE.Color(colorValue);
+                const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+
+                materials.forEach(material => {
+                    if (material && material.isMaterial) {
+                        // Crucial: Remove map to ensure solid color is visible
+                        if (material.map) {
+                            material.map.dispose(); // Dispose of the texture to free memory
+                            material.map = null;    // Remove the reference to the texture
+                        }
+                        if (material.color) {
+                            material.color.set(newColor);
+                        }
+                        // If the material has emissive, ensure it's reset to black when changing main color
+                        if (material.emissive !== undefined) {
+                             material.emissive.set(0x000000); // Reset emissive to black
+                             material.emissiveIntensity = 0; // Reset intensity
+                        }
+                        material.needsUpdate = true; // Inform Three.js that material properties have changed
+                    }
+                });
+
+                // IMPORTANT: After changing the color, update the stored original properties
+                // This ensures that if the object is deselected and re-selected,
+                // the highlight logic uses this new color as its base.
+                const updatedProps = {};
+                const currentMaterials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+                currentMaterials.forEach(mat => {
+                    if (mat && mat.isMaterial) {
+                        if (mat.emissive !== undefined) { // Store current emissive (should be black after reset)
+                            updatedProps.emissive = mat.emissive.clone();
+                            updatedProps.emissiveIntensity = mat.emissiveIntensity;
+                        }
+                        if (mat.color !== undefined) { // Store the new color
+                            updatedProps.color = mat.color.clone();
+                        }
+                    }
+                });
+                originalMaterialProperties.set(selectedObject.uuid, updatedProps);
+
+
+                addMessageToLog('AI', `Changed color of selected object to ${colorValue}.`);
+                speakResponse(`Changed color of selected object.`);
+                console.log(`[changeObjectColor] Selected object color changed to ${colorValue}.`);
+            } catch (error) {
+                console.error("Error setting object color:", error);
+                addMessageToLog('System', `Failed to change color. Invalid color value or material issue: ${error.message}`);
+                speakResponse(`Failed to change color.`);
+            }
+        }
+
 
         function processAICommand(aiResponseContent) { // Now receives the content string directly
             console.log("[processAICommand] Processing AI command content:", aiResponseContent);
@@ -1837,6 +2385,14 @@
                             } else {
                                 addMessageToLog('System', 'No object selected or invalid translate command.');
                                 speakResponse('No object selected or invalid translate command.');
+                            }
+                            break;
+                        case 'changeColor':
+                            if (parsedResponse.value) {
+                                changeObjectColor(parsedResponse.value);
+                            } else {
+                                addMessageToLog('AI', 'Please specify a color value (e.g., "red", "#FF0000").');
+                                speakResponse('Please specify a color value.');
                             }
                             break;
                         case 'error':
@@ -1937,6 +2493,7 @@
         sendTextCommandBtn.addEventListener('click', () => {
             const command = textCommandInput.value.trim();
             if (command) {
+                addMessageToLog('User', command); // Add user message to log immediately
                 sendAICommand(command);
                 textCommandInput.value = ''; // Clear input after sending
             }
@@ -1945,6 +2502,7 @@
         // Allow sending command by pressing Enter in the input field
         textCommandInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default Enter key behavior (e.g., new line in textarea)
                 sendTextCommandBtn.click();
             }
         });
@@ -1957,7 +2515,14 @@
                 camera.updateProjectionMatrix();
                 renderer.setSize(viewerDiv.clientWidth, viewerDiv.clientHeight);
                 updateDynamicGrid(); // Update grid on resize as well
-                resetView(); // Also re-adjust camera to fit models on resize
+                // No need to call resetView() here, as it can be jarring on every resize.
+                // The user can use the "Fit All" button or AI command.
+            }
+             // Update viewAxesHelper renderer size on window resize
+            if (viewAxesRenderer && viewAxesContainer) {
+                viewAxesRenderer.setSize(viewAxesContainer.clientWidth, viewAxesContainer.clientHeight);
+                viewAxesCamera.aspect = viewAxesContainer.clientWidth / viewAxesContainer.clientHeight;
+                viewAxesCamera.updateProjectionMatrix();
             }
         }
 
@@ -1977,8 +2542,32 @@
             editorPage.classList.add('page-inactive');
             editorPage.classList.remove('page-active');
 
+            // Explicitly hide dropZone and loadingMsg on initial load
+            dropZone.style.display = 'none';
+            dropZone.style.pointerEvents = 'none';
+            loadingMsg.style.display = 'none';
+
             // Automatically test AI connection on load
             testAIConnection(); // Still call to log backend status to console
+
+            // Removed event listeners for view control buttons as the HTML is removed
+            // topViewBtn.addEventListener('click', setTopView);
+            // bottomViewBtn.addEventListener('click', setBottomView);
+            // frontViewBtn.addEventListener('click', setFrontView);
+            // backViewBtn.addEventListener('click', setBackView);
+            // rightViewBtn.addEventListener('click', setRightView);
+            // leftViewBtn.addEventListener('click', setLeftView);
+            // isometricViewBtn.addEventListener('click', setIsometricView);
+            // fitAllViewBtn.addEventListener('click', resetView);
+
+            // Add event listener for object color change
+            applyObjectColorBtn.addEventListener('click', () => {
+                const color = objectColorPicker.value;
+                changeObjectColor(color);
+            });
+
+            // Initial message to guide the user on the upload page
+            addMessageToLog('System', 'Welcome to the AI VR CAD Editor! Please choose an option above to get started: "Create Empty Model", "Edit Existing Model" (to upload a file), or "Load Random Model".');
         };
 
     </script>
