@@ -771,7 +771,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { VRButton } from 'three/addons/webxr/VRButton.js'; // Corrected syntax here
+        import { VRButton } from 'three/addons/webxr/VRButton.js';
         import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
         // Global map to store dropped files by their relative path (e.g., "scene.bin", "textures/image.png")
@@ -831,7 +831,7 @@
         const uploadNewFileButton = document.getElementById('uploadNewFileButton');
         const saveButton = document.getElementById('saveButton');
         const chatContent = document.getElementById('chatContent');
-        const codeEditorContent = document.getElementById('codeEditorContent'); // Corrected syntax here
+        const codeEditorContent = document.getElementById('codeEditorContent');
         const cssCodeEditor = document.getElementById('cssCodeEditor');
         const applyCssButton = document.getElementById('applyCssButton');
 
@@ -1672,20 +1672,27 @@
         }
 
         function selectObject(object) {
+            console.log(`[selectObject] Attempting to select object: ${object.name || 'Unnamed Object'} (UUID: ${object.uuid})`);
+
             // If there was a previously selected object, revert its highlight
             if (selectedObject && originalMaterialProperties.has(selectedObject.uuid)) {
+                console.log(`[selectObject] Reverting previous selection for: ${selectedObject.name || 'Unnamed Object'} (UUID: ${selectedObject.uuid})`);
                 const originalProps = originalMaterialProperties.get(selectedObject.uuid);
                 const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
-                materials.forEach(mat => {
+                materials.forEach((mat, index) => {
                     if (mat) {
+                        console.log(`[selectObject]   Material ${index}: Before revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
                         if (originalProps.hasOwnProperty('emissive')) {
                             mat.emissive.copy(originalProps.emissive);
                             mat.emissiveIntensity = originalProps.emissiveIntensity;
+                            console.log(`[selectObject]     Reverted emissive to: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
                         }
                         if (originalProps.hasOwnProperty('color')) {
                             mat.color.copy(originalProps.color);
+                            console.log(`[selectObject]     Reverted color to: ${mat.color.getHex()}`);
                         }
                         mat.needsUpdate = true;
+                        console.log(`[selectObject]   Material ${index}: After revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
                     }
                 });
                 originalMaterialProperties.delete(selectedObject.uuid);
@@ -1694,18 +1701,22 @@
             if (object) {
                 selectedObject = object;
                 const highlightColor = new THREE.Color(0x1e90ff); // Dodger Blue for highlight
+                console.log(`[selectObject] Applying highlight to: ${selectedObject.name || 'Unnamed Object'} (UUID: ${selectedObject.uuid}) with color ${highlightColor.getHex()}`);
 
                 const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
-                materials.forEach(mat => {
+                materials.forEach((mat, index) => {
                     if (mat && mat.isMaterial) {
+                        console.log(`[selectObject]   Material ${index}: Type: ${mat.type}`);
                         // Store original material properties before modifying
                         const propsToStore = {};
                         if (mat.emissive !== undefined) {
                             propsToStore.emissive = mat.emissive.clone();
                             propsToStore.emissiveIntensity = mat.emissiveIntensity;
+                            console.log(`[selectObject]     Storing original emissive: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
                         }
                         if (mat.color !== undefined) {
                             propsToStore.color = mat.color.clone();
+                            console.log(`[selectObject]     Storing original color: ${mat.color.getHex()}`);
                         }
                         originalMaterialProperties.set(selectedObject.uuid, propsToStore);
 
@@ -1713,13 +1724,17 @@
                         if (mat.emissive !== undefined) {
                             mat.emissive.copy(highlightColor);
                             mat.emissiveIntensity = 0.5; // Adjust intensity as needed
+                            console.log(`[selectObject]     Applied highlight to emissive: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
                         } else if (mat.color !== undefined) {
                             // If no emissive, change the main color
                             mat.color.copy(highlightColor);
+                            console.log(`[selectObject]     Applied highlight to color: ${mat.color.getHex()}`);
                         } else {
-                            console.warn(`Material for ${object.name || 'Unnamed Part'} (UUID: ${object.uuid}) does not have an emissive or color property. Highlighting might not be work as expected.`);
+                            console.warn(`[selectObject] Material for ${object.name || 'Unnamed Part'} (UUID: ${object.uuid}) does not have an emissive or color property. Highlighting might not be work as expected.`);
                         }
                         mat.needsUpdate = true;
+                    } else {
+                        console.warn(`[selectObject] Material at index ${index} for object ${object.name || 'Unnamed Part'} is null or not a Three.js Material.`);
                     }
                 });
 
@@ -1727,24 +1742,33 @@
                 addMessageToLog('System', `Selected: ${object.name || 'Unnamed Part'} (UUID: ${object.uuid})`);
                 speakResponse(`Selected ${object.name || 'a part'}.`);
             } else {
+                console.log("[selectObject] No object provided to selectObject function.");
                 clearSelection();
             }
         }
 
         function clearSelection() {
+            console.log("[clearSelection] Attempting to clear selection.");
             if (selectedObject && originalMaterialProperties.has(selectedObject.uuid)) {
+                console.log(`[clearSelection] Reverting highlight for: ${selectedObject.name || 'Unnamed Part'} (UUID: ${selectedObject.uuid})`);
                 const originalProps = originalMaterialProperties.get(selectedObject.uuid);
                 const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
-                materials.forEach(mat => {
+                materials.forEach((mat, index) => {
                     if (mat) {
+                        console.log(`[clearSelection]   Material ${index}: Before revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
                         if (originalProps.hasOwnProperty('emissive')) {
                             mat.emissive.copy(originalProps.emissive);
                             mat.emissiveIntensity = originalProps.emissiveIntensity;
+                            console.log(`[clearSelection]     Reverted emissive to: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
                         }
                         if (originalProps.hasOwnProperty('color')) {
                             mat.color.copy(originalProps.color);
+                            console.log(`[clearSelection]     Reverted color to: ${mat.color.getHex()}`);
                         }
                         mat.needsUpdate = true;
+                        console.log(`[clearSelection]   Material ${index}: After revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
+                    } else {
+                        console.warn(`[clearSelection] Material at index ${index} for object ${selectedObject.name || 'Unnamed Part'} is null or not a Three.js Material.`);
                     }
                 });
                 originalMaterialProperties.delete(selectedObject.uuid);
@@ -1753,6 +1777,7 @@
             transformControls.detach(); // Detach controls when selection is cleared
             addMessageToLog('System', 'Selection cleared.');
             speakResponse('Selection cleared.');
+            console.log("[clearSelection] Selection cleared successfully.");
         }
 
         function removeObject() {
