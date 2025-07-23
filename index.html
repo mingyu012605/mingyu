@@ -17,7 +17,7 @@
             /* Authentic Fusion-like pure white background for the whole app */
             background-color: #FFFFFF; /* Pure white base color for Fusion 360 */
             background-image: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px), /* Visible darker grid lines */
-            repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);\
+            repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,0.1) 20px);
             background-size: 20px 20px; /* Size of each grid cell */
             overflow: hidden; /* Keep overflow hidden for main body */
             display: flex;
@@ -1024,7 +1024,6 @@
                 loadingMsg.textContent = '❌ No .gltf or .glb file found among dropped items!';
                 loadingMsg.style.color = 'red';
                 loadingMsg.style.display = 'block';
-                uploadedFile = null;
                 setTimeout(() => { // Hide message after a delay
                     loadingMsg.style.display = 'none';
                     loadingMsg.textContent = '';
@@ -1564,7 +1563,7 @@
                     resetView();
 
                     loadingMsg.style.display = 'none';
-                    addMessageToLog('System', `Model '${file.name}' loaded successfully. Total models: ${loadedModels.length}`);
+                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
                     speakResponse(`Model loaded successfully. You now have ${loadedModels.length} models in the scene.`);
                     console.log("[loadModel] Model successfully added to scene. Current loadedModels:", loadedModels);
                 }, (xhr) => {
@@ -2185,8 +2184,9 @@
         }
 
         // --- Backend API Configuration ---
-        // This URL should point to your Render backend's AI proxy endpoint.
-        const BACKEND_API_URL = "https://mingyu.onrender.com/api/ai"; // YOUR RENDER BACKEND URL HERE
+        // IMPORTANT: Replace "https://mingyu.onrender.com/api/ai" with YOUR ACTUAL Render backend URL.
+        // This URL must be correct for the frontend to communicate with your backend.
+        const BACKEND_API_URL = "https://mingyu.onrender.com/api/ai";
 
         async function sendAICommand(command) {
             sendTextCommandBtn.disabled = true;
@@ -2229,8 +2229,17 @@
 
             } catch (error) {
                 console.error("Error communicating with backend API:", error);
-                addMessageToLog('AI', `I'm sorry, I couldn't reach the AI service through your backend. Please ensure your Render backend is running and configured correctly. Error: ${error.message}`);
-                speakResponse(`I'm sorry, I couldn't reach the AI service.`);
+                // Enhanced error message for "Failed to fetch"
+                if (error.message.includes('Failed to fetch')) {
+                    addMessageToLog('AI', `I'm sorry, I couldn't connect to the AI service. This usually means your Render backend is not running, its URL is incorrect, or there's a network issue. Please ensure:
+                    1. Your Render service is 'Running' in your Render dashboard.
+                    2. The 'BACKEND_API_URL' in your index.html matches your Render service's URL exactly.
+                    3. Check your Render service logs for any startup errors.`);
+                    speakResponse(`I'm sorry, I couldn't connect to the AI service. Please check your Render backend status and URL.`);
+                } else {
+                    addMessageToLog('AI', `I'm sorry, I couldn't reach the AI service through your backend. Please ensure your Render backend is running and configured correctly. Error: ${error.message}`);
+                    speakResponse(`I'm sorry, I couldn't reach the AI service.`);
+                }
             } finally {
                 sendTextCommandBtn.disabled = false;
                 textCommandInput.disabled = false;
@@ -2328,6 +2337,49 @@
             }
         }
 
+        // Function to create a primitive shape
+        function createPrimitive(type) {
+            let geometry;
+            let mesh;
+            // Use a default material that looks good and can be easily colored
+            const material = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.5, roughness: 0.5 }); // DodgerBlue
+
+            switch (type.toLowerCase()) {
+                case 'box':
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(1, 1, 1); // 1x1x1 unit cube
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = 'Cube';
+                    break;
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(0.5, 32, 32); // Radius 0.5
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = 'Sphere';
+                    break;
+                case 'cylinder':
+                    geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32); // Radius top/bottom 0.5, height 1
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = 'Cylinder';
+                    break;
+                default:
+                    addMessageToLog('AI', `I don't know how to create a "${type}" shape. Try "box", "sphere", or "cylinder".`);
+                    speakResponse(`I don't know how to create a ${type} shape. Try box, sphere, or cylinder.`);
+                    return;
+            }
+
+            // Position new objects slightly in front of the camera and above the origin
+            // This ensures new objects are visible and don't spawn inside existing ones
+            const positionOffset = new THREE.Vector3(0, 0, -2).applyQuaternion(camera.quaternion);
+            mesh.position.copy(controls.target).add(positionOffset);
+            mesh.position.y = 0.5; // Place on the grid
+
+            scene.add(mesh);
+            loadedModels.push(mesh); // Add newly created objects to loadedModels for saving and general management
+            addMessageToLog('AI', `Created a ${type} model.`);
+            speakResponse(`Created a ${type} model.`);
+            selectObject(mesh); // Automatically select the newly created object
+        }
+
 
         function processAICommand(aiResponseContent) { // Now receives the content string directly
             console.log("[processAICommand] Processing AI command content:", aiResponseContent);
@@ -2336,6 +2388,8 @@
             try {
                 parsedResponse = JSON.parse(aiResponseContent); // Parse the content string
                 console.log("[processAICommand] Parsed AI response (JSON):", parsedResponse);
+                console.log("[processAICommand] Parsed action:", parsedResponse.action); // NEW LOG
+                console.log("[processAICommand] Parsed value:", parsedResponse.value);   // NEW LOG
 
                 // Handle cases where 'action' might be missing or is 'conversational'
                 if (parsedResponse.action === 'conversational' || (!parsedResponse.action && parsedResponse.value)) {
@@ -2343,6 +2397,14 @@
                     speakResponse(parsedResponse.value);
                 } else if (typeof parsedResponse.action === 'string') {
                     switch (parsedResponse.action) {
+                        case 'createShape': // THIS WAS THE MISSING CASE!
+                            if (parsedResponse.value) {
+                                createPrimitive(parsedResponse.value);
+                            } else {
+                                addMessageToLog('AI', 'Please specify a shape type (e.g., "box", "sphere", "cylinder").');
+                                speakResponse('Please specify a shape type like box, sphere, or cylinder.');
+                            }
+                            break;
                         case 'removeObject':
                             removeObject();
                             break;
