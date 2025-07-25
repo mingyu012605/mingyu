@@ -247,23 +247,6 @@
                 font-weight: 700;
             }
 
-        /* Top buttons container for Leave, Upload, Save */
-        .top-editor-buttons {
-            display: flex;
-            justify-content: flex-end; /* Align to the right */
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .top-editor-buttons .button {
-            padding: 8px 15px; /* Smaller padding for these buttons */
-            font-size: 0.9em; /* Smaller font size */
-            width: auto; /* Allow buttons to size based on content */
-            flex-shrink: 0;
-        }
-
-
         /* Tab buttons for chat/code editor */
         .tab-buttons {
             display: flex;
@@ -304,10 +287,10 @@
             }
 
         /* Small circular button for "Back to Upload" */
-        #leaveButton { /* Renamed ID */
-            width: auto; /* Allow width to adjust to content */
+        #backToUploadCircleButton {
+            width: 40px; /* Small size */
             height: 40px; /* Small size */
-            border-radius: 8px; /* Changed to rounded rectangle for text */
+            border-radius: 50%; /* Circular shape */
             background-color: #DAA520; /* Dark Yellow */
             color: white;
             border: none;
@@ -315,56 +298,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9em; /* Smaller font size */
-            font-weight: 600;
+            font-size: 0.8em; /* Smaller font size if text is present */
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
             flex-shrink: 0; /* Prevent shrinking */
-            padding: 0 10px; /* Add padding for text */
         }
 
-            #leaveButton:hover {
+            #backToUploadCircleButton:hover {
                 background-color: #B8860B; /* Darker yellow on hover */
                 transform: translateY(-2px);
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
 
-            /* Removed SVG style for leaveButton */
-
-        /* Undo/Redo Buttons */
-        .undo-redo-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            justify-content: flex-start; /* Align to the left */
-        }
-
-        .undo-redo-buttons button {
-            background-color: #4a5568;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 1em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-        }
-
-        .undo-redo-buttons button:hover {
-            background-color: #6c757d;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
-        }
-
-        .undo-redo-buttons button svg {
-            fill: white;
-            height: 20px;
-            width: 20px;
-        }
+            #backToUploadCircleButton svg {
+                fill: #FFFFFF;
+                height: 20px;
+                width: 20px;
+            }
 
 
         /* Tab content areas */
@@ -399,7 +349,6 @@
             display: block;
             width: 100%;
             height: 100%;
-            touch-action: none; /* Add this line to prevent browser default touch actions */
         }
 
         #aiLog {
@@ -589,6 +538,36 @@
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
 
+        /* New View Controls Section - REMOVED */
+        /* .view-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #2d3748;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .view-control-button {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .view-control-button:hover {
+            background-color: #DAA520;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        } */
+
         /* Style for the static view axes helper */
         #viewAxesContainer {
             position: absolute;
@@ -673,20 +652,6 @@
             /* Reuse view-control-button styles */
             padding: 8px 15px;
             font-size: 0.9em;
-            background-color: #4a5568; /* Reusing a neutral button style */
-            color: #e2e8f0;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        #applyObjectColorBtn:hover {
-            background-color: #DAA520; /* Accent color on hover */
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
     </style>
     <!-- Import Map for ES Modules -->
@@ -744,11 +709,27 @@
 
             <!-- NEW: Right-side chat panel with updated buttons -->
             <div class="right-panel">
-                <div class="top-editor-buttons">
-                    <button class="button primary" id="leaveButton" onclick="window.goBack()">Leave</button>
-                    <button class="button primary" id="uploadNewFileButton">Upload New File</button>
-                    <button class="button secondary" id="saveButton">Save</button>
+                <div class="tab-buttons">
+                    <!-- Small circular "Back to Upload" button -->
+                    <button id="backToUploadCircleButton" onclick="window.goBack()">
+                        <!-- Left arrow SVG -->
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" /></svg>
+                    </button>
+                    <button class="tab-button active" id="uploadNewFileButton">Upload New File</button>
+                    <button class="tab-button" id="saveButton">Save</button>
                 </div>
+
+                <!-- Removed View Controls Section -->
+                <!-- <div class="view-controls">
+                    <button class="view-control-button" id="topViewBtn">Top View</button>
+                    <button class="view-control-button" id="bottomViewBtn">Bottom View</button>
+                    <button class="view-control-button" id="frontViewBtn">Front View</button>
+                    <button class="view-control-button" id="backViewBtn">Back View</button>
+                    <button class="view-control-button" id="rightViewBtn">Right View</button>
+                    <button class="view-control-button" id="leftViewBtn">Left View</button>
+                    <button class="view-control-button" id="isometricViewBtn">Isometric View</button>
+                    <button class="view-control-button" id="fitAllViewBtn">Fit All</button>
+                </div> -->
 
                 <!-- Object Properties Section -->
                 <div class="object-properties-controls">
@@ -759,16 +740,6 @@
                         <button class="view-control-button" id="applyObjectColorBtn">Apply Color</button>
                     </div>
                     <!-- More properties can be added here later -->
-                </div>
-
-                <!-- Undo/Redo Buttons -->
-                <div class="undo-redo-buttons">
-                    <button id="undoButton">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.61-3.61c1.39-1.16 3.16-1.89 5.11-1.89 3.73 0 6.84 2.55 7.73 6h2.08c-.9-4.5-4.77-8-9.81-8z"/></svg>
-                    </button>
-                    <button id="redoButton">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M18.41 16.59L22 13V4h-9l3.61 3.61c-1.39 1.16-3.16 1.89-5.11 1.89-3.73 0-6.84-2.55-7.73-6H2.27c.9 4.5 4.77 8 9.81 8 2.65 0 5.05-.99 6.9-2.6z"/></svg>
-                    </button>
                 </div>
 
                 <!-- Chat Content remains visible by default -->
@@ -823,7 +794,10 @@
         let mouse;
         let selectedObject = null; // This will hold the currently selected THREE.Mesh part
         // Stores original material properties for deselection, now includes color and emissive
-        const originalMaterialProperties = new Map(); // Stores { color?: THREE.Color, emissive?: THREE.Color, emissiveIntensity?: number }
+        const originalMaterialProperties = new Map(); // Stores { uuid: { color?: THREE.Color, emissive?: THREE.Color, emissiveIntensity?: number } }
+        // New map to store original materials for "select all" highlight
+        const allHighlightsOriginalMaterials = new Map(); // Stores { uuid: { material: originalMaterial(s), color?: THREE.Color, emissive?: THREE.Color, emissiveIntensity?: number } }
+
         let transformControls;
 
         // Variables for dynamic grid
@@ -836,6 +810,7 @@
         // New scene and camera for the static view axes helper
         let viewAxesScene, viewAxesCamera, viewAxesRenderer;
         let viewAxesHelper; // The actual AxesHelper object
+        let viewAxesSceneRendered = false; // Flag to ensure helper is initialized only once
 
         // Get references to HTML elements
         const fileInput = document.getElementById('fileInput');
@@ -857,15 +832,22 @@
         const editExistingModelButton = document.getElementById('editExistingModelButton');
 
         // Updated button references on editor page
-        const leaveButton = document.getElementById('leaveButton'); // Renamed ID
         const uploadNewFileButton = document.getElementById('uploadNewFileButton');
         const saveButton = document.getElementById('saveButton');
-        const undoButton = document.getElementById('undoButton'); // New Undo button
-        const redoButton = document.getElementById('redoButton'); // New Redo button
         const chatContent = document.getElementById('chatContent');
         const codeEditorContent = document.getElementById('codeEditorContent');
         const cssCodeEditor = document.getElementById('cssCodeEditor');
         const applyCssButton = document.getElementById('applyCssButton');
+
+        // New view control buttons - these are now unused in the HTML but kept for reference if AI commands use them
+        const topViewBtn = document.getElementById('topViewBtn');
+        const bottomViewBtn = document.getElementById('bottomViewBtn');
+        const frontViewBtn = document.getElementById('frontViewBtn');
+        const backViewBtn = document.getElementById('backViewBtn');
+        const rightViewBtn = document.getElementById('rightViewBtn');
+        const leftViewBtn = document.getElementById('leftViewBtn');
+        const isometricViewBtn = document.getElementById('isometricViewBtn');
+        const fitAllViewBtn = document.getElementById('fitAllViewBtn');
 
         // New object properties UI elements
         const objectColorPicker = document.getElementById('objectColorPicker');
@@ -881,7 +863,6 @@
         window.setTransformMode = setTransformMode;
         window.listParts = listParts;
         window.saveModel = saveModel; // Expose saveModel globally
-        window.duplicateObject = duplicateObject; // Expose duplicateObject globally
 
         // --- Event Listeners for new buttons ---
         // The "Upload New File" button now directly triggers the file input click
@@ -913,19 +894,6 @@
             // Do NOT show dropZone or loadingMsg here. The fileInput 'change' listener will handle cleanup.
             fileInput.click(); // Programmatically click the hidden file input
             addMessageToLog('System', 'Please select a .gltf or .glb file.');
-        });
-
-        // --- Undo/Redo Placeholder Functions ---
-        undoButton.addEventListener('click', () => {
-            addMessageToLog('System', 'Undo functionality is a placeholder. A full undo/redo system requires complex state management.');
-            speakResponse('Undo is not yet implemented.');
-            console.warn("Undo: Placeholder function executed.");
-        });
-
-        redoButton.addEventListener('click', () => {
-            addMessageToLog('System', 'Redo functionality is a placeholder. A full undo/redo system requires complex state management.');
-            speakResponse('Redo is not yet implemented.');
-            console.warn("Redo: Placeholder function executed.");
         });
 
 
@@ -1059,7 +1027,7 @@
             } else {
                 loadingMsg.textContent = '❌ No .gltf or .glb file found among dropped items!';
                 loadingMsg.style.color = 'red';
-                loadingMsg.style.display = 'block';
+                uploadedFile = null;
                 setTimeout(() => { // Hide message after a delay
                     loadingMsg.style.display = 'none';
                     loadingMsg.textContent = '';
@@ -1223,7 +1191,8 @@
                 // Re-initialize scene after disposal to ensure a clean state
                 initScene();
             }
-            originalMaterialProperties.clear(); // Clear original material properties map
+            originalMaterialProperties.clear(); // Clear this map too
+            allHighlightsOriginalMaterials.clear(); // Clear all highlights map
             selectedObject = null; // Clear selected object
             console.log("[Dispose] Resources disposed and scene re-initialized.");
         }
@@ -1301,6 +1270,7 @@
             uploadedFile = null;
             droppedFileBlobs.clear();
             originalMaterialProperties.clear(); // Clear this map too
+            allHighlightsOriginalMaterials.clear(); // Clear all highlights map
             selectedObject = null;
             fileInput.value = ''; // Clear file input value
             loadingMsg.textContent = 'Drag and Drop your .gltf or .glb file(s) here, or click to browse.';
@@ -1375,7 +1345,7 @@
             directionalLight.position.set(1, 1, 1).normalize();
             scene.add(directionalLight);
             const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.7); // Additional light from another angle
-            directionalLight2.position.set(-1, -1).normalize();
+            directionalLight2.position.set(-1, -1, -1).normalize();
             scene.add(directionalLight2);
 
 
@@ -1599,7 +1569,7 @@
                     resetView();
 
                     loadingMsg.style.display = 'none';
-                    addMessageToLog('System', `Model '${file.name}' loaded successfully.`);
+                    addMessageToLog('System', `Model '${file.name}' loaded successfully. Total models: ${loadedModels.length}`);
                     speakResponse(`Model loaded successfully. You now have ${loadedModels.length} models in the scene.`);
                     console.log("[loadModel] Model successfully added to scene. Current loadedModels:", loadedModels);
                 }, (xhr) => {
@@ -1618,11 +1588,23 @@
         // --- Model Interaction (Selection, Transformation, Information) ---
         let mouseDownX = 0;
         let mouseDownY = 0;
-        const CLICK_TOLERANCE = 3; // Max pixels difference for a click to be registered
+        const CLICK_TOLERANCE = 10; // Increased from 3 to 10 for more forgiving click detection
+
+        // Global highlight material (re-use this instance)
+        const highlightMaterial = new THREE.MeshBasicMaterial({
+            color: 0x1e90ff, // Dodger Blue
+            transparent: true,
+            opacity: 0.8,
+            depthTest: false, // Important: Render without considering depth
+            depthWrite: false // Important: Do not write to depth buffer
+        });
 
         function onCanvasClick(event) {
             // Only process left-click (mouse button 0) or touchstart
-            if (event.type === 'mousedown' && event.button !== 0) return;
+            if (event.type === 'mousedown' && event.button !== 0) {
+                console.log("[onCanvasClick] Ignoring non-left click or non-touchstart event.");
+                return;
+            }
 
             // If TransformControls are currently active and dragging, do not process selection
             if (transformControls && transformControls.dragging) {
@@ -1663,6 +1645,13 @@
 
                 console.log(`[onCanvasClick] Mouse/Touch Up: Final(${currentX}, ${currentY}). DeltaX=${deltaX}, DeltaY=${deltaY}. Tolerance=${CLICK_TOLERANCE}`);
 
+                // Visual feedback for any click registered
+                cadViewer.style.backgroundColor = '#E0F2F7'; // Light blue flash
+                setTimeout(() => {
+                    cadViewer.style.backgroundColor = '#FFFFFF'; // Revert to white
+                }, 100);
+
+
                 if (deltaX > CLICK_TOLERANCE || deltaY > CLICK_TOLERANCE) {
                     console.log("[onCanvasClick] Detected drag (movement exceeded tolerance), skipping selection.");
                 } else {
@@ -1672,26 +1661,34 @@
                     const rect = renderer.domElement.getBoundingClientRect();
                     mouse.x = ((mouseDownX - rect.left) / rect.width) * 2 - 1;
                     mouse.y = -((mouseDownY - rect.top) / rect.height) * 2 + 1;
+                    console.log(`[onCanvasClick] Normalized mouse coords for raycasting: X=${mouse.x.toFixed(4)}, Y=${mouse.y.toFixed(4)}`);
+
 
                     raycaster.setFromCamera(mouse, camera);
 
                     const objectsToIntersect = [];
-                    loadedModels.forEach(modelGroup => { // Iterate through each loaded model group
-                        modelGroup.traverse((obj) => {
-                            if (obj.isMesh && !obj.userData.isGridLabel) { // Exclude grid labels
-                                objectsToIntersect.push(obj);
-                            }
-                        });
+                    scene.traverse((obj) => { // Traverse the entire scene
+                        // Only consider meshes that are visible and not part of the grid or labels
+                        if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper) {
+                            objectsToIntersect.push(obj);
+                        }
                     });
+                    console.log(`[onCanvasClick] Total visible meshes considered for intersection: ${objectsToIntersect.length}`);
+                    if (objectsToIntersect.length === 0) {
+                        console.log("[onCanvasClick] No meshes available to intersect.");
+                    }
+
 
                     const intersects = raycaster.intersectObjects(objectsToIntersect, true);
+                    console.log(`[onCanvasClick] Intersections found by raycaster: ${intersects.length}`);
+
 
                     if (intersects.length > 0) {
                         const intersectedObject = intersects[0].object;
-                        console.log("[onCanvasClick] Object intersected:", intersectedObject.name || "Unnamed Object", intersectedObject.uuid);
+                        console.log("[onCanvasClick] Object intersected:", intersectedObject.name || "Unnamed Object", "UUID:", intersectedObject.uuid, "Type:", intersectedObject.type, "Parent:", intersectedObject.parent ? intersectedObject.parent.name || intersectedObject.parent.uuid : 'none');
                         selectObject(intersectedObject);
                     } else {
-                        console.log("[onCanvasClick] No object intersected.");
+                        console.log("[onCanvasClick] No object intersected by raycaster.");
                         clearSelection();
                     }
                 }
@@ -1707,113 +1704,201 @@
         }
 
         function selectObject(object) {
-            console.log(`[selectObject] Attempting to select object: ${object.name || 'Unnamed Object'} (UUID: ${object.uuid})`);
+            console.log(`[selectObject] Function called with object:`, object ? object.name || object.uuid : 'null');
+            console.log(`[selectObject] Current selectedObject BEFORE:`, selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
 
-            // If there was a previously selected object, revert its highlight
-            if (selectedObject && originalMaterialProperties.has(selectedObject.uuid)) {
-                console.log(`[selectObject] Reverting previous selection for: ${selectedObject.name || 'Unnamed Object'} (UUID: ${selectedObject.uuid})`);
-                const originalProps = originalMaterialProperties.get(selectedObject.uuid);
-                const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+            // Clear any existing "select all" highlights first if this object was part of it
+            if (allHighlightsOriginalMaterials.has(object.uuid)) {
+                const originalProps = allHighlightsOriginalMaterials.get(object.uuid);
+                const materials = Array.isArray(object.material) ? object.material : [object.material];
                 materials.forEach((mat, index) => {
-                    if (mat) {
-                        console.log(`[selectObject]   Material ${index}: Before revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
+                    if (mat && mat.isMaterial) {
+                        // Restore original material properties for this specific object
                         if (originalProps.hasOwnProperty('emissive')) {
                             mat.emissive.copy(originalProps.emissive);
                             mat.emissiveIntensity = originalProps.emissiveIntensity;
-                            console.log(`[selectObject]     Reverted emissive to: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
                         }
                         if (originalProps.hasOwnProperty('color')) {
                             mat.color.copy(originalProps.color);
-                            console.log(`[selectObject]     Reverted color to: ${mat.color.getHex()}`);
                         }
                         mat.needsUpdate = true;
-                        console.log(`[selectObject]   Material ${index}: After revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
                     }
                 });
-                originalMaterialProperties.delete(selectedObject.uuid);
+                allHighlightsOriginalMaterials.delete(object.uuid); // Remove from "all" map
+                console.log(`[selectObject] Cleared "select all" highlight for ${object.name || 'Unnamed Object'} (UUID: ${object.uuid}).`);
             }
+
+            // Clear any previous individual selection
+            clearSelection();
 
             if (object) {
                 selectedObject = object;
-                const highlightColor = new THREE.Color(0x1e90ff); // Dodger Blue for highlight
-                console.log(`[selectObject] Applying highlight to: ${selectedObject.name || 'Unnamed Object'} (UUID: ${selectedObject.uuid}) with color ${highlightColor.getHex()}`);
+                console.log(`[selectObject] Selected object set to: ${selectedObject.name || 'Unnamed Object'} (UUID: ${selectedObject.uuid})`);
 
                 const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
                 materials.forEach((mat, index) => {
                     if (mat && mat.isMaterial) {
-                        console.log(`[selectObject]   Material ${index}: Type: ${mat.type}`);
                         // Store original material properties before modifying
                         const propsToStore = {};
                         if (mat.emissive !== undefined) {
                             propsToStore.emissive = mat.emissive.clone();
                             propsToStore.emissiveIntensity = mat.emissiveIntensity;
-                            console.log(`[selectObject]     Storing original emissive: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
                         }
                         if (mat.color !== undefined) {
                             propsToStore.color = mat.color.clone();
-                            console.log(`[selectObject]     Storing original color: ${mat.color.getHex()}`);
                         }
                         originalMaterialProperties.set(selectedObject.uuid, propsToStore);
+                        console.log(`[selectObject] Stored original material properties for UUID ${selectedObject.uuid}, material index ${index}:`, propsToStore);
+
 
                         // Apply highlight
                         if (mat.emissive !== undefined) {
-                            mat.emissive.copy(highlightColor);
+                            mat.emissive.copy(highlightMaterial.color);
                             mat.emissiveIntensity = 0.5; // Adjust intensity as needed
-                            console.log(`[selectObject]     Applied highlight to emissive: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
+                            console.log(`[selectObject] Applied emissive highlight to material for ${selectedObject.name || 'Unnamed Object'} (material index ${index}).`);
                         } else if (mat.color !== undefined) {
                             // If no emissive, change the main color
-                            mat.color.copy(highlightColor);
-                            console.log(`[selectObject]     Applied highlight to color: ${mat.color.getHex()}`);
+                            mat.color.copy(highlightMaterial.color);
+                            console.log(`[selectObject] Applied color highlight to material for ${selectedObject.name || 'Unnamed Object'} (material index ${index}).`);
                         } else {
-                            console.warn(`[selectObject] Material for ${object.name || 'Unnamed Part'} (UUID: ${object.uuid}) does not have an emissive or color property. Highlighting might not be work as expected.`);
+                            console.warn(`[selectObject] Material for ${object.name || 'Unnamed Part'} (UUID: ${object.uuid}, material index ${index}) does not have an emissive or color property. Highlighting might not work as expected.`);
                         }
                         mat.needsUpdate = true;
                     } else {
-                        console.warn(`[selectObject] Material at index ${index} for object ${object.name || 'Unnamed Part'} is null or not a Three.js Material.`);
+                        console.warn(`[selectObject] Material at index ${index} for object ${object.name || object.uuid} is null or not a valid material.`);
                     }
                 });
 
                 transformControls.attach(selectedObject);
+                console.log(`[selectObject] TransformControls attached to: ${transformControls.object ? transformControls.object.name || transformControls.object.uuid : 'null'}`);
                 addMessageToLog('System', `Selected: ${object.name || 'Unnamed Part'} (UUID: ${object.uuid})`);
                 speakResponse(`Selected ${object.name || 'a part'}.`);
             } else {
-                console.log("[selectObject] No object provided to selectObject function.");
-                clearSelection();
+                console.log("[selectObject] No object provided for selection, clearing any existing selection.");
+                clearSelection(); // If no object is passed, clear selection
             }
+            console.log(`[selectObject] Current selectedObject AFTER:`, selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
         }
 
         function clearSelection() {
-            console.log("[clearSelection] Attempting to clear selection.");
+            console.log("[clearSelection] Attempting to clear individual selection.");
             if (selectedObject && originalMaterialProperties.has(selectedObject.uuid)) {
                 console.log(`[clearSelection] Reverting highlight for: ${selectedObject.name || 'Unnamed Part'} (UUID: ${selectedObject.uuid})`);
+
                 const originalProps = originalMaterialProperties.get(selectedObject.uuid);
                 const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+
                 materials.forEach((mat, index) => {
                     if (mat) {
-                        console.log(`[clearSelection]   Material ${index}: Before revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
                         if (originalProps.hasOwnProperty('emissive')) {
                             mat.emissive.copy(originalProps.emissive);
                             mat.emissiveIntensity = originalProps.emissiveIntensity;
-                            console.log(`[clearSelection]     Reverted emissive to: ${mat.emissive.getHex()}, intensity: ${mat.emissiveIntensity}`);
+                            console.log(`[clearSelection] Restored emissive for material index ${index}.`);
                         }
                         if (originalProps.hasOwnProperty('color')) {
                             mat.color.copy(originalProps.color);
-                            console.log(`[clearSelection]     Reverted color to: ${mat.color.getHex()}`);
+                            console.log(`[clearSelection] Restored color for material index ${index}.`);
                         }
                         mat.needsUpdate = true;
-                        console.log(`[clearSelection]   Material ${index}: After revert - emissive: ${mat.emissive?.getHex()}, color: ${mat.color?.getHex()}`);
                     } else {
-                        console.warn(`[clearSelection] Material at index ${index} for object ${selectedObject.name || 'Unnamed Part'} is null or not a Three.js Material.`);
+                        console.warn(`[clearSelection] Material at index ${index} for object ${selectedObject.name || selectedObject.uuid} is null or not a valid material during clearSelection.`);
                     }
                 });
-                originalMaterialProperties.delete(selectedObject.uuid);
-                selectedObject = null;
+                originalMaterialProperties.delete(selectedObject.uuid); // Remove from map
+                selectedObject = null; // Clear selected object reference
+                console.log("[clearSelection] Individual selection cleared and highlight reverted.");
             }
-            transformControls.detach(); // Detach controls when selection is cleared
-            addMessageToLog('System', 'Selection cleared.');
-            speakResponse('Selection cleared.');
-            console.log("[clearSelection] Selection cleared successfully.");
+            if (transformControls) { // Ensure transformControls exists before detaching
+                transformControls.detach(); // Detach controls when selection is cleared
+                console.log("[clearSelection] TransformControls detached.");
+            }
+            // Do NOT add message to log or speak here, as it's often called internally before a new selection.
+            // addMessageToLog('System', 'Selection cleared.');
+            // speakResponse('Selection cleared.');
         }
+
+        function highlightAllModels() {
+            console.log("[highlightAllModels] Attempting to highlight all models.");
+            clearSelection(); // Clear any individual selection first
+            clearAllHighlights(); // Clear any previous "select all" highlights
+
+            let highlightedCount = 0;
+            scene.traverse((obj) => {
+                if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper) {
+                    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                    materials.forEach(mat => {
+                        if (mat && mat.isMaterial) {
+                            // Store original material properties
+                            const propsToStore = { material: mat }; // Store the actual material object
+                            if (mat.emissive !== undefined) {
+                                propsToStore.emissive = mat.emissive.clone();
+                                propsToStore.emissiveIntensity = mat.emissiveIntensity;
+                            }
+                            if (mat.color !== undefined) {
+                                propsToStore.color = mat.color.clone();
+                            }
+                            allHighlightsOriginalMaterials.set(obj.uuid, propsToStore);
+
+                            // Apply highlight
+                            if (mat.emissive !== undefined) {
+                                mat.emissive.copy(highlightMaterial.color);
+                                mat.emissiveIntensity = 0.5;
+                            } else if (mat.color !== undefined) {
+                                mat.color.copy(highlightMaterial.color);
+                            }
+                            mat.needsUpdate = true;
+                            highlightedCount++;
+                        }
+                    });
+                }
+            });
+
+            if (highlightedCount > 0) {
+                addMessageToLog('AI', `Highlighted ${highlightedCount} objects in the scene.`);
+                speakResponse(`Highlighted all ${highlightedCount} objects.`);
+                console.log(`[highlightAllModels] Successfully highlighted ${highlightedCount} objects.`);
+            } else {
+                addMessageToLog('System', 'No objects found to highlight in the scene.');
+                speakResponse('No objects found to highlight.');
+                console.log("[highlightAllModels] No objects found to highlight.");
+            }
+        }
+
+        function clearAllHighlights() {
+            console.log("[clearAllHighlights] Attempting to clear all highlights.");
+            if (allHighlightsOriginalMaterials.size === 0) {
+                console.log("[clearAllHighlights] No global highlights to clear.");
+                return;
+            }
+
+            let clearedCount = 0;
+            for (const [uuid, originalProps] of allHighlightsOriginalMaterials.entries()) {
+                // Find the object in the scene by its UUID
+                const object = scene.getObjectByProperty('uuid', uuid);
+                if (object && object.isMesh) {
+                    const materials = Array.isArray(object.material) ? object.material : [object.material];
+                    materials.forEach(mat => {
+                        if (mat && mat.isMaterial) {
+                            // Restore original material properties
+                            if (originalProps.hasOwnProperty('emissive')) {
+                                mat.emissive.copy(originalProps.emissive);
+                                mat.emissiveIntensity = originalProps.emissiveIntensity;
+                            }
+                            if (originalProps.hasOwnProperty('color')) {
+                                mat.color.copy(originalProps.color);
+                            }
+                            mat.needsUpdate = true;
+                        }
+                    });
+                    clearedCount++;
+                }
+            }
+            allHighlightsOriginalMaterials.clear(); // Clear the map
+            addMessageToLog('System', `Cleared highlights from ${clearedCount} objects.`);
+            speakResponse('All highlights cleared.');
+            console.log(`[clearAllHighlights] Successfully cleared highlights from ${clearedCount} objects.`);
+        }
+
 
         function removeObject() {
             if (selectedObject) { // Check if something is selected
@@ -1846,6 +1931,15 @@
                         console.log(`[Remove Object] Removed object: ${objectToRemoveName} (UUID: ${objectToRemoveUUID})`);
                     }
 
+                    // Clear its entry from originalMaterialProperties if it exists
+                    if (originalMaterialProperties.has(selectedObject.uuid)) {
+                        originalMaterialProperties.delete(selectedObject.uuid);
+                    }
+                    // Clear its entry from allHighlightsOriginalMaterials if it exists
+                    if (allHighlightsOriginalMaterials.has(selectedObject.uuid)) {
+                        allHighlightsOriginalMaterials.delete(selectedObject.uuid);
+                    }
+
                     addMessageToLog('AI', `Removed ${objectToRemoveName}.`);
                     speakResponse(`Removed ${objectToRemoveName}.`);
                     selectedObject = null; // Clear selected object after removal
@@ -1860,6 +1954,43 @@
                 speakResponse('No object selected to remove.');
             }
         }
+
+        function duplicateSelectedObject() {
+            // This function is now only called if selectedObject is confirmed to be not null by processAICommand
+            console.log("[duplicateSelectedObject] Attempting to duplicate selectedObject:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
+
+            // Clone the selected object
+            const clonedObject = selectedObject.clone();
+
+            // IMPORTANT: Ensure cloned materials are new instances, not references to original's materials
+            // This prevents changing the original object's material when changing the clone's.
+            if (Array.isArray(clonedObject.material)) {
+                clonedObject.material = clonedObject.material.map(mat => mat.clone());
+            } else if (clonedObject.material) {
+                clonedObject.material = clonedObject.material.clone();
+            }
+
+            // Offset the cloned object slightly so it's visible
+            const offset = new THREE.Vector3(1, 1, 1);
+            clonedObject.position.add(offset);
+
+            // Give the cloned object a distinct name
+            clonedObject.name = `${selectedObject.name || 'Unnamed Object'} (Copy)`;
+
+            // Add the cloned object to the scene and to our list of loaded models
+            scene.add(clonedObject);
+            loadedModels.push(clonedObject);
+
+            addMessageToLog('AI', `Duplicated ${selectedObject.name || 'the selected object'}.`);
+            speakResponse(`Duplicated the selected object.`);
+
+            // Clear the selection of the original and select the new duplicated object
+            clearSelection(); // This will also detach transform controls from the original
+            selectObject(clonedObject); // Select the new clone, attaching transform controls to it
+            resetView(); // Adjust view to include the new object
+            console.log("[duplicateSelectedObject] Object duplicated and selected.");
+        }
+
 
         function resetView() {
             if (controls && camera && loadedModels.length > 0) {
@@ -1895,6 +2026,9 @@
                 camera.lookAt(center);
                 controls.target.copy(center); // Orbit controls should orbit around the center of all models
                 controls.update();
+
+                console.log("[resetView] New Camera Position:", camera.position);
+                console.log("[resetView] Controls Target:", controls.target);
 
                 addMessageToLog('AI', 'View reset to fit all models.');
                 speakResponse('View reset to fit all models.');
@@ -2059,7 +2193,7 @@
         // --- Static View Axes Helper ---
         let viewAxesRaycaster;
         let viewAxesMouse;
-        let viewAxesSceneRendered = false; // Flag to ensure it's rendered only once
+        // viewAxesSceneRendered is a global flag, already declared at the top
 
         function initViewAxesHelper() {
             if (viewAxesSceneRendered) return; // Prevent re-initialization
@@ -2080,8 +2214,6 @@
             viewAxesHelper = new THREE.Group();
             const axisLength = 1.0;
             const axisRadius = 0.08; // Made axes thicker for easier clicking
-            const arrowLength = 0.2;
-            const arrowRadius = 0.08;
 
             // X-axis (Red)
             const xAxisMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
@@ -2216,88 +2348,125 @@
             aiLog.scrollTop = aiLog.scrollHeight; // Auto-scroll to bottom
         }
 
-        // --- Gemini API Configuration (Direct Call for Debugging) ---
-        const API_KEY = ""; // Canvas will inject the API key here at runtime
-        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+        // --- Backend API Configuration ---
+        // This URL should point to your Render backend's AI proxy endpoint.
+        const BACKEND_API_URL = "https://mingyu.onrender.com/api/ai"; // YOUR RENDER BACKEND URL HERE
 
         async function sendAICommand(command) {
             sendTextCommandBtn.disabled = true;
             textCommandInput.disabled = true;
             addMessageToLog('System', 'AI is thinking...');
-            console.log("[sendAICommand] Sending command to Gemini API directly:", command);
+            console.log("[sendAICommand] Sending command to Render backend:", command);
 
-            const systemInstruction = `
-                You are an AI assistant for a 3D CAD editor. Your primary goal is to interpret user commands and return a structured JSON response.
-                For commands related to creating shapes, use "action": "createShape" and "value": "cube", "sphere", "cylinder", "cone", or "pyramid".
-                For other commands, use the specified action. If a command is not recognized, use "action": "conversational".
-
-                Here are some examples:
-                - User: "create a cube" -> {"action": "createShape", "value": "cube"}
-                - User: "make a ball" -> {"action": "createShape", "value": "sphere"}
-                - User: "add a cone" -> {"action": "createShape", "value": "cone"}
-                - User: "duplicate this" or "duplicate object" -> {"action": "duplicateObject"} (If only one object exists, duplicate that one. If multiple, ask user to select. If one is selected, duplicate selected.)
-                - User: "remove the selected object" -> {"action": "removeObject"}
-                - User: "reset the view" -> {"action": "resetView"}
-                - User: "show design info" -> {"action": "showDesignInfo"}
-                - User: "set to translate mode" -> {"action": "setTransformMode", "value": "translate"}
-                - User: "list all parts" -> {"action": "listParts"}
-                - User: "select part A" -> {"action": "selectPart", "value": "part A"}
-                - User: "change color to red" -> {"action": "changeColor", "value": "red"}
-                - User: "hello" -> {"action": "conversational", "value": "Hello! How can I assist you with your 3D model today?"}
-            `;
+            let selectedObjectInfo = "none";
+            if (selectedObject) {
+                selectedObjectInfo = `A CAD object is currently selected with UUID: ${selectedObject.uuid} and name: "${selectedObject.name || 'Unnamed Part'}".`;
+            } else {
+                selectedObjectInfo = "No CAD object is currently selected.";
+            }
 
             const payload = {
-                contents: [
-                    { role: "user", parts: [{ text: systemInstruction }] },
-                    { role: "user", parts: [{ text: command }] }
-                ],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            "action": { "type": "STRING", "description": "The action to perform based on the user's command. e.g., 'createShape', 'duplicateObject', 'removeObject', 'resetView', 'showDesignInfo', 'setTransformMode', 'listParts', 'selectPart', 'changeColor', 'conversational'" },
-                            "value": { "type": "STRING", "description": "Any associated value for the action, like a part name, shape type (cube, sphere, cone, random), color, or a conversational response." }
-                        },
-                        "propertyOrdering": ["action", "value"]
-                    }
-                }
+                prompt: `User command: "${command}". Context: ${selectedObjectInfo}
+                You are an AI assistant for a CAD editor. Your task is to interpret user commands and return a JSON object with an "action" and "value" property.
+                If the user asks to duplicate the currently selected object, return:
+                \`\`\`json
+                {"action": "duplicateObject"}
+                \`\`\`
+                If the user asks to create a shape, return:
+                \`\`\`json
+                {"action": "createShape", "value": "[shape_type]"}
+                \`\`\`
+                where [shape_type] can be "box", "sphere", "cylinder", "cone", "pyramid", "plane", or "torus".
+                If the user asks to remove the selected object, return:
+                \`\`\`json
+                {"action": "removeObject"}
+                \`\`\`
+                If the user asks to reset the view, return:
+                \`\`\`json
+                {"action": "resetView"}
+                \`\`\`
+                If the user asks for design information, return:
+                \`\`\`json
+                {"action": "showDesignInfo"}
+                \`\`\`
+                If the user asks to change the transform mode, return:
+                \`\`\`json
+                {"action": "setTransformMode", "value": "[mode]"}
+                \`\`\`
+                where [mode] can be "translate", "rotate", or "scale".
+                If the user asks to list parts, return:
+                \`\`\`json
+                {"action": "listParts"}
+                \`\`\`
+                If the user asks to select a part by name, return:
+                \`\`\`json
+                {"action": "selectPart", "value": "[part_name]"}
+                \`\`\`
+                If the user asks to select all objects, return:
+                \`\`\`json
+                {"action": "selectAll"}
+                \`\`\`
+                If the user asks to clear all highlights, return:
+                \`\`\`json
+                {"action": "clearAllHighlights"}
+                \`\`\`
+                If the user asks to rotate the selected object, return:
+                \`\`\`json
+                {"action": "rotateAxis", "value": {"axis": "[x/y/z]", "degrees": [number]}}
+                \`\`\`
+                If the user asks to scale the selected object, return:
+                \`\`\`json
+                {"action": "scale", "value": [factor]}
+                \`\`\`
+                If the user asks to translate (move) the selected object, return:
+                \`\`\`json
+                {"action": "translate", "value": {"x": [number], "y": [number], "z": [number]}}
+                \`\`\`
+                If the user asks to change the color of the selected object, return:
+                \`\`\`json
+                {"action": "changeColor", "value": "[color_value]"}
+                \`\`\`
+                where [color_value] can be a color name (e.g., "red") or a hex code (e.g., "#FF0000").
+                If the command is conversational or you don't understand, return:
+                \`\`\`json
+                {"action": "conversational", "value": "[your response]"}
+                \`\`\`
+                Always respond with a single JSON object. Do not include any other text outside the JSON.
+                `
             };
 
             try {
-                console.log("[sendAICommand] Fetching from Gemini API. Payload being sent:", JSON.stringify(payload, null, 2));
-                const response = await fetch(GEMINI_API_URL, {
+                console.log("[sendAICommand] Fetching from backend API:", BACKEND_API_URL, "with payload:", payload);
+                const response = await fetch(BACKEND_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
+                        // No Authorization header here, as the backend handles the OpenAI API key
                     },
                     body: JSON.stringify(payload)
                 });
 
-                console.log("[sendAICommand] Gemini API response received. Status:", response.status, "OK:", response.ok);
+                console.log("[sendAICommand] Backend API response received. Status:", response.status, "OK:", response.ok);
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("[sendAICommand] Gemini API Response not OK. Status:", response.status, "Status Text:", response.statusText, "Error Data:", errorData);
-                    throw new Error(`Gemini API error: ${errorData.error || response.statusText}. Details: ${JSON.stringify(errorData)}`);
+                    console.error("[sendAICommand] Backend API Response not OK. Status:", response.status, "Status Text:", response.statusText, "Error Data:", errorData);
+                    throw new Error(`Backend API error: ${errorData.error || response.statusText}. Details: ${JSON.stringify(errorData)}`);
                 }
 
                 const result = await response.json();
-                console.log("[sendAICommand] Raw Gemini API result:", result);
+                console.log("[sendAICommand] Raw backend response result:", result);
 
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const aiResponseText = result.candidates[0].content.parts[0].text;
-                    processAICommand(aiResponseText);
+                if (result.content) { // Expecting { content: "..." } from your backend
+                    processAICommand(result.content); // Pass the AI's content for parsing
                 } else {
-                    console.error("[sendAICommand] Gemini API response format unexpected or empty. Result:", result);
-                    throw new Error("Gemini API response format unexpected or empty.");
+                    console.error("[sendAICommand] Backend response format unexpected or empty. Result:", result);
+                    throw new Error("Backend response format unexpected or empty.");
                 }
 
             } catch (error) {
-                console.error("Error communicating with Gemini API:", error);
-                addMessageToLog('AI', `I'm sorry, I couldn't reach the AI service. This might be due to network issues or API configuration. Error: ${error.message}`);
+                console.error("Error communicating with backend API:", error);
+                addMessageToLog('AI', `I'm sorry, I couldn't reach the AI service through your backend. Please ensure your Render backend is running and configured correctly. Error: ${error.message}`);
                 speakResponse(`I'm sorry, I couldn't reach the AI service.`);
             } finally {
                 sendTextCommandBtn.disabled = false;
@@ -2309,49 +2478,30 @@
             }
         }
 
-        // Function to test Gemini API connection on load (now only logs, no UI status update)
+        // Function to test backend connection on load (now only logs, no UI status update)
         async function testAIConnection() {
-            console.log("[testAIConnection] Attempting to test Gemini API connection directly.");
-
-            const testPayload = {
-                contents: [
-                    { role: "user", parts: [{ text: "Hello, are you there?" }] }
-                ],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            "action": { "type": "STRING" },
-                            "value": { "type": "STRING" }
-                        }
-                    }
-                }
-            };
+            console.log("[testAIConnection] Attempting to test backend connection with a simple 'hello'.");
 
             try {
-                const response = await fetch(GEMINI_API_URL, {
+                const response = await fetch(BACKEND_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(testPayload)
+                    body: JSON.stringify({ prompt: "hello" })
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const aiResponseText = result.candidates[0].content.parts[0].text;
-                        console.log(`[testAIConnection] Gemini API connection successful! AI responded: "${aiResponseText}"`);
+                    if (result.content) {
+                        console.log(`[testAIConnection] Backend connection successful! AI responded (via backend): "${JSON.parse(result.content).value || 'Hello!'}"`);
                     } else {
-                         console.warn('[testAIConnection] Gemini API responded OK, but AI content was missing or malformed.');
+                         console.warn('[testAIConnection] Backend responded OK, but AI content was missing or malformed.');
                     }
                 } else {
                     const errorData = await response.json();
-                    console.error(`[testAIConnection] Gemini API connection failed: Status ${response.status}. Error: ${errorData.error || response.statusText}.`);
+                    console.error(`[testAIConnection] Backend connection failed: Status ${response.status}. Error: ${errorData.error || response.statusText}. Check Render logs.`);
                 }
             } catch (error) {
-                console.error(`[testAIConnection] Gemini API connection failed (network error): ${error.message}.`);
+                console.error(`[testAIConnection] Backend connection failed (network error): ${error.message}. Is your Render server running?`);
             }
         }
 
@@ -2419,112 +2569,64 @@
         function createPrimitive(type) {
             let geometry;
             let mesh;
-            // Use a default material that looks good and can be easily colored
-            const material = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.5, roughness: 0.5 }); // DodgerBlue
+            const material = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.5, roughness: 0.5 });
 
             switch (type.toLowerCase()) {
                 case 'box':
                 case 'cube':
-                    geometry = new THREE.BoxGeometry(1, 1, 1); // 1x1x1 unit cube
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
                     mesh = new THREE.Mesh(geometry, material);
                     mesh.name = 'Cube';
                     break;
                 case 'sphere':
-                case 'ball': /* Added 'ball' alias */
-                    geometry = new THREE.SphereGeometry(0.5, 32, 32); // Radius 0.5
+                case 'ball':
+                    geometry = new THREE.SphereGeometry(0.5, 32, 32);
                     mesh = new THREE.Mesh(geometry, material);
                     mesh.name = 'Sphere';
                     break;
                 case 'cylinder':
-                    geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32); // Radius top/bottom 0.5, height 1
+                case 'tube': // Added 'tube' as an alias
+                    geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
                     mesh = new THREE.Mesh(geometry, material);
                     mesh.name = 'Cylinder';
                     break;
-                case 'cone': // Added cone
-                    geometry = new THREE.ConeGeometry(0.5, 1, 32); // Radius 0.5, height 1
+                case 'cone':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 32);
                     mesh = new THREE.Mesh(geometry, material);
                     mesh.name = 'Cone';
                     break;
-                case 'pyramid': // Added pyramid (using ConeGeometry with 4 segments)
-                    geometry = new THREE.ConeGeometry(0.5, 1, 4); // Radius 0.5, height 1, 4 radial segments for a square base
+                case 'pyramid':
+                    geometry = new THREE.ConeGeometry(0.5, 1, 4); // A cone with 4 segments forms a pyramid
                     mesh = new THREE.Mesh(geometry, material);
                     mesh.name = 'Pyramid';
                     break;
+                case 'plane': // Added plane
+                    geometry = new THREE.PlaneGeometry(10, 10);
+                    mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xcccccc, side: THREE.DoubleSide }));
+                    mesh.rotation.x = -Math.PI / 2; // Orient horizontally
+                    mesh.name = 'Plane';
+                    break;
+                case 'torus': // Added torus (donut)
+                    geometry = new THREE.TorusGeometry(0.5, 0.2, 16, 100);
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = 'Torus';
+                    break;
                 default:
-                    addMessageToLog('AI', `I don't know how to create a "${type}" shape. Try "box", "sphere", "cylinder", "cone", or "pyramid".`);
-                    speakResponse(`I don't know how to create a ${type} shape. Try box, sphere, cylinder, cone, or pyramid.`);
+                    addMessageToLog('AI', `I don't know how to create a "${type}" shape. Try "box", "sphere", "cylinder", "cone", "pyramid", "plane", or "torus".`);
+                    speakResponse(`I don't know how to create a ${type} shape. Try box, sphere, cylinder, cone, pyramid, plane, or torus.`);
                     return;
             }
 
-            // Position new objects slightly in front of the camera and above the origin
-            // This ensures new objects are visible and don't spawn inside existing ones
+            // Position the new object slightly in front of the camera's current target
             const positionOffset = new THREE.Vector3(0, 0, -2).applyQuaternion(camera.quaternion);
             mesh.position.copy(controls.target).add(positionOffset);
-            mesh.position.y = 0.5; // Place on the grid
+            mesh.position.y = 0.5; // Place it slightly above the grid
 
             scene.add(mesh);
-            loadedModels.push(mesh); // Add newly created objects to loadedModels for saving and general management
+            loadedModels.push(mesh); // Add to our list of loaded models
             addMessageToLog('AI', `Created a ${type} model.`);
             speakResponse(`Created a ${type} model.`);
-            selectObject(mesh); // Automatically select the newly created object
-        }
-
-        // --- NEW: Duplicate Object Function ---
-        function duplicateObject() {
-            let objectToDuplicate = null;
-
-            if (selectedObject) {
-                objectToDuplicate = selectedObject;
-                console.log("[duplicateObject] Duplicating selected object:", objectToDuplicate.name || "Unnamed Object");
-            } else if (loadedModels.length === 1) {
-                objectToDuplicate = loadedModels[0];
-                console.log("[duplicateObject] Duplicating the only object in scene:", objectToDuplicate.name || "Unnamed Object");
-            } else if (loadedModels.length > 1) {
-                addMessageToLog('AI', 'Multiple objects detected. Please select the object you wish to duplicate first.');
-                speakResponse('Multiple objects detected. Please select the object you wish to duplicate first.');
-                return;
-            } else {
-                addMessageToLog('System', 'No object found in the scene to duplicate.');
-                speakResponse('No object found to duplicate.');
-                return;
-            }
-
-            if (objectToDuplicate) {
-                const clonedObject = objectToDuplicate.clone();
-
-                // Ensure geometry and material are cloned to be independent
-                if (objectToDuplicate.geometry) {
-                    clonedObject.geometry = objectToDuplicate.geometry.clone();
-                }
-                if (objectToDuplicate.material) {
-                    if (Array.isArray(objectToDuplicate.material)) {
-                        clonedObject.material = objectToDuplicate.material.map(mat => mat.clone());
-                    } else {
-                        clonedObject.material = objectToDuplicate.material.clone();
-                    }
-                }
-
-                // Calculate bounding box of the original object to determine a dynamic offset
-                const bbox = new THREE.Box3().setFromObject(objectToDuplicate);
-                const size = bbox.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-
-                // Offset the duplicated object by a factor of its largest dimension, with a minimum offset
-                const minOffset = 2; // Minimum offset to ensure visibility for small objects
-                const calculatedOffset = Math.max(minOffset, maxDim * 0.8); // Use 0.8 times the largest dimension
-
-                clonedObject.position.x += calculatedOffset;
-                clonedObject.position.y += calculatedOffset * 0.2; // Slightly offset in Y as well, less than X
-
-                clonedObject.name = `${objectToDuplicate.name || 'Unnamed'}_Duplicate_${Date.now().toString().slice(-5)}`;
-
-                scene.add(clonedObject);
-                loadedModels.push(clonedObject);
-                addMessageToLog('AI', `Duplicated "${objectToDuplicate.name || 'Unnamed Object'}" as "${clonedObject.name}".`);
-                speakResponse(`Duplicated ${objectToDuplicate.name || 'the object'}.`);
-                selectObject(clonedObject); // Select the newly duplicated object
-                resetView(); // Adjust view to include the new object
-            }
+            selectObject(mesh); // Select the newly created object
         }
 
 
@@ -2535,8 +2637,6 @@
             try {
                 parsedResponse = JSON.parse(aiResponseContent); // Parse the content string
                 console.log("[processAICommand] Parsed AI response (JSON):", parsedResponse);
-                console.log("[processAICommand] Parsed action:", parsedResponse.action); // NEW LOG
-                console.log("[processAICommand] Parsed value:", parsedResponse.value);   // NEW LOG
 
                 // Handle cases where 'action' might be missing or is 'conversational'
                 if (parsedResponse.action === 'conversational' || (!parsedResponse.action && parsedResponse.value)) {
@@ -2544,7 +2644,7 @@
                     speakResponse(parsedResponse.value);
                 } else if (typeof parsedResponse.action === 'string') {
                     switch (parsedResponse.action) {
-                        case 'createShape': // THIS WAS THE MISSING CASE!
+                        case 'createShape':
                             if (parsedResponse.value) {
                                 createPrimitive(parsedResponse.value);
                             } else {
@@ -2552,11 +2652,18 @@
                                 speakResponse('Please specify a shape type like box, sphere, cylinder, cone, or pyramid.');
                             }
                             break;
-                        case 'duplicateObject': // NEW CASE FOR DUPLICATION
-                            duplicateObject();
-                            break;
                         case 'removeObject':
                             removeObject();
+                            break;
+                        case 'duplicateObject': // Handle duplicate command
+                            console.log("[processAICommand] Duplicate command received. selectedObject is:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
+                            if (selectedObject) {
+                                duplicateSelectedObject(); // This will now proceed if selectedObject is valid
+                            } else {
+                                // If AI tries to duplicate but nothing is selected, provide a specific error to the user
+                                addMessageToLog('AI', 'I cannot duplicate. No object is currently selected. Please select an object first by clicking on it.');
+                                speakResponse('No object selected to duplicate. Please click on an object first.');
+                            }
                             break;
                         case 'resetView':
                             resetView();
@@ -2582,6 +2689,12 @@
                                 addMessageToLog('AI', 'Please specify a part name to select.');
                                 speakResponse('Please tell me which part to select.');
                             }
+                            break;
+                        case 'selectAll': // Handle select all command
+                            highlightAllModels();
+                            break;
+                        case 'clearAllHighlights': // New command to clear all highlights
+                            clearAllHighlights();
                             break;
                         case 'rotateAxis':
                             if (selectedObject && parsedResponse.value) {
@@ -2641,7 +2754,6 @@
                             speakResponse(`I understand, but I don't know how to perform ${parsedResponse.action}.`);
                     }
                 } else if (parsedResponse.message) {
-                    // Fallback for direct messages if action is not explicitly handled
                     addMessageToLog('AI', parsedResponse.message);
                     speakResponse(parsedResponse.message);
                 } else {
@@ -2650,8 +2762,8 @@
                 }
             } catch (jsonError) {
                 console.error("Failed to parse AI response as JSON:", jsonError, "Raw Response (for parsing error):", aiResponseContent); // Specific log for parsing errors
-                addMessageToLog('AI', `I received an uninterpretable response from the AI. This might be due to a backend issue or the AI not returning valid JSON. Raw response: "${aiResponseContent.substring(0, Math.min(aiResponseContent.length, 100))}...". Please check the console for full details.`);
-                speakResponse('I received an uninterpretable response. Please check the console for details.');
+                addMessageToLog('AI', `I received an uninterpretable response from the AI: "${aiResponseContent.substring(0, 100)}...". Please check the console for full details.`);
+                speakResponse('I received an uninterpretable response.');
             }
         }
 
@@ -2786,6 +2898,16 @@
 
             // Automatically test AI connection on load
             testAIConnection(); // Still call to log backend status to console
+
+            // Removed event listeners for view control buttons as the HTML is removed
+            // topViewBtn.addEventListener('click', setTopView);
+            // bottomViewBtn.addEventListener('click', setBottomView);
+            // frontViewBtn.addEventListener('click', setFrontView);
+            // backViewBtn.addEventListener('click', setBackView);
+            // rightViewBtn.addEventListener('click', setRightView);
+            // leftViewBtn.addEventListener('click', setLeftView);
+            // isometricViewBtn.addEventListener('click', setIsometricView);
+            // fitAllViewBtn.addEventListener('click', resetView);
 
             // Add event listener for object color change
             applyObjectColorBtn.addEventListener('click', () => {
