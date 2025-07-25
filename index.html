@@ -399,6 +399,7 @@
             display: block;
             width: 100%;
             height: 100%;
+            touch-action: none; /* Add this line to prevent browser default touch actions */
         }
 
         #aiLog {
@@ -672,6 +673,20 @@
             /* Reuse view-control-button styles */
             padding: 8px 15px;
             font-size: 0.9em;
+            background-color: #4a5568; /* Reusing a neutral button style */
+            color: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #applyObjectColorBtn:hover {
+            background-color: #DAA520; /* Accent color on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
     </style>
     <!-- Import Map for ES Modules -->
@@ -852,16 +867,6 @@
         const cssCodeEditor = document.getElementById('cssCodeEditor');
         const applyCssButton = document.getElementById('applyCssButton');
 
-        // New view control buttons - these are now unused in the HTML but kept for reference if AI commands use them
-        const topViewBtn = document.getElementById('topViewBtn');
-        const bottomViewBtn = document.getElementById('bottomViewBtn');
-        const frontViewBtn = document.getElementById('frontViewBtn');
-        const backViewBtn = document.getElementById('backViewBtn');
-        const rightViewBtn = document.getElementById('rightViewBtn');
-        const leftViewBtn = document.getElementById('leftViewBtn');
-        const isometricViewBtn = document.getElementById('isometricViewBtn');
-        const fitAllViewBtn = document.getElementById('fitAllViewBtn');
-
         // New object properties UI elements
         const objectColorPicker = document.getElementById('objectColorPicker');
         const applyObjectColorBtn = document.getElementById('applyObjectColorBtn');
@@ -876,6 +881,7 @@
         window.setTransformMode = setTransformMode;
         window.listParts = listParts;
         window.saveModel = saveModel; // Expose saveModel globally
+        window.duplicateObject = duplicateObject; // Expose duplicateObject globally
 
         // --- Event Listeners for new buttons ---
         // The "Upload New File" button now directly triggers the file input click
@@ -1890,9 +1896,6 @@
                 controls.target.copy(center); // Orbit controls should orbit around the center of all models
                 controls.update();
 
-                console.log("[resetView] New Camera Position:", camera.position);
-                console.log("[resetView] Controls Target:", controls.target);
-
                 addMessageToLog('AI', 'View reset to fit all models.');
                 speakResponse('View reset to fit all models.');
             } else if (controls && camera) {
@@ -2213,63 +2216,89 @@
             aiLog.scrollTop = aiLog.scrollHeight; // Auto-scroll to bottom
         }
 
-        // --- Backend API Configuration ---
-        // IMPORTANT: Replace "https://mingyu.onrender.com/api/ai" with YOUR ACTUAL Render backend URL.
-        // This URL must be correct for the frontend to communicate with your backend.
-        const BACKEND_API_URL = "https://mingyu.onrender.com/api/ai";
+        // --- Gemini API Configuration (Direct Call for Debugging) ---
+        const API_KEY = ""; // Canvas will inject the API key here at runtime
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
         async function sendAICommand(command) {
             sendTextCommandBtn.disabled = true;
             textCommandInput.disabled = true;
             addMessageToLog('System', 'AI is thinking...');
-            console.log("[sendAICommand] Sending command to Render backend:", command);
+            console.log("[sendAICommand] Sending command to Gemini API directly:", command);
+
+            const systemInstruction = `
+                You are an AI assistant for a 3D CAD editor. Your primary goal is to interpret user commands and return a structured JSON response.
+                For commands related to creating shapes, use "action": "createShape" and "value": "cube", "sphere", "cylinder", "cone", or "pyramid".
+                For other commands, use the specified action. If a command is not recognized, use "action": "conversational".
+
+                Here are some examples:
+                - User: "create a cube" -> {"action": "createShape", "value": "cube"}
+                - User: "make a ball" -> {"action": "createShape", "value": "sphere"}
+                - User: "add a cone" -> {"action": "createShape", "value": "cone"}
+                - User: "duplicate this" or "duplicate object" -> {"action": "duplicateObject"} (If only one object exists, duplicate that one. If multiple, ask user to select. If one is selected, duplicate selected.)
+                - User: "remove the selected object" -> {"action": "removeObject"}
+                - User: "reset the view" -> {"action": "resetView"}
+                - User: "show design info" -> {"action": "showDesignInfo"}
+                - User: "set to translate mode" -> {"action": "setTransformMode", "value": "translate"}
+                - User: "list all parts" -> {"action": "listParts"}
+                - User: "select part A" -> {"action": "selectPart", "value": "part A"}
+                - User: "change color to red" -> {"action": "changeColor", "value": "red"}
+                - User: "hello" -> {"action": "conversational", "value": "Hello! How can I assist you with your 3D model today?"}
+            `;
 
             const payload = {
-                prompt: command // Sending the command as 'prompt' to your backend
+                contents: [
+                    { role: "user", parts: [{ text: systemInstruction }] },
+                    { role: "user", parts: [{ text: command }] }
+                ],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "action": { "type": "STRING", "description": "The action to perform based on the user's command. e.g., 'createShape', 'duplicateObject', 'removeObject', 'resetView', 'showDesignInfo', 'setTransformMode', 'listParts', 'selectPart', 'changeColor', 'conversational'" },
+                            "value": { "type": "STRING", "description": "Any associated value for the action, like a part name, shape type (cube, sphere, cone, random), color, or a conversational response." }
+                        },
+                        "propertyOrdering": ["action", "value"]
+                    }
+                }
             };
 
             try {
-                console.log("[sendAICommand] Fetching from backend API:", BACKEND_API_URL, "with payload:", payload);
-                const response = await fetch(BACKEND_API_URL, {
+                console.log("[sendAICommand] Fetching from Gemini API. Payload being sent:", JSON.stringify(payload, null, 2));
+                const response = await fetch(GEMINI_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                        // No Authorization header here, as the backend handles the OpenAI API key
                     },
                     body: JSON.stringify(payload)
                 });
 
-                console.log("[sendAICommand] Backend API response received. Status:", response.status, "OK:", response.ok);
+                console.log("[sendAICommand] Gemini API response received. Status:", response.status, "OK:", response.ok);
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("[sendAICommand] Backend API Response not OK. Status:", response.status, "Status Text:", response.statusText, "Error Data:", errorData);
-                    throw new Error(`Backend API error: ${errorData.error || response.statusText}. Details: ${JSON.stringify(errorData)}`);
+                    console.error("[sendAICommand] Gemini API Response not OK. Status:", response.status, "Status Text:", response.statusText, "Error Data:", errorData);
+                    throw new Error(`Gemini API error: ${errorData.error || response.statusText}. Details: ${JSON.stringify(errorData)}`);
                 }
 
                 const result = await response.json();
-                console.log("[sendAICommand] Raw backend response result:", result);
+                console.log("[sendAICommand] Raw Gemini API result:", result);
 
-                if (result.content) { // Expecting { content: "..." } from your backend
-                    processAICommand(result.content); // Pass the AI's content for parsing
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const aiResponseText = result.candidates[0].content.parts[0].text;
+                    processAICommand(aiResponseText);
                 } else {
-                    console.error("[sendAICommand] Backend response format unexpected or empty. Result:", result);
-                    throw new Error("Backend response format unexpected or empty.");
+                    console.error("[sendAICommand] Gemini API response format unexpected or empty. Result:", result);
+                    throw new Error("Gemini API response format unexpected or empty.");
                 }
 
             } catch (error) {
-                console.error("Error communicating with backend API:", error);
-                // Enhanced error message for "Failed to fetch"
-                if (error.message.includes('Failed to fetch')) {
-                    addMessageToLog('AI', `I'm sorry, I couldn't connect to the AI service. This usually means your Render backend is not running, its URL is incorrect, or there's a network issue. Please ensure:
-                    1. Your Render service is 'Running' in your Render dashboard.
-                    2. The 'BACKEND_API_URL' in your index.html matches your Render service's URL exactly.
-                    3. Check your Render service logs for any startup errors.`);
-                    speakResponse(`I'm sorry, I couldn't connect to the AI service. Please check your Render backend status and URL.`);
-                } else {
-                    addMessageToLog('AI', `I'm sorry, I couldn't reach the AI service through your backend. Please ensure your Render backend is running and configured correctly. Error: ${error.message}`);
-                    speakResponse(`I'm sorry, I couldn't reach the AI service.`);
-                }
+                console.error("Error communicating with Gemini API:", error);
+                addMessageToLog('AI', `I'm sorry, I couldn't reach the AI service. This might be due to network issues or API configuration. Error: ${error.message}`);
+                speakResponse(`I'm sorry, I couldn't reach the AI service.`);
             } finally {
                 sendTextCommandBtn.disabled = false;
                 textCommandInput.disabled = false;
@@ -2280,30 +2309,49 @@
             }
         }
 
-        // Function to test backend connection on load (now only logs, no UI status update)
+        // Function to test Gemini API connection on load (now only logs, no UI status update)
         async function testAIConnection() {
-            console.log("[testAIConnection] Attempting to test backend connection with a simple 'hello'.");
+            console.log("[testAIConnection] Attempting to test Gemini API connection directly.");
+
+            const testPayload = {
+                contents: [
+                    { role: "user", parts: [{ text: "Hello, are you there?" }] }
+                ],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "action": { "type": "STRING" },
+                            "value": { "type": "STRING" }
+                        }
+                    }
+                }
+            };
 
             try {
-                const response = await fetch(BACKEND_API_URL, {
+                const response = await fetch(GEMINI_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: "hello" })
+                    body: JSON.stringify(testPayload)
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.content) {
-                        console.log(`[testAIConnection] Backend connection successful! AI responded (via backend): "${JSON.parse(result.content).value || 'Hello!'}"`);
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const aiResponseText = result.candidates[0].content.parts[0].text;
+                        console.log(`[testAIConnection] Gemini API connection successful! AI responded: "${aiResponseText}"`);
                     } else {
-                         console.warn('[testAIConnection] Backend responded OK, but AI content was missing or malformed.');
+                         console.warn('[testAIConnection] Gemini API responded OK, but AI content was missing or malformed.');
                     }
                 } else {
                     const errorData = await response.json();
-                    console.error(`[testAIConnection] Backend connection failed: Status ${response.status}. Error: ${errorData.error || response.statusText}. Check Render logs.`);
+                    console.error(`[testAIConnection] Gemini API connection failed: Status ${response.status}. Error: ${errorData.error || response.statusText}.`);
                 }
             } catch (error) {
-                console.error(`[testAIConnection] Backend connection failed (network error): ${error.message}. Is your Render server running?`);
+                console.error(`[testAIConnection] Gemini API connection failed (network error): ${error.message}.`);
             }
         }
 
@@ -2421,6 +2469,64 @@
             selectObject(mesh); // Automatically select the newly created object
         }
 
+        // --- NEW: Duplicate Object Function ---
+        function duplicateObject() {
+            let objectToDuplicate = null;
+
+            if (selectedObject) {
+                objectToDuplicate = selectedObject;
+                console.log("[duplicateObject] Duplicating selected object:", objectToDuplicate.name || "Unnamed Object");
+            } else if (loadedModels.length === 1) {
+                objectToDuplicate = loadedModels[0];
+                console.log("[duplicateObject] Duplicating the only object in scene:", objectToDuplicate.name || "Unnamed Object");
+            } else if (loadedModels.length > 1) {
+                addMessageToLog('AI', 'Multiple objects detected. Please select the object you wish to duplicate first.');
+                speakResponse('Multiple objects detected. Please select the object you wish to duplicate first.');
+                return;
+            } else {
+                addMessageToLog('System', 'No object found in the scene to duplicate.');
+                speakResponse('No object found to duplicate.');
+                return;
+            }
+
+            if (objectToDuplicate) {
+                const clonedObject = objectToDuplicate.clone();
+
+                // Ensure geometry and material are cloned to be independent
+                if (objectToDuplicate.geometry) {
+                    clonedObject.geometry = objectToDuplicate.geometry.clone();
+                }
+                if (objectToDuplicate.material) {
+                    if (Array.isArray(objectToDuplicate.material)) {
+                        clonedObject.material = objectToDuplicate.material.map(mat => mat.clone());
+                    } else {
+                        clonedObject.material = objectToDuplicate.material.clone();
+                    }
+                }
+
+                // Calculate bounding box of the original object to determine a dynamic offset
+                const bbox = new THREE.Box3().setFromObject(objectToDuplicate);
+                const size = bbox.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+
+                // Offset the duplicated object by a factor of its largest dimension, with a minimum offset
+                const minOffset = 2; // Minimum offset to ensure visibility for small objects
+                const calculatedOffset = Math.max(minOffset, maxDim * 0.8); // Use 0.8 times the largest dimension
+
+                clonedObject.position.x += calculatedOffset;
+                clonedObject.position.y += calculatedOffset * 0.2; // Slightly offset in Y as well, less than X
+
+                clonedObject.name = `${objectToDuplicate.name || 'Unnamed'}_Duplicate_${Date.now().toString().slice(-5)}`;
+
+                scene.add(clonedObject);
+                loadedModels.push(clonedObject);
+                addMessageToLog('AI', `Duplicated "${objectToDuplicate.name || 'Unnamed Object'}" as "${clonedObject.name}".`);
+                speakResponse(`Duplicated ${objectToDuplicate.name || 'the object'}.`);
+                selectObject(clonedObject); // Select the newly duplicated object
+                resetView(); // Adjust view to include the new object
+            }
+        }
+
 
         function processAICommand(aiResponseContent) { // Now receives the content string directly
             console.log("[processAICommand] Processing AI command content:", aiResponseContent);
@@ -2445,6 +2551,9 @@
                                 addMessageToLog('AI', 'Please specify a shape type (e.g., "box", "sphere", "cylinder", "cone", "pyramid").');
                                 speakResponse('Please specify a shape type like box, sphere, cylinder, cone, or pyramid.');
                             }
+                            break;
+                        case 'duplicateObject': // NEW CASE FOR DUPLICATION
+                            duplicateObject();
                             break;
                         case 'removeObject':
                             removeObject();
@@ -2541,8 +2650,8 @@
                 }
             } catch (jsonError) {
                 console.error("Failed to parse AI response as JSON:", jsonError, "Raw Response (for parsing error):", aiResponseContent); // Specific log for parsing errors
-                addMessageToLog('AI', `I received an uninterpretable response from the AI: "${aiResponseContent.substring(0, 100)}...". Please check the console for full details.`);
-                speakResponse('I received an uninterpretable response.');
+                addMessageToLog('AI', `I received an uninterpretable response from the AI. This might be due to a backend issue or the AI not returning valid JSON. Raw response: "${aiResponseContent.substring(0, Math.min(aiResponseContent.length, 100))}...". Please check the console for full details.`);
+                speakResponse('I received an uninterpretable response. Please check the console for details.');
             }
         }
 
