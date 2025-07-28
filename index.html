@@ -219,13 +219,13 @@
             align-items: stretch;
             padding: 0;
             box-sizing: border-box;
-            position: relative;
             flex-grow: 1; /* Ensure editor page takes full height after header */
         }
 
         /* Right Panel for Chat and Code Editor */
         .right-panel {
-            width: 350px;
+            width: 350px; /* Fixed width for the sidebar */
+            min-width: 300px; /* Ensure it doesn't get too small */
             background-color: #1a202c;
             padding: 25px;
             display: flex;
@@ -599,7 +599,6 @@
 
         .object-properties-controls h3 {
             color: #ffffff;
-            font-size: 1.2em;
             margin-bottom: 10px;
             border-bottom: 1px solid #4a5568;
             padding-bottom: 5px;
@@ -719,17 +718,15 @@
                     <button class="tab-button" id="saveButton">Save</button>
                 </div>
 
-                <!-- Removed View Controls Section -->
-                <!-- <div class="view-controls">
-                    <button class="view-control-button" id="topViewBtn">Top View</button>
-                    <button class="view-control-button" id="bottomViewBtn">Bottom View</button>
-                    <button class="view-control-button" id="frontViewBtn">Front View</button>
-                    <button class="view-control-button" id="backViewBtn">Back View</button>
-                    <button class="view-control-button" id="rightViewBtn">Right View</button>
-                    <button class="view-control-button" id="leftViewBtn">Left View</button>
-                    <button class="view-control-button" id="isometricViewBtn">Isometric View</button>
-                    <button class="view-control-button" id="fitAllViewBtn">Fit All</button>
-                </div> -->
+                <!-- NEW: Undo/Redo Buttons -->
+                <div class="undo-redo-buttons">
+                    <button id="undoButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.61-3.61c1.39-1.16 3.16-1.89 5.11-1.89 3.73 0 6.84 2.55 7.73 6h2.08c-.9-4.5-4.77-8-9.81-8z"/></svg>
+                    </button>
+                    <button id="redoButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M18.41 16.59L22 13V4h-9l3.61 3.61c-1.39 1.16-3.16 1.89-5.11 1.89-3.73 0-6.84-2.55-7.73-6H2.27c.9 4.5 4.77 8 9.81 8 2.65 0 5.05-.99 6.9-2.6z"/></svg>
+                    </button>
+                </div>
 
                 <!-- Object Properties Section -->
                 <div class="object-properties-controls">
@@ -794,9 +791,12 @@
         let mouse;
         let selectedObject = null; // This will hold the currently selected THREE.Mesh part
         // Stores original material properties for deselection, now includes color and emissive
-        const originalMaterialProperties = new Map(); // Stores { uuid: { color?: THREE.Color, emissive?: THREE.Color, emissiveIntensity?: number } }
+        // Changed to store an array of properties for multi-material objects
+        const originalMaterialProperties = new Map(); // Stores { uuid: [originalMaterial1, originalMaterial2, ...] or originalMaterial }
         // New map to store original materials for "select all" highlight
-        const allHighlightsOriginalMaterials = new Map(); // Stores { uuid: { material: originalMaterial(s), color?: THREE.Color, emissive?: THREE.Color, emissiveIntensity?: number } }
+        const allHighlightsOriginalMaterials = new Map(); // Stores { uuid: [originalMaterial1, originalMaterial2, ...] or originalMaterial }
+        // NEW: This array will hold the actual objects selected by "select all" for functional editing
+        let currentlySelectedObjectsForEditing = [];
 
         let transformControls;
 
@@ -834,6 +834,8 @@
         // Updated button references on editor page
         const uploadNewFileButton = document.getElementById('uploadNewFileButton');
         const saveButton = document.getElementById('saveButton');
+        const undoButton = document.getElementById('undoButton'); // New Undo button
+        const redoButton = document.getElementById('redoButton'); // New Redo button
         const chatContent = document.getElementById('chatContent');
         const codeEditorContent = document.getElementById('codeEditorContent');
         const cssCodeEditor = document.getElementById('cssCodeEditor');
@@ -852,6 +854,9 @@
         // New object properties UI elements
         const objectColorPicker = document.getElementById('objectColorPicker');
         const applyObjectColorBtn = document.getElementById('applyObjectColorBtn');
+
+        // Debugging: Raycast hit visualizer
+        let raycastDebugSphere;
 
 
         // --- Expose functions globally for HTML onclick attributes ---
@@ -896,6 +901,19 @@
             addMessageToLog('System', 'Please select a .gltf or .glb file.');
         });
 
+        // --- Undo/Redo Placeholder Functions ---
+        undoButton.addEventListener('click', () => {
+            addMessageToLog('System', 'Undo functionality is a placeholder. A full undo/redo system requires complex state management.');
+            speakResponse('Undo is not yet implemented.');
+            console.warn("Undo: Placeholder function executed.");
+        });
+
+        redoButton.addEventListener('click', () => {
+            addMessageToLog('System', 'Redo functionality is a placeholder. A full undo/redo system requires complex state management.');
+            speakResponse('Redo is not yet implemented.');
+            console.warn("Redo: Placeholder function executed.");
+        });
+
 
         // --- Placeholder Save Model Function ---
         function saveModel() {
@@ -926,8 +944,8 @@
                 });
                 addMessageToLog('System', 'CAD viewer background CSS applied successfully.');
             } catch (error) {
-                addMessageToLog('System', `Error applying CSS: ${error.message}`);
-                console.error("Error applying CSS:", error);
+                    addMessageToLog('System', `Error applying CSS: ${error.message}`);
+                    console.error("Error applying CSS:", error);
             }
         });
 
@@ -1016,7 +1034,6 @@
                     if (editorPage.classList.contains('page-active')) {
                         loadModel(uploadedFile);
                     } else {
-                        // On upload page, just validate and then go to editor with the uploaded file
                         loadingMsg.textContent = `File selected: ${uploadedFile.name}. Loading editor...`;
                         loadingMsg.style.color = '#007bff';
                         loadingMsg.style.display = 'block';
@@ -1027,13 +1044,12 @@
             } else {
                 loadingMsg.textContent = '❌ No .gltf or .glb file found among dropped items!';
                 loadingMsg.style.color = 'red';
-                uploadedFile = null;
                 setTimeout(() => { // Hide message after a delay
                     loadingMsg.style.display = 'none';
                     loadingMsg.textContent = '';
                 }, 3000);
             }
-            console.log("[Drop Handler] uploadedFile after drop processing:", uploadedFile ? uploadedFile.name : "null");
+            console.log("[Drop Handler] uploadedFile after change processing:", uploadedFile ? uploadedFile.name : "null");
         });
 
         fileInput.addEventListener('change', () => {
@@ -1188,12 +1204,21 @@
                     viewAxesContainer.innerHTML = '';
                 }
 
+                // Dispose debug sphere if it exists
+                if (raycastDebugSphere) {
+                    scene.remove(raycastDebugSphere);
+                    if (raycastDebugSphere.geometry) raycastDebugSphere.geometry.dispose();
+                    if (raycastDebugSphere.material) raycastDebugSphere.material.dispose();
+                    raycastDebugSphere = null;
+                }
+
                 // Re-initialize scene after disposal to ensure a clean state
                 initScene();
             }
             originalMaterialProperties.clear(); // Clear this map too
             allHighlightsOriginalMaterials.clear(); // Clear all highlights map
             selectedObject = null; // Clear selected object
+            currentlySelectedObjectsForEditing = []; // Clear the functional selection array
             console.log("[Dispose] Resources disposed and scene re-initialized.");
         }
 
@@ -1236,9 +1261,17 @@
         }
 
         function loadRandomModel() {
+            // Added error handling for empty RANDOM_MODEL_URLS
+            if (RANDOM_MODEL_URLS.length === 0) {
+                console.warn("[loadRandomModel] RANDOM_MODEL_URLS is empty. Cannot load a random model.");
+                addMessageToLog('System', 'No random models available to load. Please try uploading a model or creating a new one.');
+                speakResponse('No random models available to load.');
+                return;
+            }
+
             const randomIndex = Math.floor(Math.random() * RANDOM_MODEL_URLS.length);
             const modelUrl = RANDOM_MODEL_URLS[randomIndex];
-            console.log(`[loadRandomModel] Attempting to load random model from URL: ${modelUrl}`); // Added log
+            console.log(`[loadRandomModel] Attempting to load random model from URL: ${modelUrl} (Index: ${randomIndex})`); // Added index to log
             const loader = new GLTFLoader();
             loader.load(modelUrl, (gltf) => {
                 const randomModel = gltf.scene;
@@ -1248,12 +1281,14 @@
                 resetView();
                 addMessageToLog('System', `Random model "${randomModel.name}" loaded successfully.`);
                 speakResponse(`Random model loaded.`);
-                console.log(`[loadRandomModel] Random model "${randomModel.name}" loaded successfully.`); // Added log
-            }, undefined, (error) => {
-                console.error('Error loading random model:', error);
-                addMessageToLog('System', `Error loading random model from ${modelUrl}. Starting with an empty scene.`);
-                speakResponse(`Error loading random model. Starting with an empty scene.`);
-                console.error(`[loadRandomModel] Error loading random model from ${modelUrl}:`, error); // Added log
+                console.log(`[loadRandomModel] Random model "${randomModel.name}" loaded successfully.`);
+            }, (xhr) => { // Progress callback
+                console.log(`[loadRandomModel] Loading progress for ${modelUrl}: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
+                // Optionally update a loading indicator if visible
+            }, (error) => {
+                console.error(`[loadRandomModel] Error loading random model from ${modelUrl}:`, error);
+                addMessageToLog('System', `Failed to load random model from ${modelUrl}. Error details in console. Please try another option.`); // More specific error message
+                speakResponse(`Failed to load random model. Please check the console for details.`);
             });
         }
 
@@ -1272,6 +1307,7 @@
             originalMaterialProperties.clear(); // Clear this map too
             allHighlightsOriginalMaterials.clear(); // Clear all highlights map
             selectedObject = null;
+            currentlySelectedObjectsForEditing = []; // Clear the functional selection array
             fileInput.value = ''; // Clear file input value
             loadingMsg.textContent = 'Drag and Drop your .gltf or .glb file(s) here, or click to browse.';
             loadingMsg.style.display = 'none';
@@ -1311,18 +1347,19 @@
                 camera.position.set(30, 30, 30); // Set camera at an angle
             }
             if (!controls) {
-                controls = new OrbitControls(camera, renderer.domElement);
+                controls = new OrbitControls(camera, renderer.domElement); // Corrected
                 controls.enableDamping = true;
                 controls.dampingFactor = 0.25;
                 controls.addEventListener('change', updateDynamicGrid); // Call on camera change
                 controls.target.set(0, 0, 0); // Ensure controls target the origin
             }
             if (!transformControls) {
-                transformControls = new TransformControls(camera, renderer.domElement);
+                transformControls = new TransformControls(camera, renderer.domElement); // Corrected
                 scene.add(transformControls);
                 transformControls.addEventListener('dragging-changed', function (event) {
                     controls.enabled = !event.value;
                 });
+                transformControls.visible = false; // Initialize as hidden
             }
 
             // Ensure renderer size is correct on init/re-init
@@ -1341,6 +1378,7 @@
 
             const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient light
             scene.add(ambientLight);
+            // Corrected typo: DirectionionalLight -> DirectionalLight
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Full intensity directional light
             directionalLight.position.set(1, 1, 1).normalize();
             scene.add(directionalLight);
@@ -1358,6 +1396,17 @@
             cadCanvas.addEventListener('touchstart', onCanvasClick, false);
 
             initViewAxesHelper(); // Initialize the static view axes helper
+
+            // Initialize raycast debug sphere
+            if (!raycastDebugSphere) {
+                raycastDebugSphere = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.05, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xffff00 }) // Yellow sphere
+                );
+                raycastDebugSphere.visible = false; // Initially hidden
+                scene.add(raycastDebugSphere);
+            }
+
             console.log("[initScene] Three.js scene initialized.");
             animate();
         }
@@ -1405,6 +1454,12 @@
         }
 
         function updateDynamicGrid() {
+            // Defensive check: only proceed if controls is defined
+            if (!controls) {
+                console.warn("[updateDynamicGrid] Controls not initialized, skipping dynamic grid update.");
+                return;
+            }
+
             // Clear existing grid and labels
             if (currentGridHelper) {
                 scene.remove(currentGridHelper);
@@ -1569,7 +1624,7 @@
                     resetView();
 
                     loadingMsg.style.display = 'none';
-                    addMessageToLog('System', `Model '${file.name}' loaded successfully. Total models: ${loadedModels.length}`);
+                    addMessageToLog('System', `Model '${file.name}' loaded successfully. You now have ${loadedModels.length} models in the scene.`);
                     speakResponse(`Model loaded successfully. You now have ${loadedModels.length} models in the scene.`);
                     console.log("[loadModel] Model successfully added to scene. Current loadedModels:", loadedModels);
                 }, (xhr) => {
@@ -1588,7 +1643,7 @@
         // --- Model Interaction (Selection, Transformation, Information) ---
         let mouseDownX = 0;
         let mouseDownY = 0;
-        const CLICK_TOLERANCE = 10; // Increased from 3 to 10 for more forgiving click detection
+        const CLICK_TOLERANCE = 15; // Increased from 10 to 15 for more forgiving click detection
 
         // Global highlight material (re-use this instance)
         const highlightMaterial = new THREE.MeshBasicMaterial({
@@ -1600,6 +1655,7 @@
         });
 
         function onCanvasClick(event) {
+            console.log(`[onCanvasClick] Event type: ${event.type}, Button: ${event.button}`);
             // Only process left-click (mouse button 0) or touchstart
             if (event.type === 'mousedown' && event.button !== 0) {
                 console.log("[onCanvasClick] Ignoring non-left click or non-touchstart event.");
@@ -1662,6 +1718,9 @@
                     mouse.x = ((mouseDownX - rect.left) / rect.width) * 2 - 1;
                     mouse.y = -((mouseDownY - rect.top) / rect.height) * 2 + 1;
                     console.log(`[onCanvasClick] Normalized mouse coords for raycasting: X=${mouse.x.toFixed(4)}, Y=${mouse.y.toFixed(4)}`);
+                    console.log(`[onCanvasClick] Raycaster set from camera. Mouse: (${mouse.x.toFixed(3)}, ${mouse.y.toFixed(3)})`);
+                    console.log(`[onCanvasClick] Camera position: (${camera.position.x.toFixed(3)}, ${camera.position.y.toFixed(3)}, ${camera.position.z.toFixed(3)})`);
+                    console.log(`[onCanvasClick] Camera fov: ${camera.fov}, aspect: ${camera.aspect}`);
 
 
                     raycaster.setFromCamera(mouse, camera);
@@ -1669,7 +1728,7 @@
                     const objectsToIntersect = [];
                     scene.traverse((obj) => { // Traverse the entire scene
                         // Only consider meshes that are visible and not part of the grid or labels
-                        if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper) {
+                        if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper && obj !== raycastDebugSphere) { // Exclude debug sphere
                             objectsToIntersect.push(obj);
                         }
                     });
@@ -1686,16 +1745,26 @@
                     if (intersects.length > 0) {
                         const intersectedObject = intersects[0].object;
                         console.log("[onCanvasClick] Object intersected:", intersectedObject.name || "Unnamed Object", "UUID:", intersectedObject.uuid, "Type:", intersectedObject.type, "Parent:", intersectedObject.parent ? intersectedObject.parent.name || intersectedObject.parent.uuid : 'none');
+
+                        // Show raycast debug sphere
+                        raycastDebugSphere.position.copy(intersects[0].point); // Position at intersection point
+                        raycastDebugSphere.visible = true;
+                        setTimeout(() => {
+                            raycastDebugSphere.visible = false; // Hide after a short delay
+                        }, 500);
+
                         selectObject(intersectedObject);
                     } else {
-                        console.log("[onCanvasClick] No object intersected by raycaster.");
+                        console.log("[onCanvasClick] No object intersected by raycaster. Clearing selection.");
+                        // Hide debug sphere if no intersection
+                        raycastDebugSphere.visible = false;
                         clearSelection();
                     }
                 }
 
                 // Clean up the temporary listeners
                 renderer.domElement.removeEventListener('mouseup', onPointerUp);
-                renderer.domElement.removeEventListener('touchend', onPointerUp);
+                    renderer.domElement.removeEventListener('touchend', onPointerUp);
             };
 
             // Attach temporary listeners for mouseup/touchend
@@ -1704,28 +1773,13 @@
         }
 
         function selectObject(object) {
-            console.log(`[selectObject] Function called with object:`, object ? object.name || object.uuid : 'null');
-            console.log(`[selectObject] Current selectedObject BEFORE:`, selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
+            console.log(`[selectObject] Function called with object: ${object ? object.name || object.uuid : 'null'}`);
+            console.log(`[selectObject] Current selectedObject BEFORE: ${selectedObject ? selectedObject.name || selectedObject.uuid : 'null'}`);
 
             // Clear any existing "select all" highlights first if this object was part of it
-            if (allHighlightsOriginalMaterials.has(object.uuid)) {
-                const originalProps = allHighlightsOriginalMaterials.get(object.uuid);
-                const materials = Array.isArray(object.material) ? object.material : [object.material];
-                materials.forEach((mat, index) => {
-                    if (mat && mat.isMaterial) {
-                        // Restore original material properties for this specific object
-                        if (originalProps.hasOwnProperty('emissive')) {
-                            mat.emissive.copy(originalProps.emissive);
-                            mat.emissiveIntensity = originalProps.emissiveIntensity;
-                        }
-                        if (originalProps.hasOwnProperty('color')) {
-                            mat.color.copy(originalProps.color);
-                        }
-                        mat.needsUpdate = true;
-                    }
-                });
-                allHighlightsOriginalMaterials.delete(object.uuid); // Remove from "all" map
-                console.log(`[selectObject] Cleared "select all" highlight for ${object.name || 'Unnamed Object'} (UUID: ${object.uuid}).`);
+            if (allHighlightsOriginalMaterials.size > 0) {
+                // Clear all highlights and the currentlySelectedObjectsForEditing array
+                clearAllHighlights();
             }
 
             // Clear any previous individual selection
@@ -1736,20 +1790,14 @@
                 console.log(`[selectObject] Selected object set to: ${selectedObject.name || 'Unnamed Object'} (UUID: ${selectedObject.uuid})`);
 
                 const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
-                materials.forEach((mat, index) => {
-                    if (mat && mat.isMaterial) {
-                        // Store original material properties before modifying
-                        const propsToStore = {};
-                        if (mat.emissive !== undefined) {
-                            propsToStore.emissive = mat.emissive.clone();
-                            propsToStore.emissiveIntensity = mat.emissiveIntensity;
-                        }
-                        if (mat.color !== undefined) {
-                            propsToStore.color = mat.color.clone();
-                        }
-                        originalMaterialProperties.set(selectedObject.uuid, propsToStore);
-                        console.log(`[selectObject] Stored original material properties for UUID ${selectedObject.uuid}, material index ${index}:`, propsToStore);
+                const objectOriginalMaterials = []; // Array to store original material instances
 
+                materials.forEach((mat, index) => {
+                    if (mat && mat.isMaterial) { // Defensive check for valid material
+                        console.log(`[selectObject] Processing material ${index}: Type=${mat.type}, Color=${mat.color ? mat.color.getHexString() : 'N/A'}, Emissive=${mat.emissive ? mat.emissive.getHexString() : 'N/A'}`);
+
+                        // Store the original material instance itself
+                        objectOriginalMaterials.push(mat.clone()); // Store a clone of the original material
 
                         // Apply highlight
                         if (mat.emissive !== undefined) {
@@ -1765,53 +1813,65 @@
                         }
                         mat.needsUpdate = true;
                     } else {
-                        console.warn(`[selectObject] Material at index ${index} for object ${object.name || object.uuid} is null or not a valid material.`);
+                        console.warn(`[selectObject] Material at index ${index} for object ${object.name || object.uuid} is null or not a valid material. Skipping highlight.`);
                     }
                 });
+                originalMaterialProperties.set(selectedObject.uuid, objectOriginalMaterials); // Store the array of original material instances
 
                 transformControls.attach(selectedObject);
-                console.log(`[selectObject] TransformControls attached to: ${transformControls.object ? transformControls.object.name || transformControls.object.uuid : 'null'}`);
+                transformControls.visible = true; // Make controls visible
+                console.log(`[selectObject] TransformControls attached: ${transformControls.object ? transformControls.object.name || transformControls.object.uuid : 'none'}`);
+                console.log(`[selectObject] TransformControls visible: ${transformControls.visible}`);
                 addMessageToLog('System', `Selected: ${object.name || 'Unnamed Part'} (UUID: ${object.uuid})`);
                 speakResponse(`Selected ${object.name || 'a part'}.`);
             } else {
                 console.log("[selectObject] No object provided for selection, clearing any existing selection.");
                 clearSelection(); // If no object is passed, clear selection
             }
-            console.log(`[selectObject] Current selectedObject AFTER:`, selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
+            console.log(`[selectObject] Current selectedObject AFTER: ${selectedObject ? selectedObject.name || selectedObject.uuid : 'null'}`);
         }
 
         function clearSelection() {
-            console.log("[clearSelection] Attempting to clear individual selection.");
+            console.log(`[clearSelection] Function called. selectedObject BEFORE: ${selectedObject ? selectedObject.name || selectedObject.uuid : 'null'}`);
             if (selectedObject && originalMaterialProperties.has(selectedObject.uuid)) {
                 console.log(`[clearSelection] Reverting highlight for: ${selectedObject.name || 'Unnamed Part'} (UUID: ${selectedObject.uuid})`);
 
-                const originalProps = originalMaterialProperties.get(selectedObject.uuid);
-                const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+                const originalMaterials = originalMaterialProperties.get(selectedObject.uuid); // Get the array of original material instances
+                const currentMaterials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
 
-                materials.forEach((mat, index) => {
-                    if (mat) {
-                        if (originalProps.hasOwnProperty('emissive')) {
-                            mat.emissive.copy(originalProps.emissive);
-                            mat.emissiveIntensity = originalProps.emissiveIntensity;
-                            console.log(`[clearSelection] Restored emissive for material index ${index}.`);
+                currentMaterials.forEach((mat, index) => {
+                    if (mat && mat.isMaterial && originalMaterials && originalMaterials[index]) { // Defensive check
+                        // Dispose current material before replacing to avoid memory leaks
+                        mat.dispose();
+                        // Assign the original material instance back
+                        // Ensure we are assigning to the correct material slot if it's an array
+                        if (Array.isArray(selectedObject.material)) {
+                            selectedObject.material[index] = originalMaterials[index];
+                        } else {
+                            selectedObject.material = originalMaterials[index];
                         }
-                        if (originalProps.hasOwnProperty('color')) {
-                            mat.color.copy(originalProps.color);
-                            console.log(`[clearSelection] Restored color for material index ${index}.`);
-                        }
-                        mat.needsUpdate = true;
+                        selectedObject.material.needsUpdate = true;
+                        console.log(`[clearSelection] Restored material for index ${index}.`);
                     } else {
-                        console.warn(`[clearSelection] Material at index ${index} for object ${selectedObject.name || selectedObject.uuid} is null or not a valid material during clearSelection.`);
+                        console.warn(`[clearSelection] Material at index ${index} for object ${selectedObject.name || selectedObject.uuid} is null or not a valid material, or no original material instance found. Skipping restore.`);
                     }
                 });
+
+                // Detach transform controls before clearing selectedObject
+                if (transformControls) {
+                    transformControls.detach(); // Detach controls when selection is cleared
+                    transformControls.visible = false; // Explicitly hide controls
+                    console.log("[clearSelection] TransformControls detached and hidden.");
+                }
+
                 originalMaterialProperties.delete(selectedObject.uuid); // Remove from map
                 selectedObject = null; // Clear selected object reference
                 console.log("[clearSelection] Individual selection cleared and highlight reverted.");
+            } else {
+                console.log("[clearSelection] No object selected or no original material properties to restore.");
             }
-            if (transformControls) { // Ensure transformControls exists before detaching
-                transformControls.detach(); // Detach controls when selection is cleared
-                console.log("[clearSelection] TransformControls detached.");
-            }
+            currentlySelectedObjectsForEditing = []; // Clear the functional selection array
+            console.log(`[clearSelection] Function finished. selectedObject AFTER: ${selectedObject ? selectedObject.name || selectedObject.uuid : 'null'}`);
             // Do NOT add message to log or speak here, as it's often called internally before a new selection.
             // addMessageToLog('System', 'Selection cleared.');
             // speakResponse('Selection cleared.');
@@ -1823,22 +1883,17 @@
             clearAllHighlights(); // Clear any previous "select all" highlights
 
             let highlightedCount = 0;
-            scene.traverse((obj) => {
-                if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper) {
-                    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
-                    materials.forEach(mat => {
-                        if (mat && mat.isMaterial) {
-                            // Store original material properties
-                            const propsToStore = { material: mat }; // Store the actual material object
-                            if (mat.emissive !== undefined) {
-                                propsToStore.emissive = mat.emissive.clone();
-                                propsToStore.emissiveIntensity = mat.emissiveIntensity;
-                            }
-                            if (mat.color !== undefined) {
-                                propsToStore.color = mat.color.clone();
-                            }
-                            allHighlightsOriginalMaterials.set(obj.uuid, propsToStore);
+            // Clear currentlySelectedObjectsForEditing before populating
+            currentlySelectedObjectsForEditing = []; // Ensure it's empty before new selection
 
+            scene.traverse((obj) => {
+                if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper && obj !== raycastDebugSphere) { // Exclude debug sphere
+                    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                    const objectOriginalMaterials = []; // Store original materials for this object
+
+                    materials.forEach(mat => {
+                        if (mat && mat.isMaterial) { // Defensive check
+                            objectOriginalMaterials.push(mat.clone()); // Store a clone of the original material
                             // Apply highlight
                             if (mat.emissive !== undefined) {
                                 mat.emissive.copy(highlightMaterial.color);
@@ -1850,13 +1905,15 @@
                             highlightedCount++;
                         }
                     });
+                    allHighlightsOriginalMaterials.set(obj.uuid, objectOriginalMaterials); // Store the array of original materials
+                    currentlySelectedObjectsForEditing.push(obj); // NEW: Add object to the new functional selection array
                 }
             });
 
             if (highlightedCount > 0) {
                 addMessageToLog('AI', `Highlighted ${highlightedCount} objects in the scene.`);
                 speakResponse(`Highlighted all ${highlightedCount} objects.`);
-                console.log(`[highlightAllModels] Successfully highlighted ${highlightedCount} objects.`);
+                console.log(`[highlightAllModels] Successfully highlighted ${highlightedCount} objects. Currently selected for editing (functional): ${currentlySelectedObjectsForEditing.length} objects.`);
             } else {
                 addMessageToLog('System', 'No objects found to highlight in the scene.');
                 speakResponse('No objects found to highlight.');
@@ -1872,28 +1929,28 @@
             }
 
             let clearedCount = 0;
-            for (const [uuid, originalProps] of allHighlightsOriginalMaterials.entries()) {
+            for (const [uuid, originalMaterials] of allHighlightsOriginalMaterials.entries()) {
                 // Find the object in the scene by its UUID
                 const object = scene.getObjectByProperty('uuid', uuid);
                 if (object && object.isMesh) {
-                    const materials = Array.isArray(object.material) ? object.material : [object.material];
-                    materials.forEach(mat => {
-                        if (mat && mat.isMaterial) {
-                            // Restore original material properties
-                            if (originalProps.hasOwnProperty('emissive')) {
-                                mat.emissive.copy(originalProps.emissive);
-                                mat.emissiveIntensity = originalProps.emissiveIntensity;
+                    const currentMaterials = Array.isArray(object.material) ? object.material : [object.material];
+                    currentMaterials.forEach((mat, index) => {
+                        if (mat && mat.isMaterial && originalMaterials[index]) { // Defensive check
+                            mat.dispose(); // Dispose current material before replacing
+                            // Assign the original material instance back
+                            if (Array.isArray(object.material)) {
+                                object.material[index] = originalMaterials[index];
+                            } else {
+                                object.material = originalMaterials[index];
                             }
-                            if (originalProps.hasOwnProperty('color')) {
-                                mat.color.copy(originalProps.color);
-                            }
-                            mat.needsUpdate = true;
+                            object.material.needsUpdate = true;
                         }
                     });
                     clearedCount++;
                 }
             }
             allHighlightsOriginalMaterials.clear(); // Clear the map
+            currentlySelectedObjectsForEditing = []; // Clear the functional selection array
             addMessageToLog('System', `Cleared highlights from ${clearedCount} objects.`);
             speakResponse('All highlights cleared.');
             console.log(`[clearAllHighlights] Successfully cleared highlights from ${clearedCount} objects.`);
@@ -1943,6 +2000,7 @@
                     addMessageToLog('AI', `Removed ${objectToRemoveName}.`);
                     speakResponse(`Removed ${objectToRemoveName}.`);
                     selectedObject = null; // Clear selected object after removal
+                    currentlySelectedObjectsForEditing = []; // Clear the functional selection array
                     resetView(); // Re-adjust view after removing an object
                 } else {
                     console.warn(`[Remove Object] Selected object ${objectToRemoveName} has no parent to remove from.`);
@@ -1956,39 +2014,96 @@
         }
 
         function duplicateSelectedObject() {
-            // This function is now only called if selectedObject is confirmed to be not null by processAICommand
             console.log("[duplicateSelectedObject] Attempting to duplicate selectedObject:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
 
-            // Clone the selected object
-            const clonedObject = selectedObject.clone();
-
-            // IMPORTANT: Ensure cloned materials are new instances, not references to original's materials
-            // This prevents changing the original object's material when changing the clone's.
-            if (Array.isArray(clonedObject.material)) {
-                clonedObject.material = clonedObject.material.map(mat => mat.clone());
-            } else if (clonedObject.material) {
-                clonedObject.material = clonedObject.material.clone();
+            if (!selectedObject) {
+                addMessageToLog('System', 'No object selected to duplicate.');
+                speakResponse('No object selected to duplicate.');
+                return;
             }
 
-            // Offset the cloned object slightly so it's visible
-            const offset = new THREE.Vector3(1, 1, 1);
+            const objectToDuplicate = selectedObject; // Store reference to the object being duplicated
+
+            // Clone the selected object.
+            const clonedObject = objectToDuplicate.clone();
+
+            // IMPORTANT: Get the original material properties from the map
+            // This is the material state *before* it was highlighted.
+            const originalMaterialsForObject = originalMaterialProperties.get(objectToDuplicate.uuid);
+
+            if (Array.isArray(clonedObject.material)) {
+                clonedObject.material = clonedObject.material.map((mat, index) => {
+                    // Create a new material instance for the clone to ensure independence
+                    const newMat = mat.clone();
+                    // Restore original properties to the new material if available
+                    if (originalMaterialsForObject && originalMaterialsForObject[index]) {
+                        const originalMat = originalMaterialsForObject[index];
+                        newMat.copy(originalMat); // Copy all properties from the original material instance
+                    } else {
+                        // Fallback to a default neutral material if no original properties found
+                        newMat.color.set(0xcccccc);
+                        newMat.emissive.set(0x000000);
+                        newMat.emissiveIntensity = 0;
+                    }
+                    newMat.needsUpdate = true;
+                    return newMat;
+                });
+            } else if (clonedObject.material) {
+                const newMat = clonedObject.material.clone(); // Clone the material instance
+                if (originalMaterialsForObject && originalMaterialsForObject[0]) { // For single material, it's at index 0
+                    const originalMat = originalMaterialsForObject[0];
+                    newMat.copy(originalMat); // Copy all properties from the original material instance
+                } else {
+                    // Fallback
+                    newMat.color.set(0xcccccc);
+                    newMat.emissive.set(0x000000);
+                    newMat.emissiveIntensity = 0;
+                }
+                newMat.needsUpdate = true;
+                clonedObject.material = newMat;
+            }
+
+            // Get world position, rotation, scale of the original object
+            const originalWorldPosition = new THREE.Vector3();
+            objectToDuplicate.getWorldPosition(originalWorldPosition);
+            const originalWorldQuaternion = new THREE.Quaternion();
+            objectToDuplicate.getWorldQuaternion(originalWorldQuaternion);
+            const originalWorldScale = new THREE.Vector3();
+            objectToDuplicate.getWorldScale(originalWorldScale);
+
+            // Apply world transforms to the clone's local properties
+            clonedObject.position.copy(originalWorldPosition);
+            clonedObject.quaternion.copy(originalWorldQuaternion);
+            clonedObject.scale.copy(originalWorldScale);
+
+            // Offset the cloned object slightly
+            const offset = new THREE.Vector3(2, 0, 0); // Offset by 2 units on X-axis
             clonedObject.position.add(offset);
 
             // Give the cloned object a distinct name
-            clonedObject.name = `${selectedObject.name || 'Unnamed Object'} (Copy)`;
+            clonedObject.name = `${objectToDuplicate.name || 'Unnamed Object'} (Copy)`;
 
             // Add the cloned object to the scene and to our list of loaded models
             scene.add(clonedObject);
             loadedModels.push(clonedObject);
 
-            addMessageToLog('AI', `Duplicated ${selectedObject.name || 'the selected object'}.`);
-            speakResponse(`Duplicated the selected object.`);
+            // Clear the selection of the original object and ensure no object is selected afterwards.
+            clearSelection(); // This now explicitly clears the original selection state.
+            console.log("[duplicateSelectedObject] After clearSelection(), selectedObject is now:", selectedObject);
 
-            // Clear the selection of the original and select the new duplicated object
-            clearSelection(); // This will also detach transform controls from the original
-            selectObject(clonedObject); // Select the new clone, attaching transform controls to it
+            // Also clear any "select all" highlights as a safety measure.
+            clearAllHighlights();
+            console.log("[duplicateSelectedObject] After clearAllHighlights(), allHighlightsOriginalMaterials size is:", allHighlightsOriginalMaterials.size);
+
+            // Request an animation frame to ensure the visual update happens.
+            requestAnimationFrame(() => {
+                renderer.render(scene, camera);
+            });
+
             resetView(); // Adjust view to include the new object
-            console.log("[duplicateSelectedObject] Object duplicated and selected.");
+            addMessageToLog('AI', `Duplicated ${clonedObject.name}. No object is currently selected.`);
+            speakResponse(`Duplicated the selected object.`);
+            console.log("[duplicateSelectedObject] Object duplicated. No object is currently selected.");
         }
 
 
@@ -2013,6 +2128,7 @@
 
                 console.log("[resetView] Overall Bounding Box:", overallBbox);
                 console.log("[resetView] Center:", center);
+                console.log("[resetView] Resetting view to fit all models.");
                 console.log("[resetView] Size:", size);
                 console.log("[resetView] Max Dimension:", maxDim);
 
@@ -2026,9 +2142,6 @@
                 camera.lookAt(center);
                 controls.target.copy(center); // Orbit controls should orbit around the center of all models
                 controls.update();
-
-                console.log("[resetView] New Camera Position:", camera.position);
-                console.log("[resetView] Controls Target:", controls.target);
 
                 addMessageToLog('AI', 'View reset to fit all models.');
                 speakResponse('View reset to fit all models.');
@@ -2359,79 +2472,134 @@
             console.log("[sendAICommand] Sending command to Render backend:", command);
 
             let selectedObjectInfo = "none";
-            if (selectedObject) {
+            // Check if there are objects in currentlySelectedObjectsForEditing (meaning "select all" is active)
+            if (currentlySelectedObjectsForEditing.length > 0) {
+                const uuids = currentlySelectedObjectsForEditing.map(obj => obj.uuid);
+                selectedObjectInfo = `Multiple CAD objects are currently selected for editing with UUIDs: ${uuids.join(', ')}.`;
+            } else if (selectedObject) {
                 selectedObjectInfo = `A CAD object is currently selected with UUID: ${selectedObject.uuid} and name: "${selectedObject.name || 'Unnamed Part'}".`;
             } else {
                 selectedObjectInfo = "No CAD object is currently selected.";
             }
 
             const payload = {
-                prompt: `User command: "${command}". Context: ${selectedObjectInfo}
-                You are an AI assistant for a CAD editor. Your task is to interpret user commands and return a JSON object with an "action" and "value" property.
-                If the user asks to duplicate the currently selected object, return:
-                \`\`\`json
-                {"action": "duplicateObject"}
-                \`\`\`
-                If the user asks to create a shape, return:
-                \`\`\`json
-                {"action": "createShape", "value": "[shape_type]"}
-                \`\`\`
-                where [shape_type] can be "box", "sphere", "cylinder", "cone", "pyramid", "plane", or "torus".
-                If the user asks to remove the selected object, return:
-                \`\`\`json
-                {"action": "removeObject"}
-                \`\`\`
-                If the user asks to reset the view, return:
-                \`\`\`json
-                {"action": "resetView"}
-                \`\`\`
-                If the user asks for design information, return:
-                \`\`\`json
-                {"action": "showDesignInfo"}
-                \`\`\`
-                If the user asks to change the transform mode, return:
-                \`\`\`json
-                {"action": "setTransformMode", "value": "[mode]"}
-                \`\`\`
-                where [mode] can be "translate", "rotate", or "scale".
-                If the user asks to list parts, return:
-                \`\`\`json
-                {"action": "listParts"}
-                \`\`\`
-                If the user asks to select a part by name, return:
-                \`\`\`json
-                {"action": "selectPart", "value": "[part_name]"}
-                \`\`\`
-                If the user asks to select all objects, return:
-                \`\`\`json
-                {"action": "selectAll"}
-                \`\`\`
-                If the user asks to clear all highlights, return:
-                \`\`\`json
-                {"action": "clearAllHighlights"}
-                \`\`\`
-                If the user asks to rotate the selected object, return:
-                \`\`\`json
-                {"action": "rotateAxis", "value": {"axis": "[x/y/z]", "degrees": [number]}}
-                \`\`\`
-                If the user asks to scale the selected object, return:
-                \`\`\`json
-                {"action": "scale", "value": [factor]}
-                \`\`\`
-                If the user asks to translate (move) the selected object, return:
-                \`\`\`json
-                {"action": "translate", "value": {"x": [number], "y": [number], "z": [number]}}
-                \`\`\`
-                If the user asks to change the color of the selected object, return:
-                \`\`\`json
-                {"action": "changeColor", "value": "[color_value]"}
-                \`\`\`
-                where [color_value] can be a color name (e.g., "red") or a hex code (e.g., "#FF0000").
-                If the command is conversational or you don't understand, return:
-                \`\`\`json
-                {"action": "conversational", "value": "[your response]"}
-                \`\`\`
-                Always respond with a single JSON object. Do not include any other text outside the JSON.
+                prompt: `You are an AI assistant for a CAD editor. Your primary goal is to interpret user commands and return a JSON object with an "action" and "value" property.
+                **VERY IMPORTANT:** Always respond with a single JSON object. Do not include any other text outside the JSON.
+
+                Available actions and their expected JSON format:
+
+                1.  **To duplicate the currently selected object:**
+                    User input example: "duplicate it", "make a copy", "duplicate this"
+                    Return:
+                    \`\`\`json
+                    {"action": "duplicateObject"}
+                    \`\`\`
+
+                2.  **To create a new shape:**
+                    User input example: "create a box", "add a sphere", "make a cylinder"
+                    Return:
+                    \`\`\`json
+                    {"action": "createShape", "value": "[shape_type]"}
+                    \`\`\`
+                    [shape_type] can be "box", "sphere", "cylinder", "cone", "pyramid", "plane", or "torus".
+
+                3.  **To remove the selected object:**
+                    User input example: "remove it", "delete this", "erase the selected object"
+                    Return:
+                    \`\`\`json
+                    {"action": "removeObject"}
+                    \`\`\`
+
+                4.  **To reset the camera view to fit all models:**
+                    User input example: "reset view", "fit all", "zoom out to see everything"
+                    Return:
+                    \`\`\`json
+                    {"action": "resetView"}
+                    \`\`\`
+
+                5.  **To show design information (e.g., number of models, bounding box):**
+                    User input example: "show design info", "what's in the scene?", "tell me about the design"
+                    Return:
+                    \`\`\`json
+                    {"action": "showDesignInfo"}
+                    \`\`\`
+
+                6.  **To change the transform mode of the selected object:**
+                    User input example: "set to translate mode", "rotate this", "switch to scale"
+                    Return:
+                    \`\`\`json
+                    {"action": "setTransformMode", "value": "[mode]"}
+                    \`\`\`
+                    [mode] can be "translate", "rotate", or "scale".
+
+                7.  **To list all named parts in the models:**
+                    User input example: "list parts", "what are the parts?", "show me the parts"
+                    Return:
+                    \`\`\`json
+                    {"action": "listParts"}
+                    \`\`\`
+
+                8.  **To select a part by its name:**
+                    User input example: "select the wheel", "select part A", "choose the main body"
+                    Return:
+                    \`\`\`json
+                    {"action": "selectPart", "value": "[part_name]"}
+                    \`\`\`
+
+                9.  **To highlight all objects in the scene:**
+                    User input example: "select all", "highlight everything"
+                    Return:
+                    \`\`\`json
+                    {"action": "selectAll"}
+                    \`\`\`
+
+                10. **To clear all highlights:**
+                    User input example: "clear highlights", "unhighlight all"
+                    Return:
+                    \`\`\`json
+                    {"action": "clearAllHighlights"}
+                    \`\`\`
+
+                11. **To rotate the selected object:**
+                    User input example: "rotate 90 degrees around x", "turn it on y axis by 45"
+                    Return:
+                    \`\`\`json
+                    {"action": "rotateAxis", "value": {"axis": "[x/y/z]", "degrees": [number]}}
+                    \`\`\`
+                    If axis is not specified, default to 'y'. If degrees is not specified, default to 90.
+
+                12. **To scale the selected object:**
+                    User input example: "scale it by 2", "make it half size", "scale up by 1.5"
+                    Return:
+                    \`\`\`json
+                    {"action": "scale", "value": [factor]}
+                    \`\`\`
+
+                13. **To translate (move) the selected object:**
+                    User input example: "move it 1 unit on x", "shift by -0.5 on y", "translate 2, 0, -1"
+                    Return:
+                    \`\`\`json
+                    {"action": "translate", "value": {"x": [number], "y": [number], "z": [number]}}
+                    \`\`\`
+                    If a coordinate is not specified, assume 0.
+
+                14. **To change the color of the selected object:**
+                    User input example: "make it red", "change color to #00FF00", "set color to blue"
+                    Return:
+                    \`\`\`json
+                    {"action": "changeColor", "value": "[color_value]"}
+                    \`\`\`
+                    [color_value] can be a color name (e.g., "red") or a hex code (e.g., "#FF0000").
+
+                15. **For conversational responses or if the command is not understood:**
+                    Return:
+                    \`\`\`json
+                    {"action": "conversational", "value": "[your response]"}
+                    \`\`\`
+
+                User command: "${command}".
+                Current context: ${selectedObjectInfo}
+                Please return *only* the JSON object for the most appropriate action based on the user's command and the current context.
                 `
             };
 
@@ -2507,62 +2675,62 @@
 
         // Function to change the color of the selected object
         function changeObjectColor(colorValue) {
-            if (!selectedObject) {
-                addMessageToLog('System', 'No object selected. Please select an object first.');
-                speakResponse('No object selected. Please select an object first.');
+            const newColor = new THREE.Color(colorValue);
+            let objectsToModify = []; // Renamed from objectsToColor for clarity
+
+            if (currentlySelectedObjectsForEditing.length > 0) {
+                console.log(`[changeObjectColor] Applying color to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
+                objectsToModify = [...currentlySelectedObjectsForEditing]; // Use spread to copy array
+            } else if (selectedObject) {
+                // Fallback to single selected object
+                console.log("[changeObjectColor] Applying color to single selected object.");
+                objectsToModify.push(selectedObject);
+            } else {
+                // If neither is selected, inform the user
+                addMessageToLog('System', 'No object selected. Please select an object or use "select all" first.');
+                speakResponse('No object selected. Please select an object or use select all first.');
                 return;
             }
 
-            try {
-                const newColor = new THREE.Color(colorValue);
-                const materials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
-
+            objectsToModify.forEach(obj => {
+                const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
                 materials.forEach(material => {
                     if (material && material.isMaterial) {
-                        // Crucial: Remove map to ensure solid color is visible
+                        // Dispose current map if it exists, to ensure solid color is visible
                         if (material.map) {
-                            material.map.dispose(); // Dispose of the texture to free memory
-                            material.map = null;    // Remove the reference to the texture
+                            material.map.dispose();
+                            material.map = null;
                         }
                         if (material.color) {
                             material.color.set(newColor);
                         }
-                        // If the material has emissive, ensure it's reset to black when changing main color
+                        // Ensure emissive is reset if changing main color
                         if (material.emissive !== undefined) {
-                             material.emissive.set(0x000000); // Reset emissive to black
-                             material.emissiveIntensity = 0; // Reset intensity
+                            material.emissive.set(0x000000);
+                            material.emissiveIntensity = 0;
                         }
-                        material.needsUpdate = true; // Inform Three.js that material properties have changed
+                        material.needsUpdate = true;
                     }
                 });
 
-                // IMPORTANT: After changing the color, update the stored original properties
-                // This ensures that if the object is deselected and re-selected,
-                // the highlight logic uses this new color as its base.
-                const updatedProps = {};
-                const currentMaterials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
+                // Update originalMaterialProperties for each colored object
+                // This is crucial so that when highlights are cleared, they revert to the new color.
+                const updatedOriginalMaterials = [];
+                const currentMaterials = Array.isArray(obj.material) ? obj.material : [obj.material];
                 currentMaterials.forEach(mat => {
                     if (mat && mat.isMaterial) {
-                        if (mat.emissive !== undefined) { // Store current emissive (should be black after reset)
-                            updatedProps.emissive = mat.emissive.clone();
-                            updatedProps.emissiveIntensity = mat.emissiveIntensity;
-                        }
-                        if (mat.color !== undefined) { // Store the new color
-                            updatedProps.color = mat.color.clone();
-                        }
+                        updatedOriginalMaterials.push(mat.clone());
                     }
                 });
-                originalMaterialProperties.set(selectedObject.uuid, updatedProps);
+                originalMaterialProperties.set(obj.uuid, updatedOriginalMaterials);
+            });
 
+            addMessageToLog('AI', `Changed color of ${objectsToModify.length} object(s) to ${colorValue}.`);
+            speakResponse(`Changed color of ${objectsToModify.length} object(s).`);
+            console.log(`[changeObjectColor] Changed color of ${objectsToModify.length} object(s) to ${colorValue}.`);
 
-                addMessageToLog('AI', `Changed color of selected object to ${colorValue}.`);
-                speakResponse(`Changed color of selected object.`);
-                console.log(`[changeObjectColor] Selected object color changed to ${colorValue}.`);
-            } catch (error) {
-                console.error("Error setting object color:", error);
-                addMessageToLog('System', `Failed to change color. Invalid color value or material issue: ${error.message}`);
-                speakResponse(`Failed to change color.`);
-            }
+            // After changing color, clear all highlights to show the new permanent color
+            clearAllHighlights();
         }
 
         // Function to create a primitive shape
@@ -2697,44 +2865,92 @@
                             clearAllHighlights();
                             break;
                         case 'rotateAxis':
-                            if (selectedObject && parsedResponse.value) {
+                            // Determine target objects: all highlighted, or single selected
+                            const objectsToRotate = [];
+                            if (currentlySelectedObjectsForEditing.length > 0) {
+                                console.log(`[rotateAxis] Applying rotation to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
+                                currentlySelectedObjectsForEditing.forEach(obj => {
+                                    if (obj && obj.isMesh) objectsToRotate.push(obj);
+                                });
+                            } else if (selectedObject) {
+                                console.log("[rotateAxis] Applying rotation to single selected object.");
+                                objectsToRotate.push(selectedObject);
+                            }
+
+                            if (objectsToRotate.length > 0 && parsedResponse.value) {
                                 const { axis, degrees } = parsedResponse.value;
-                                const radians = THREE.MathUtils.degToRad(degrees || 90); // Default to 90 degrees
-                                switch (axis) {
-                                    case 'x': selectedObject.rotation.x += radians; break;
-                                    case 'y': selectedObject.rotation.y += radians; break;
-                                    case 'z': selectedObject.rotation.z += radians; break;
-                                    default: selectedObject.rotation.y += radians; break; // Default axis
-                                }
-                                addMessageToLog('AI', `Rotated selected object by ${degrees || 90} degrees around ${axis || 'y'}-axis.`);
-                                speakResponse(`Rotated selected object.`);
+                                const radians = THREE.MathUtils.degToRad(degrees || 90);
+                                objectsToRotate.forEach(obj => {
+                                    switch (axis) {
+                                        case 'x': obj.rotation.x += radians; break;
+                                        case 'y': obj.rotation.y += radians; break;
+                                        case 'z': obj.rotation.z += radians; break;
+                                        default: obj.rotation.y += radians; break;
+                                    }
+                                    obj.updateMatrixWorld(true); // Ensure world matrix is updated for correct rendering
+                                });
+                                addMessageToLog('AI', `Rotated ${objectsToRotate.length} object(s) by ${degrees || 90} degrees around ${axis || 'y'}-axis.`);
+                                speakResponse(`Rotated ${objectsToRotate.length} object(s).`);
+                                clearAllHighlights(); // Clear highlights after batch operation
                             } else {
-                                addMessageToLog('System', 'No object selected or invalid rotation command.');
-                                speakResponse('No object selected or invalid rotation command.');
+                                addMessageToLog('System', 'No object selected or highlighted, or invalid rotation command.');
+                                speakResponse('No object selected or highlighted, or invalid rotation command.');
                             }
                             break;
                         case 'scale':
-                            if (selectedObject && parsedResponse.value) {
+                            // Determine target objects: all highlighted, or single selected
+                            const objectsToScale = [];
+                            if (currentlySelectedObjectsForEditing.length > 0) {
+                                console.log(`[scale] Applying scale to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
+                                currentlySelectedObjectsForEditing.forEach(obj => {
+                                    if (obj && obj.isMesh) objectsToScale.push(obj);
+                                });
+                            } else if (selectedObject) {
+                                console.log("[scale] Applying scale to single selected object.");
+                                objectsToScale.push(selectedObject);
+                            }
+
+                            if (objectsToScale.length > 0 && parsedResponse.value) {
                                 const factor = parsedResponse.value;
-                                selectedObject.scale.multiplyScalar(factor);
-                                addMessageToLog('AI', `Scaled selected object by a factor of ${factor}.`);
-                                speakResponse(`Scaled selected object.`);
+                                objectsToScale.forEach(obj => {
+                                    obj.scale.multiplyScalar(factor);
+                                    obj.updateMatrixWorld(true); // Ensure world matrix is updated for correct rendering
+                                });
+                                addMessageToLog('AI', `Scaled ${objectsToScale.length} object(s) by a factor of ${factor}.`);
+                                speakResponse(`Scaled ${objectsToScale.length} object(s).`);
+                                clearAllHighlights(); // Clear highlights after batch operation
                             } else {
-                                addMessageToLog('System', 'No object selected or invalid scale command.');
-                                speakResponse('No object selected or invalid scale command.');
+                                addMessageToLog('System', 'No object selected or highlighted, or invalid scale command.');
+                                speakResponse('No object selected or highlighted, or invalid scale command.');
                             }
                             break;
                         case 'translate':
-                            if (selectedObject && parsedResponse.value) {
+                            // Determine target objects: all highlighted, or single selected
+                            const objectsToTranslate = [];
+                            if (currentlySelectedObjectsForEditing.length > 0) {
+                                console.log(`[translate] Applying translation to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
+                                currentlySelectedObjectsForEditing.forEach(obj => {
+                                    if (obj && obj.isMesh) objectsToTranslate.push(obj);
+                                });
+                            } else if (selectedObject) {
+                                console.log("[translate] Applying translation to single selected object.");
+                                objectsToTranslate.push(selectedObject);
+                            }
+
+                            if (objectsToTranslate.length > 0 && parsedResponse.value) {
                                 const { x, y, z } = parsedResponse.value;
-                                selectedObject.position.x += (x || 0);
-                                selectedObject.position.y += (y || 0);
-                                selectedObject.position.z += (z || 0);
-                                addMessageToLog('AI', `Moved selected object by X:${x || 0}, Y:${y || 0}, Z:${z || 0}.`);
-                                speakResponse(`Moved selected object.`);
+                                objectsToTranslate.forEach(obj => {
+                                    obj.position.x += (x || 0);
+                                    obj.position.y += (y || 0);
+                                    obj.position.z += (z || 0);
+                                    obj.updateMatrixWorld(true); // Ensure world matrix is updated for correct rendering
+                                });
+                                addMessageToLog('AI', `Moved ${objectsToTranslate.length} object(s) by X:${x || 0}, Y:${y || 0}, Z:${z || 0}.`);
+                                speakResponse(`Moved ${objectsToTranslate.length} object(s).`);
+                                clearAllHighlights(); // Clear highlights after batch operation
                             } else {
-                                addMessageToLog('System', 'No object selected or invalid translate command.');
-                                speakResponse('No object selected or invalid translate command.');
+                                addMessageToLog('System', 'No object selected or highlighted, or invalid translate command.');
+                                speakResponse('No object selected or highlighted, or invalid translate command.');
                             }
                             break;
                         case 'changeColor':
@@ -2837,7 +3053,6 @@
                 synth.speak(utterance);
             }
         }
-
         // Send text command via input field
         sendTextCommandBtn.addEventListener('click', () => {
             const command = textCommandInput.value.trim();
