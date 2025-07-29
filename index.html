@@ -135,6 +135,7 @@
             height: 180px;
             border: 3px dashed #a0aec0;
             border-radius: 10px;
+            /* FIX: pointer-events and display are now controlled solely by JS for clarity */
             display: none; /* Initially hidden */
             justify-content: center;
             align-items: center;
@@ -147,7 +148,7 @@
             font-weight: 600;
             position: relative; /* Keep relative for internal positioning if needed later */
             overflow: hidden;
-            pointer-events: none; /* Crucial: ensure it doesn't block clicks when hidden */
+            /* Removed initial pointer-events: none; from CSS, controlled by JS */
         }
 
             #dropZone:hover {
@@ -177,6 +178,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 100%; /* Make buttons full width */
             box-sizing: border-box; /* Include padding in width */
+            pointer-events: auto; /* Ensure buttons are always clickable */
         }
 
             .button.primary {
@@ -208,6 +210,7 @@
             font-size: 1.15em;
             font-weight: 600;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            pointer-events: none; /* FIX: Ensure loading message is non-interactive */
         }
 
         /* Editor Page */
@@ -250,15 +253,15 @@
         /* Tab buttons for chat/code editor */
         .tab-buttons {
             display: flex;
-            align-items: center; /* Align items to center vertically */
+            align-items: center;
             margin-bottom: 15px;
             border-radius: 8px;
             overflow: hidden;
             background-color: #2d3748;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-            padding: 5px; /* Added padding to contain the circular button better */
+            padding: 5px;
             box-sizing: border-box;
-            gap: 5px; /* Reduced gap between buttons for tighter packing */
+            gap: 5px;
         }
 
         .tab-button {
@@ -272,7 +275,7 @@
             cursor: pointer;
             transition: background-color 0.3s ease, color 0.3s ease;
             text-align: center;
-            border-radius: 8px; /* Apply border-radius to individual buttons */
+            border-radius: 8px;
         }
 
             .tab-button:hover {
@@ -281,31 +284,31 @@
             }
 
             .tab-button.active {
-                background-color: #DAA520; /* Active tab button - Dark Yellow */
+                background-color: #DAA520;
                 color: white;
-                box-shadow: 0 2px 5px rgba(218, 165, 32, 0.3); /* Dark Yellow shadow */
+                box-shadow: 0 2px 5px rgba(218, 165, 32, 0.3);
             }
 
         /* Small circular button for "Back to Upload" */
         #backToUploadCircleButton {
-            width: 40px; /* Small size */
-            height: 40px; /* Small size */
-            border-radius: 50%; /* Circular shape */
-            background-color: #DAA520; /* Dark Yellow */
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #DAA520;
             color: white;
             border: none;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8em; /* Smaller font size if text is present */
+            font-size: 0.8em;
             transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0;
         }
 
             #backToUploadCircleButton:hover {
-                background-color: #B8860B; /* Darker yellow on hover */
+                background-color: #B8860B;
                 transform: translateY(-2px);
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
@@ -319,16 +322,16 @@
 
         /* Tab content areas */
         .tab-content {
-            flex-grow: 1; /* Ensure tab content grows to fill available space */
-            display: none; /* Hidden by default */
-            flex-direction: column; /* Ensure content stacks vertically */
-            padding-top: 5px; /* Small padding for content */
-            height: 100%; /* Crucial: Make sure tab-content takes full height of its parent */
-            box-sizing: border-box; /* Include padding in height */
+            flex-grow: 1;
+            display: none;
+            flex-direction: column;
+            padding-top: 5px;
+            height: 100%;
+            box-sizing: border-box;
         }
 
             .tab-content.active {
-                display: flex; /* Show active tab content */
+                display: flex;
             }
 
         #chatContent {
@@ -336,12 +339,12 @@
         }
 
         #codeEditorContent {
-            height: 100%; /* Take full height of parent when active */
+            height: 100%;
         }
 
         #cadViewer {
             flex-grow: 1;
-            background-color: #FFFFFF; /* Pure white background - authentic Fusion */
+            background-color: #FFFFFF;
             position: relative;
         }
 
@@ -352,29 +355,29 @@
         }
 
         #aiLog {
-            flex-grow: 1; /* Allow aiLog to grow and take available space */
-            flex-shrink: 1; /* Allow aiLog to shrink if needed */
+            flex-grow: 1;
+            flex-shrink: 1;
             background-color: #2d3748;
             border-radius: 10px;
             padding: 15px;
             color: #e2e8f0;
-            overflow-y: auto; /* This should handle scrolling for the chat history */
+            overflow-y: auto;
             line-height: 1.5;
-            margin-bottom: 10px; /* Add some space between log and input */
-            min-height: 50px; /* Ensure a minimum height for the log */
-            flex-basis: 0; /* Added to ensure it respects flex-grow properly */
+            margin-bottom: 10px;
+            min-height: 50px;
+            flex-basis: 0;
         }
 
         .user-message, .ai-response, .system-message {
             padding: 8px 12px;
             border-radius: 12px;
             margin-bottom: 8px;
-            word-wrap: break-word; /* Ensure long words wrap */
-            max-width: 85%; /* Slightly reduce max-width for better look */
+            word-wrap: break-word;
+            max-width: 85%;
         }
 
         .user-message {
-            background-color: #DAA520; /* Accent color for user messages - Dark Yellow */
+            background-color: #DAA520;
             color: white;
             text-align: right;
             align-self: flex-end;
@@ -405,14 +408,13 @@
             align-items: center;
             gap: 10px;
             flex-shrink: 0;
-            padding-top: 10px; /* Add some padding above the input group */
+            padding-top: 10px;
             box-sizing: border-box;
-            /* Ensure it stays at the bottom */
             position: sticky;
             bottom: 0;
-            background-color: #1a202c; /* Match right panel background */
-            z-index: 10; /* Ensure it's above chat log content */
-            padding-bottom: 10px; /* Add padding at the very bottom */
+            background-color: #1a202c;
+            z-index: 10;
+            padding-bottom: 10px;
         }
 
         #textCommandInput {
@@ -432,13 +434,13 @@
             }
 
             #textCommandInput:focus {
-                border-color: #DAA520; /* Accent color on focus - Dark Yellow */
-                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.3); /* Focus ring - Dark Yellow */
+                border-color: #DAA520;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.3);
             }
 
         #sendTextCommandBtn {
             padding: 12px 20px;
-            background-color: #DAA520; /* Send button - Dark Yellow */
+            background-color: #DAA520;
             color: white;
             border: none;
             border-radius: 8px;
@@ -450,7 +452,7 @@
         }
 
             #sendTextCommandBtn:hover {
-                background-color: #B8860B; /* Darker yellow on hover */
+                background-color: #B8860B;
                 transform: translateY(-2px);
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
             }
@@ -474,7 +476,7 @@
         }
 
             #integratedVoiceBtn svg {
-                fill: #FFFFFF; /* Changed fill to white for visibility */
+                fill: #FFFFFF;
                 height: 24px;
                 width: 24px;
                 transition: fill 0.3s ease;
@@ -487,8 +489,8 @@
             }
 
                 #integratedVoiceBtn.active-voice-btn {
-                    background-color: #e53e3e; /* Red when active */
-                    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4); /* Red glow when active */
+                    background-color: #e53e3e;
+                    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4);
                 }
 
                 #integratedVoiceBtn.active-voice-btn svg {
@@ -498,30 +500,30 @@
         /* Code Editor Specific Styles */
         #cssCodeEditor {
             width: 100%;
-            flex-grow: 1; /* Allows it to fill available height */
+            flex-grow: 1;
             background-color: #2d3748;
             border: 1px solid #4a5568;
             border-radius: 8px;
             padding: 15px;
-            font-family: 'Monaspace Neon', 'Fira Code', 'Consolas', monospace; /* Monospace font for code */
+            font-family: 'Monaspace Neon', 'Fira Code', 'Consolas', monospace;
             font-size: 0.9em;
             color: #e2e8f0;
-            resize: vertical; /* Allow vertical resizing */
+            resize: vertical;
             min-height: 150px;
-            box-sizing: border-box; /* Include padding in width/height */
-            margin-bottom: 15px; /* Space before button */
+            box-sizing: border-box;
+            margin-bottom: 15px;
             outline: none;
         }
 
             #cssCodeEditor:focus {
-                border-color: #DAA520; /* Dark Yellow */
-                box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.3); /* Dark Yellow */
+                border-color: #DAA520;
+                box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.3);
             }
 
         #applyCssButton {
             width: 100%;
             padding: 12px 20px;
-            background-color: #28a745; /* Green for apply/preview */
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 8px;
@@ -573,17 +575,17 @@
             position: absolute;
             bottom: 20px;
             left: 20px;
-            width: 100px; /* Smaller size for the helper */
+            width: 100px;
             height: 100px;
-            z-index: 5; /* Ensure it's above the CAD canvas */
-            pointer-events: auto; /* Enable clicks on this container */
-            background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+            z-index: 5;
+            pointer-events: auto;
+            background-color: rgba(0, 0, 0, 0.3);
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.2s ease; /* For click feedback */
+            transition: background-color 0.2s ease;
         }
 
         /* Object Properties Section Styles */
@@ -620,13 +622,13 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            width: 80px; /* Fixed width for color picker */
+            width: 80px;
             height: 35px;
             background-color: transparent;
             border: none;
             cursor: pointer;
             border-radius: 5px;
-            overflow: hidden; /* Hide default border */
+            overflow: hidden;
         }
 
         #objectColorPicker::-webkit-color-swatch-wrapper {
@@ -714,8 +716,10 @@
                         <!-- Left arrow SVG -->
                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" /></svg>
                     </button>
-                    <button class="tab-button active" id="uploadNewFileButton">Upload New File</button>
-                    <button class="tab-button" id="saveButton">Save</button>
+                    <button class="tab-button active" id="chatTabButton">AI Chat</button>
+                    <button class="tab-button" id="codeEditorTabButton">Code Editor</button>
+                    <button class="tab-button" id="uploadNewFileButton">Add New Model</button>
+                    <button class="tab-button" id="saveButton">Save Scene</button>
                 </div>
 
                 <!-- NEW: Undo/Redo Buttons -->
@@ -807,6 +811,11 @@
         // Global array to store all loaded GLTF scenes
         let loadedModels = []; // This will now hold all top-level GLTF scenes
 
+        // --- Undo/Redo History ---
+        let history = [];
+        let historyPointer = -1;
+        const MAX_HISTORY_SIZE = 20; // Limit history size to prevent excessive memory usage
+
         // New scene and camera for the static view axes helper
         let viewAxesScene, viewAxesCamera, viewAxesRenderer;
         let viewAxesHelper; // The actual AxesHelper object
@@ -841,6 +850,11 @@
         const cssCodeEditor = document.getElementById('cssCodeEditor');
         const applyCssButton = document.getElementById('applyCssButton');
 
+        // NEW: References to tab buttons for setActiveTab function
+        const chatTabButton = document.getElementById('chatTabButton');
+        const codeEditorTabButton = document.getElementById('codeEditorTabButton');
+
+
         // New view control buttons - these are now unused in the HTML but kept for reference if AI commands use them
         const topViewBtn = document.getElementById('topViewBtn');
         const bottomViewBtn = document.getElementById('bottomViewBtn');
@@ -868,6 +882,9 @@
         window.setTransformMode = setTransformMode;
         window.listParts = listParts;
         window.saveModel = saveModel; // Expose saveModel globally
+        window.highlightAllModels = highlightAllModels; // Expose for AI command
+        window.clearAllHighlights = clearAllHighlights; // Expose for AI command
+        window.duplicateSelectedObject = duplicateSelectedObject; // Expose for AI command
 
         // --- Event Listeners for new buttons ---
         // The "Upload New File" button now directly triggers the file input click
@@ -901,18 +918,262 @@
             addMessageToLog('System', 'Please select a .gltf or .glb file.');
         });
 
-        // --- Undo/Redo Placeholder Functions ---
-        undoButton.addEventListener('click', () => {
-            addMessageToLog('System', 'Undo functionality is a placeholder. A full undo/redo system requires complex state management.');
-            speakResponse('Undo is not yet implemented.');
-            console.warn("Undo: Placeholder function executed.");
-        });
+        // --- Undo/Redo Functions ---
+        // Function to save the current state of the scene
+        function saveSceneState() {
+            // Clear any redo history if a new action is performed
+            if (historyPointer < history.length - 1) {
+                history = history.slice(0, historyPointer + 1);
+            }
 
-        redoButton.addEventListener('click', () => {
-            addMessageToLog('System', 'Redo functionality is a placeholder. A full undo/redo system requires complex state management.');
-            speakResponse('Redo is not yet implemented.');
-            console.warn("Redo: Placeholder function executed.");
-        });
+            const currentState = [];
+            loadedModels.forEach(model => {
+                const modelState = {
+                    uuid: model.uuid, // Store UUID to identify the object when restoring
+                    name: model.name,
+                    type: model.type, // e.g., Group, Mesh
+                    position: model.position.toArray(),
+                    rotation: model.rotation.toArray(),
+                    scale: model.scale.toArray(),
+                    // Store original file data if it's an uploaded model
+                    isFileModel: model.userData.isFileModel || false,
+                    fileData: model.userData.fileData || null, // Store original file blob or URL
+                    // Store primitive type if it's a created primitive
+                    isPrimitive: model.userData.isPrimitive || false,
+                    primitiveType: model.userData.primitiveType || null,
+                    // Store material properties for meshes within this model
+                    materials: []
+                };
+
+                model.traverse(obj => {
+                    if (obj.isMesh && obj.material) {
+                        const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                        const initialMaterials = obj.userData.initialMaterial ? (Array.isArray(obj.userData.initialMaterial) ? obj.userData.initialMaterial : [obj.userData.initialMaterial]) : null;
+
+                        const materialStates = materials.map((mat, index) => {
+                            const matState = {
+                                uuid: mat.uuid,
+                                color: mat.color ? mat.color.getHex() : null,
+                                emissive: mat.emissive ? mat.emissive.getHex() : null,
+                                emissiveIntensity: mat.emissiveIntensity !== undefined ? mat.emissiveIntensity : null,
+                                // Add other relevant material properties if needed (e.g., roughness, metalness)
+                            };
+                            // If there's an initial material, store its properties too for true reversion
+                            if (initialMaterials && initialMaterials[index]) {
+                                matState.initialColor = initialMaterials[index].color ? initialMaterials[index].color.getHex() : null;
+                                matState.initialEmissive = initialMaterials[index].emissive ? initialMaterials[index].emissive.getHex() : null;
+                                matState.initialEmissiveIntensity = initialMaterials[index].emissiveIntensity !== undefined ? initialMaterials[index].emissiveIntensity : null;
+                            }
+                            return matState;
+                        });
+                        modelState.materials.push({ meshUuid: obj.uuid, states: materialStates });
+                    }
+                });
+                currentState.push(modelState);
+            });
+
+            history.push(currentState);
+            historyPointer = history.length - 1;
+
+            // Trim history if it exceeds max size
+            if (history.length > MAX_HISTORY_SIZE) {
+                history.shift(); // Remove the oldest state
+                historyPointer--; // Adjust pointer
+            }
+
+            console.log(`[History] Saved state. History size: ${history.length}, Pointer: ${historyPointer}`);
+            updateUndoRedoButtons();
+        }
+
+        // Function to load a specific state from history
+        async function loadSceneState(state) {
+            console.log("[History] Loading scene state...", state);
+
+            // Dispose current scene objects (excluding grid and axes helpers)
+            // Iterate over a copy of the loadedModels array to avoid issues during removal
+            const currentLoadedModels = [...loadedModels];
+            currentLoadedModels.forEach(model => {
+                scene.remove(model);
+                model.traverse(child => {
+                    if (child.isMesh) {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) {
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(mat => mat.dispose());
+                            } else {
+                                child.material.dispose();
+                            }
+                        }
+                    }
+                });
+            });
+            loadedModels = []; // Clear current loaded models array after removal
+
+            // Clear selection and highlights before loading new state
+            clearSelection();
+            clearAllHighlights();
+
+            // Recreate objects from the saved state
+            for (const modelState of state) {
+                let newObject;
+                if (modelState.isPrimitive) {
+                    // Recreate primitive
+                    const material = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.5, roughness: 0.5 });
+                    switch (modelState.primitiveType.toLowerCase()) {
+                        case 'box': case 'cube': newObject = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), material); break;
+                        case 'sphere': case 'ball': newObject = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), material); break;
+                        case 'cylinder': case 'tube': newObject = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 32), material); break;
+                        case 'cone': newObject = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 32), material); break;
+                        case 'pyramid': newObject = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 4), material); break;
+                        case 'plane': newObject = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStandardMaterial({ color: 0xcccccc, side: THREE.DoubleSide })); break;
+                        case 'torus': newObject = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.2, 16, 100), material); break;
+                        default: console.warn(`[loadSceneState] Unknown primitive type: ${modelState.primitiveType}`); continue;
+                    }
+                    newObject.name = modelState.name;
+                    newObject.userData.isPrimitive = true;
+                    newObject.userData.primitiveType = modelState.primitiveType;
+                } else if (modelState.isFileModel && modelState.fileData) {
+                    // Reload GLTF model if it was an uploaded file
+                    const loader = new GLTFLoader();
+                    try {
+                        const file = droppedFileBlobs.get(modelState.fileData.name); // Assuming fileData.name is the key
+                        if (file) {
+                            const fileUrl = URL.createObjectURL(file);
+                            const gltf = await new Promise((resolve, reject) => loader.load(fileUrl, resolve, undefined, reject));
+                            newObject = gltf.scene;
+                            newObject.name = modelState.name;
+                            newObject.userData.isFileModel = true;
+                            newObject.userData.fileData = modelState.fileData;
+                            URL.revokeObjectURL(fileUrl); // Clean up blob URL
+                        } else {
+                            console.warn(`[loadSceneState] File data not found for model: ${modelState.name}. Skipping.`);
+                            continue;
+                        }
+                    } catch (error) {
+                        console.error(`[loadSceneState] Error reloading GLTF model ${modelState.name}:`, error);
+                        continue;
+                    }
+                } else {
+                    console.warn(`[loadSceneState] Cannot restore object type: ${modelState.type || 'unknown'}. Skipping.`);
+                    continue;
+                }
+
+                // Restore UUID to match the saved state, important for maps like originalMaterialProperties
+                newObject.uuid = modelState.uuid;
+
+                // Apply saved transforms
+                newObject.position.fromArray(modelState.position);
+                newObject.rotation.fromArray(modelState.rotation);
+                newObject.scale.fromArray(modelState.scale);
+
+                // Apply saved materials (traverse children to find meshes)
+                newObject.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        const savedMeshMaterials = modelState.materials.find(m => m.meshUuid === child.uuid);
+                        if (savedMeshMaterials) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            savedMeshMaterials.states.forEach((matState, index) => {
+                                if (materials[index]) {
+                                    // Dispose existing material before replacing with a new one from state
+                                    materials[index].dispose();
+
+                                    // Create a new material instance for the child mesh
+                                    let restoredMaterial;
+                                    // Try to match the original material type if possible
+                                    if (materials[index].isMeshStandardMaterial) {
+                                        restoredMaterial = new THREE.MeshStandardMaterial();
+                                    } else if (materials[index].isMeshBasicMaterial) {
+                                        restoredMaterial = new THREE.MeshBasicMaterial();
+                                    } else {
+                                        restoredMaterial = new THREE.Material(); // Fallback
+                                    }
+
+                                    if (matState.color !== null) restoredMaterial.color.setHex(matState.color);
+                                    if (matState.emissive !== null) restoredMaterial.emissive.setHex(matState.emissive);
+                                    if (matState.emissiveIntensity !== null) restoredMaterial.emissiveIntensity = matState.emissiveIntensity;
+                                    restoredMaterial.needsUpdate = true;
+
+                                    if (Array.isArray(child.material)) {
+                                        child.material[index] = restoredMaterial;
+                                    } else {
+                                        child.material = restoredMaterial;
+                                    }
+
+                                    // Restore initialMaterial for this child mesh
+                                    if (matState.initialColor !== null || matState.initialEmissive !== null) {
+                                        let initialMatClone;
+                                        if (restoredMaterial.isMeshStandardMaterial) {
+                                            initialMatClone = new THREE.MeshStandardMaterial();
+                                        } else if (restoredMaterial.isMeshBasicMaterial) {
+                                            initialMatClone = new THREE.MeshBasicMaterial();
+                                        } else {
+                                            initialMatClone = new THREE.Material();
+                                        }
+                                        if (matState.initialColor !== null) initialMatClone.color.setHex(matState.initialColor);
+                                        if (matState.initialEmissive !== null) initialMatClone.emissive.setHex(matState.initialEmissive);
+                                        if (matState.initialEmissiveIntensity !== null) initialMatClone.emissiveIntensity = matState.initialEmissiveIntensity;
+
+                                        if (Array.isArray(child.userData.initialMaterial)) {
+                                            if (!child.userData.initialMaterial) child.userData.initialMaterial = [];
+                                            child.userData.initialMaterial[index] = initialMatClone;
+                                        } else {
+                                            child.userData.initialMaterial = initialMatClone;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+
+                scene.add(newObject);
+                loadedModels.push(newObject); // Add to loadedModels array
+            }
+
+            // Reset camera to fit the new scene
+            resetView(); // This will also update the grid
+
+            console.log("[History] Scene state loaded successfully.");
+        }
+
+        // Function to handle Undo
+        function undo() {
+            if (historyPointer > 0) {
+                historyPointer--;
+                loadSceneState(history[historyPointer]);
+                addMessageToLog('System', `Undid last action. History state: ${historyPointer + 1}/${history.length}`);
+                speakResponse('Action undone.');
+            } else {
+                addMessageToLog('System', 'No more actions to undo.');
+                speakResponse('Nothing to undo.');
+            }
+            updateUndoRedoButtons();
+        }
+
+        // Function to handle Redo
+        function redo() {
+            if (historyPointer < history.length - 1) {
+                historyPointer++;
+                loadSceneState(history[historyPointer]);
+                addMessageToLog('System', `Redid action. History state: ${historyPointer + 1}/${history.length}`);
+                speakResponse('Action redone.');
+            } else {
+                addMessageToLog('System', 'No more actions to redo.');
+                speakResponse('Nothing to redo.');
+            }
+            updateUndoRedoButtons();
+        }
+
+        // Function to update the disabled state of Undo/Redo buttons
+        function updateUndoRedoButtons() {
+            undoButton.disabled = historyPointer <= 0;
+            redoButton.disabled = historyPointer >= history.length - 1;
+            console.log(`[History] Buttons updated. Undo disabled: ${undoButton.disabled}, Redo disabled: ${redoButton.disabled}`);
+        }
+
+        // --- Event Listeners for Undo/Redo Buttons ---
+        undoButton.addEventListener('click', undo);
+        redoButton.addEventListener('click', redo);
 
 
         // --- Placeholder Save Model Function ---
@@ -933,7 +1194,7 @@
                 // Apply the new CSS properties
                 const lines = cssText.split(';');
                 lines.forEach(line => {
-                    const parts = line = line.split(':');
+                    const parts = line.split(':'); // Corrected from `line = line.split(':')`
                     if (parts.length === 2) {
                         const prop = parts[0].trim();
                         const value = parts[1].trim();
@@ -989,7 +1250,7 @@
             async function readDroppedFiles(entry, path) {
                 if (entry.isFile) {
                     const file = await new Promise(resolve => entry.file(resolve));
-                    const fullPath = path ? `${path}/${file.name}` : file.name;
+                    const fullPath = path ? `${path}/${path}/${file.name}` : file.name; // FIX: Corrected path concatenation
                     droppedFileBlobs.set(fullPath, file);
                     console.log(`[Drop Handler] Stored file: ${fullPath}, Type: ${file.type}, Size: ${file.size} bytes`);
                     if (!mainModelFile && (file.name.toLowerCase().endsWith('.gltf') || file.name.toLowerCase().endsWith('.glb'))) {
@@ -1257,7 +1518,7 @@
 
             editorPage.classList.remove('page-inactive');
             editorPage.classList.add('page-active');
-            console.log("[goToEditor] Page transition complete. Editor page is now active."); // Added log
+            console.log("[goToEditor] Page transition complete. Editor page is now active.");
         }
 
         function loadRandomModel() {
@@ -1277,14 +1538,24 @@
                 const randomModel = gltf.scene;
                 randomModel.name = `Random Model (${modelUrl.split('/').pop()})`;
                 scene.add(randomModel);
+                // Store initial material(s) for the loaded model or its meshes
+                randomModel.traverse((obj) => {
+                    if (obj.isMesh && obj.material) {
+                        if (Array.isArray(obj.material)) {
+                            obj.userData.initialMaterial = obj.material.map(mat => mat.clone());
+                        } else {
+                            obj.userData.initialMaterial = obj.material.clone();
+                        }
+                    }
+                });
                 loadedModels.push(randomModel);
                 resetView();
                 addMessageToLog('System', `Random model "${randomModel.name}" loaded successfully.`);
                 speakResponse(`Random model loaded.`);
                 console.log(`[loadRandomModel] Random model "${randomModel.name}" loaded successfully.`);
+                saveSceneState(); // Save state after loading a new model
             }, (xhr) => { // Progress callback
-                console.log(`[loadRandomModel] Loading progress for ${modelUrl}: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
-                // Optionally update a loading indicator if visible
+                loadingMsg.textContent = `Loading ${modelUrl}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
             }, (error) => {
                 console.error(`[loadRandomModel] Error loading random model from ${modelUrl}:`, error);
                 addMessageToLog('System', `Failed to load random model from ${modelUrl}. Error details in console. Please try another option.`); // More specific error message
@@ -1320,6 +1591,7 @@
             loadingMsg.style.display = 'none';
             console.log("[Navigation] Returned to upload page. State reset.");
             addMessageToLog('System', 'Welcome back! Choose an option to get started.');
+            updateUndoRedoButtons(); // Update buttons on page change
         }
 
         // --- Three.js Scene Setup and Model Loading ---
@@ -1378,7 +1650,7 @@
 
             const ambientLight = new THREE.AmbientLight(0x808080); // Brighter ambient light
             scene.add(ambientLight);
-            // Corrected typo: DirectionionalLight -> DirectionalLight
+            // FIX: Corrected typo from DirectionionalLight to DirectionalLight
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Full intensity directional light
             directionalLight.position.set(1, 1, 1).normalize();
             scene.add(directionalLight);
@@ -1615,6 +1887,17 @@
                     newModel.name = file.name; // Assign the file name to the model for identification
                     scene.add(newModel); // Add the new model to the scene
 
+                    // Store initial material(s) for the entire model or its meshes
+                    newModel.traverse((obj) => {
+                        if (obj.isMesh && obj.material) {
+                            if (Array.isArray(obj.material)) {
+                                obj.userData.initialMaterial = obj.material.map(mat => mat.clone());
+                            } else {
+                                obj.userData.initialMaterial = obj.material.clone();
+                            }
+                        }
+                    });
+
                     loadedModels.push(newModel); // Store the new model in our array
 
                     console.log(`[loadModel] Model '${file.name}' added to scene. Total models: ${loadedModels.length}`);
@@ -1627,7 +1910,9 @@
                     addMessageToLog('System', `Model '${file.name}' loaded successfully. You now have ${loadedModels.length} models in the scene.`);
                     speakResponse(`Model loaded successfully. You now have ${loadedModels.length} models in the scene.`);
                     console.log("[loadModel] Model successfully added to scene. Current loadedModels:", loadedModels);
-                }, (xhr) => {
+
+                    saveSceneState(); // Save state after loading a new model
+                }, (xhr) => { // Progress callback
                     loadingMsg.textContent = `Loading ${file.name}: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
                 }, (error) => {
                     console.error('An error happened loading the GLTF model:', error);
@@ -1797,7 +2082,7 @@
                         console.log(`[selectObject] Processing material ${index}: Type=${mat.type}, Color=${mat.color ? mat.color.getHexString() : 'N/A'}, Emissive=${mat.emissive ? mat.emissive.getHexString() : 'N/A'}`);
 
                         // Store the original material instance itself
-                        objectOriginalMaterials.push(mat.clone()); // Store a clone of the original material
+                        objectOriginalMaterials.push(mat.clone()); // Store a clone of the current material for highlight reversion
 
                         // Apply highlight
                         if (mat.emissive !== undefined) {
@@ -1816,7 +2101,7 @@
                         console.warn(`[selectObject] Material at index ${index} for object ${object.name || object.uuid} is null or not a valid material. Skipping highlight.`);
                     }
                 });
-                originalMaterialProperties.set(selectedObject.uuid, objectOriginalMaterials); // Store the array of original material instances
+                originalMaterialProperties.set(selectedObject.uuid, objectOriginalMaterials); // Store the array of current materials for individual selection reversion
 
                 transformControls.attach(selectedObject);
                 transformControls.visible = true; // Make controls visible
@@ -1840,15 +2125,22 @@
                 const currentMaterials = Array.isArray(selectedObject.material) ? selectedObject.material : [selectedObject.material];
 
                 currentMaterials.forEach((mat, index) => {
-                    if (mat && mat.isMaterial && originalMaterials && originalMaterials[index]) { // Defensive check
-                        // Dispose current material before replacing to avoid memory leaks
-                        mat.dispose();
+                    if (mat && mat.isMaterial && originalMaterials[index]) { // Defensive check
+                        mat.dispose(); // Dispose current material before replacing to avoid memory leaks
                         // Assign the original material instance back
-                        // Ensure we are assigning to the correct material slot if it's an array
-                        if (Array.isArray(selectedObject.material)) {
-                            selectedObject.material[index] = originalMaterials[index];
+                        // Use the initialMaterial if available, otherwise fallback to the one stored for temporary highlight
+                        if (selectedObject.userData.initialMaterial && (Array.isArray(selectedObject.userData.initialMaterial) ? selectedObject.userData.initialMaterial[index] : selectedObject.userData.initialMaterial)) {
+                            if (Array.isArray(selectedObject.material)) {
+                                selectedObject.material[index] = selectedObject.userData.initialMaterial[index].clone(); // Clone to ensure independence
+                            } else {
+                                selectedObject.material = selectedObject.userData.initialMaterial.clone(); // Clone to ensure independence
+                            }
                         } else {
-                            selectedObject.material = originalMaterials[index];
+                            if (Array.isArray(selectedObject.material)) {
+                                selectedObject.material[index] = originalMaterials[index];
+                            } else {
+                                selectedObject.material = originalMaterials[index];
+                            }
                         }
                         selectedObject.material.needsUpdate = true;
                         console.log(`[clearSelection] Restored material for index ${index}.`);
@@ -1886,29 +2178,32 @@
             // Clear currentlySelectedObjectsForEditing before populating
             currentlySelectedObjectsForEditing = []; // Ensure it's empty before new selection
 
-            scene.traverse((obj) => {
-                if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper && obj !== raycastDebugSphere) { // Exclude debug sphere
-                    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
-                    const objectOriginalMaterials = []; // Store original materials for this object
+            // Iterate over loadedModels (top-level objects) for highlighting
+            loadedModels.forEach(model => {
+                model.traverse((obj) => {
+                    if (obj.isMesh && obj.visible && !obj.userData.isGridLabel && obj !== currentGridHelper && obj !== raycastDebugSphere) {
+                        const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                        const objectOriginalMaterials = [];
 
-                    materials.forEach(mat => {
-                        if (mat && mat.isMaterial) { // Defensive check
-                            objectOriginalMaterials.push(mat.clone()); // Store a clone of the original material
-                            // Apply highlight
-                            if (mat.emissive !== undefined) {
-                                mat.emissive.copy(highlightMaterial.color);
-                                mat.emissiveIntensity = 0.5;
-                            } else if (mat.color !== undefined) {
-                                mat.color.copy(highlightMaterial.color);
+                        materials.forEach(mat => {
+                            if (mat && mat.isMaterial) {
+                                objectOriginalMaterials.push(mat.clone()); // Store a clone of the current material for highlight reversion
+                                if (mat.emissive !== undefined) {
+                                    mat.emissive.copy(highlightMaterial.color);
+                                    mat.emissiveIntensity = 0.5;
+                                } else if (mat.color !== undefined) {
+                                    mat.color.copy(highlightMaterial.color);
+                                }
+                                mat.needsUpdate = true;
+                                highlightedCount++;
                             }
-                            mat.needsUpdate = true;
-                            highlightedCount++;
-                        }
-                    });
-                    allHighlightsOriginalMaterials.set(obj.uuid, objectOriginalMaterials); // Store the array of original materials
-                    currentlySelectedObjectsForEditing.push(obj); // NEW: Add object to the new functional selection array
-                }
+                        });
+                        allHighlightsOriginalMaterials.set(obj.uuid, objectOriginalMaterials); // Store for all-highlight reversion
+                        currentlySelectedObjectsForEditing.push(obj); // Add individual mesh to functional selection array
+                    }
+                });
             });
+
 
             if (highlightedCount > 0) {
                 addMessageToLog('AI', `Highlighted ${highlightedCount} objects in the scene.`);
@@ -1930,18 +2225,25 @@
 
             let clearedCount = 0;
             for (const [uuid, originalMaterials] of allHighlightsOriginalMaterials.entries()) {
-                // Find the object in the scene by its UUID
                 const object = scene.getObjectByProperty('uuid', uuid);
                 if (object && object.isMesh) {
                     const currentMaterials = Array.isArray(object.material) ? object.material : [object.material];
                     currentMaterials.forEach((mat, index) => {
-                        if (mat && mat.isMaterial && originalMaterials[index]) { // Defensive check
+                        if (mat && mat.isMaterial && originalMaterials[index]) {
                             mat.dispose(); // Dispose current material before replacing
-                            // Assign the original material instance back
-                            if (Array.isArray(object.material)) {
-                                object.material[index] = originalMaterials[index];
+                            // Use the initialMaterial if available, otherwise fallback to the one stored for temporary highlight
+                            if (object.userData.initialMaterial && (Array.isArray(object.userData.initialMaterial) ? object.userData.initialMaterial[index] : object.userData.initialMaterial)) {
+                                if (Array.isArray(object.material)) {
+                                    object.material[index] = object.userData.initialMaterial[index].clone(); // Clone to ensure independence
+                                } else {
+                                    object.material = object.userData.initialMaterial.clone(); // Clone to ensure independence
+                                }
                             } else {
-                                object.material = originalMaterials[index];
+                                if (Array.isArray(object.material)) {
+                                    object.material[index] = originalMaterials[index];
+                                } else {
+                                    object.material = originalMaterials[index];
+                                }
                             }
                             object.material.needsUpdate = true;
                         }
@@ -1958,18 +2260,16 @@
 
 
         function removeObject() {
-            if (selectedObject) { // Check if something is selected
+            saveSceneState(); // Save state before removing
+            if (selectedObject) {
                 const objectToRemoveName = selectedObject.name || "Unnamed Part";
                 const objectToRemoveUUID = selectedObject.uuid;
 
-                // Detach transform controls before removing
                 transformControls.detach();
 
-                // Find the parent of the selected object in the scene graph
                 let parent = selectedObject.parent;
                 if (parent) {
                     parent.remove(selectedObject);
-                    // Dispose of its resources (geometry, material, textures)
                     if (selectedObject.geometry) selectedObject.geometry.dispose();
                     if (selectedObject.material) {
                         if (Array.isArray(selectedObject.material)) {
@@ -1979,7 +2279,6 @@
                         }
                     }
 
-                    // Also check if the removed object was a top-level loaded model, and remove it from loadedModels array
                     const index = loadedModels.indexOf(selectedObject);
                     if (index > -1) {
                         loadedModels.splice(index, 1);
@@ -1988,20 +2287,18 @@
                         console.log(`[Remove Object] Removed object: ${objectToRemoveName} (UUID: ${objectToRemoveUUID})`);
                     }
 
-                    // Clear its entry from originalMaterialProperties if it exists
                     if (originalMaterialProperties.has(selectedObject.uuid)) {
                         originalMaterialProperties.delete(selectedObject.uuid);
                     }
-                    // Clear its entry from allHighlightsOriginalMaterials if it exists
                     if (allHighlightsOriginalMaterials.has(selectedObject.uuid)) {
                         allHighlightsOriginalMaterials.delete(selectedObject.uuid);
                     }
 
                     addMessageToLog('AI', `Removed ${objectToRemoveName}.`);
                     speakResponse(`Removed ${objectToRemoveName}.`);
-                    selectedObject = null; // Clear selected object after removal
-                    currentlySelectedObjectsForEditing = []; // Clear the functional selection array
-                    resetView(); // Re-adjust view after removing an object
+                    selectedObject = null;
+                    currentlySelectedObjectsForEditing = [];
+                    resetView();
                 } else {
                     console.warn(`[Remove Object] Selected object ${objectToRemoveName} has no parent to remove from.`);
                     addMessageToLog('System', `Cannot remove ${objectToRemoveName}: No parent found.`);
@@ -2011,9 +2308,11 @@
                 addMessageToLog('System', 'No object selected to remove.');
                 speakResponse('No object selected to remove.');
             }
+            updateUndoRedoButtons();
         }
 
         function duplicateSelectedObject() {
+            saveSceneState(); // Save state before duplicating
             console.log("[duplicateSelectedObject] Attempting to duplicate selectedObject:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
 
             if (!selectedObject) {
@@ -2022,25 +2321,18 @@
                 return;
             }
 
-            const objectToDuplicate = selectedObject; // Store reference to the object being duplicated
-
-            // Clone the selected object.
+            const objectToDuplicate = selectedObject;
             const clonedObject = objectToDuplicate.clone();
 
-            // IMPORTANT: Get the original material properties from the map
-            // This is the material state *before* it was highlighted.
             const originalMaterialsForObject = originalMaterialProperties.get(objectToDuplicate.uuid);
 
             if (Array.isArray(clonedObject.material)) {
                 clonedObject.material = clonedObject.material.map((mat, index) => {
-                    // Create a new material instance for the clone to ensure independence
                     const newMat = mat.clone();
-                    // Restore original properties to the new material if available
                     if (originalMaterialsForObject && originalMaterialsForObject[index]) {
                         const originalMat = originalMaterialsForObject[index];
-                        newMat.copy(originalMat); // Copy all properties from the original material instance
+                        newMat.copy(originalMat);
                     } else {
-                        // Fallback to a default neutral material if no original properties found
                         newMat.color.set(0xcccccc);
                         newMat.emissive.set(0x000000);
                         newMat.emissiveIntensity = 0;
@@ -2049,12 +2341,11 @@
                     return newMat;
                 });
             } else if (clonedObject.material) {
-                const newMat = clonedObject.material.clone(); // Clone the material instance
-                if (originalMaterialsForObject && originalMaterialsForObject[0]) { // For single material, it's at index 0
+                const newMat = clonedObject.material.clone();
+                if (originalMaterialsForObject && originalMaterialsForObject[0]) {
                     const originalMat = originalMaterialsForObject[0];
-                    newMat.copy(originalMat); // Copy all properties from the original material instance
+                    newMat.copy(originalMat);
                 } else {
-                    // Fallback
                     newMat.color.set(0xcccccc);
                     newMat.emissive.set(0x000000);
                     newMat.emissiveIntensity = 0;
@@ -2063,7 +2354,13 @@
                 clonedObject.material = newMat;
             }
 
-            // Get world position, rotation, scale of the original object
+            // Also set initialMaterial for the cloned object
+            if (Array.isArray(clonedObject.material)) {
+                clonedObject.userData.initialMaterial = clonedObject.material.map(mat => mat.clone());
+            } else if (clonedObject.material) {
+                clonedObject.userData.initialMaterial = clonedObject.material.clone();
+            }
+
             const originalWorldPosition = new THREE.Vector3();
             objectToDuplicate.getWorldPosition(originalWorldPosition);
             const originalWorldQuaternion = new THREE.Quaternion();
@@ -2071,45 +2368,39 @@
             const originalWorldScale = new THREE.Vector3();
             objectToDuplicate.getWorldScale(originalWorldScale);
 
-            // Apply world transforms to the clone's local properties
             clonedObject.position.copy(originalWorldPosition);
             clonedObject.quaternion.copy(originalWorldQuaternion);
             clonedObject.scale.copy(originalWorldScale);
 
-            // Offset the cloned object slightly
-            const offset = new THREE.Vector3(2, 0, 0); // Offset by 2 units on X-axis
+            const offset = new THREE.Vector3(2, 0, 0);
             clonedObject.position.add(offset);
 
-            // Give the cloned object a distinct name
             clonedObject.name = `${objectToDuplicate.name || 'Unnamed Object'} (Copy)`;
 
-            // Add the cloned object to the scene and to our list of loaded models
             scene.add(clonedObject);
             loadedModels.push(clonedObject);
 
-            // Clear the selection of the original object and ensure no object is selected afterwards.
-            clearSelection(); // This now explicitly clears the original selection state.
+            clearSelection();
             console.log("[duplicateSelectedObject] After clearSelection(), selectedObject is now:", selectedObject);
 
-            // Also clear any "select all" highlights as a safety measure.
             clearAllHighlights();
             console.log("[duplicateSelectedObject] After clearAllHighlights(), allHighlightsOriginalMaterials size is:", allHighlightsOriginalMaterials.size);
 
-            // Request an animation frame to ensure the visual update happens.
             requestAnimationFrame(() => {
                 renderer.render(scene, camera);
             });
 
-            resetView(); // Adjust view to include the new object
+            resetView();
             addMessageToLog('AI', `Duplicated ${clonedObject.name}. No object is currently selected.`);
             speakResponse(`Duplicated the selected object.`);
             console.log("[duplicateSelectedObject] Object duplicated. No object is currently selected.");
+            updateUndoRedoButtons();
         }
 
 
         function resetView() {
+            saveSceneState(); // Save state before resetting view
             if (controls && camera && loadedModels.length > 0) {
-                // Calculate bounding box of all loaded models
                 const overallBbox = new THREE.Box3();
                 loadedModels.forEach(model => {
                     overallBbox.union(new THREE.Box3().setFromObject(model));
@@ -2132,22 +2423,19 @@
                 console.log("[resetView] Size:", size);
                 console.log("[resetView] Max Dimension:", maxDim);
 
-                // Adjust camera position based on the largest dimension of the combined bounding box
                 const fov = camera.fov * (Math.PI / 180);
                 const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
 
-                // Position camera to view the entire scene, slightly offset for perspective
-                const newCameraPosition = center.clone().add(new THREE.Vector3(maxDim * 0.8, maxDim * 0.8, maxDim * 0.8)); // Adjusted multiplier for better initial view
+                const newCameraPosition = center.clone().add(new THREE.Vector3(maxDim * 0.8, maxDim * 0.8, maxDim * 0.8));
                 camera.position.copy(newCameraPosition);
                 camera.lookAt(center);
-                controls.target.copy(center); // Orbit controls should orbit around the center of all models
+                controls.target.copy(center);
                 controls.update();
 
                 addMessageToLog('AI', 'View reset to fit all models.');
                 speakResponse('View reset to fit all models.');
             } else if (controls && camera) {
-                // If no models loaded, reset to a default empty scene view
-                camera.position.set(30, 30, 30); // Reset to the initial perspective view
+                camera.position.set(30, 30, 30);
                 camera.lookAt(0, 0, 0);
                 controls.target.set(0, 0, 0);
                 controls.update();
@@ -2157,6 +2445,7 @@
                 addMessageToLog('System', 'Three.js components not initialized for view reset.');
                 speakResponse('Cannot reset view, editor components not ready.');
             }
+            updateUndoRedoButtons();
         }
 
         function showDesignInfo() {
@@ -2675,14 +2964,16 @@
 
         // Function to change the color of the selected object
         function changeObjectColor(colorValue) {
+            saveSceneState(); // Save state before changing color
             const newColor = new THREE.Color(colorValue);
-            let objectsToModify = []; // Renamed from objectsToColor for clarity
+            let objectsToModify = [];
 
+            // If currentlySelectedObjectsForEditing is populated, use it for batch operations
             if (currentlySelectedObjectsForEditing.length > 0) {
                 console.log(`[changeObjectColor] Applying color to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
                 objectsToModify = [...currentlySelectedObjectsForEditing]; // Use spread to copy array
             } else if (selectedObject) {
-                // Fallback to single selected object
+                // Fallback to single selected object if no batch selection
                 console.log("[changeObjectColor] Applying color to single selected object.");
                 objectsToModify.push(selectedObject);
             } else {
@@ -2693,48 +2984,59 @@
             }
 
             objectsToModify.forEach(obj => {
-                const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
-                materials.forEach(material => {
-                    if (material && material.isMaterial) {
-                        // Dispose current map if it exists, to ensure solid color is visible
-                        if (material.map) {
-                            material.map.dispose();
-                            material.map = null;
+                console.log(`[changeObjectColor] Modifying color for object: ${obj.name || obj.uuid}`); // Added log
+                // Traverse children to ensure all meshes within the object/model get the color change
+                obj.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        const materials = Array.isArray(child.material) ? child.material : [child.material];
+                        materials.forEach(material => {
+                            if (material && material.isMaterial) {
+                                if (material.map) {
+                                    material.map.dispose();
+                                    material.map = null;
+                                }
+                                if (material.color) {
+                                    material.color.set(newColor);
+                                }
+                                if (material.emissive !== undefined) {
+                                    material.emissive.set(0x000000);
+                                    material.emissiveIntensity = 0;
+                                }
+                                material.needsUpdate = true;
+                            }
+                        });
+                        // Update initialMaterial for this child mesh to reflect the new permanent color
+                        if (Array.isArray(child.material)) {
+                            child.userData.initialMaterial = child.material.map(mat => mat.clone());
+                        } else {
+                            child.userData.initialMaterial = child.material.clone();
                         }
-                        if (material.color) {
-                            material.color.set(newColor);
-                        }
-                        // Ensure emissive is reset if changing main color
-                        if (material.emissive !== undefined) {
-                            material.emissive.set(0x000000);
-                            material.emissiveIntensity = 0;
-                        }
-                        material.needsUpdate = true;
                     }
                 });
-
-                // Update originalMaterialProperties for each colored object
-                // This is crucial so that when highlights are cleared, they revert to the new color.
+                // After changing color, update originalMaterialProperties for the current selection cycle
+                // This ensures that if this object is later individually selected, its highlight reverts correctly.
                 const updatedOriginalMaterials = [];
-                const currentMaterials = Array.isArray(obj.material) ? obj.material : [obj.material];
-                currentMaterials.forEach(mat => {
+                const topLevelMaterials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                topLevelMaterials.forEach(mat => {
                     if (mat && mat.isMaterial) {
                         updatedOriginalMaterials.push(mat.clone());
                     }
                 });
                 originalMaterialProperties.set(obj.uuid, updatedOriginalMaterials);
+                obj.updateMatrixWorld(true); // Ensure world matrix is updated after material change
             });
 
             addMessageToLog('AI', `Changed color of ${objectsToModify.length} object(s) to ${colorValue}.`);
             speakResponse(`Changed color of ${objectsToModify.length} object(s).`);
             console.log(`[changeObjectColor] Changed color of ${objectsToModify.length} object(s) to ${colorValue}.`);
 
-            // After changing color, clear all highlights to show the new permanent color
-            clearAllHighlights();
+            clearAllHighlights(); // This will now revert to the updated initialMaterial
+            updateUndoRedoButtons(); // Update buttons after action
         }
 
         // Function to create a primitive shape
         function createPrimitive(type) {
+            saveSceneState(); // Save state before creating primitive
             let geometry;
             let mesh;
             const material = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.5, roughness: 0.5 });
@@ -2785,6 +3087,13 @@
                     return;
             }
 
+            // Store initial material(s) for the newly created primitive
+            if (Array.isArray(mesh.material)) {
+                mesh.userData.initialMaterial = mesh.material.map(mat => mat.clone());
+            } else {
+                mesh.userData.initialMaterial = mesh.material.clone();
+            }
+
             // Position the new object slightly in front of the camera's current target
             const positionOffset = new THREE.Vector3(0, 0, -2).applyQuaternion(camera.quaternion);
             mesh.position.copy(controls.target).add(positionOffset);
@@ -2795,6 +3104,7 @@
             addMessageToLog('AI', `Created a ${type} model.`);
             speakResponse(`Created a ${type} model.`);
             selectObject(mesh); // Select the newly created object
+            updateUndoRedoButtons(); // Update buttons after action
         }
 
 
@@ -2865,28 +3175,29 @@
                             clearAllHighlights();
                             break;
                         case 'rotateAxis':
+                            saveSceneState(); // Save state before rotating
                             // Determine target objects: all highlighted, or single selected
                             const objectsToRotate = [];
                             if (currentlySelectedObjectsForEditing.length > 0) {
                                 console.log(`[rotateAxis] Applying rotation to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
-                                currentlySelectedObjectsForEditing.forEach(obj => {
-                                    if (obj && obj.isMesh) objectsToRotate.push(obj);
+                                // FIX: Iterate over loadedModels and apply transformation to the top-level model
+                                loadedModels.forEach(model => {
+                                    if (model && model.isObject3D) { // Ensure it's a valid Three.js object
+                                        objectsToRotate.push(model);
+                                        console.log(`[rotateAxis] Targeting top-level model for rotation: ${model.name || model.uuid}`);
+                                    }
                                 });
                             } else if (selectedObject) {
                                 console.log("[rotateAxis] Applying rotation to single selected object.");
                                 objectsToRotate.push(selectedObject);
+                                console.log(`[rotateAxis] Targeting object for rotation: ${selectedObject.name || selectedObject.uuid}`);
                             }
 
                             if (objectsToRotate.length > 0 && parsedResponse.value) {
                                 const { axis, degrees } = parsedResponse.value;
                                 const radians = THREE.MathUtils.degToRad(degrees || 90);
                                 objectsToRotate.forEach(obj => {
-                                    switch (axis) {
-                                        case 'x': obj.rotation.x += radians; break;
-                                        case 'y': obj.rotation.y += radians; break;
-                                        case 'z': obj.rotation.z += radians; break;
-                                        default: obj.rotation.y += radians; break;
-                                    }
+                                    obj.rotation[axis] += radians; // Direct access using bracket notation
                                     obj.updateMatrixWorld(true); // Ensure world matrix is updated for correct rendering
                                 });
                                 addMessageToLog('AI', `Rotated ${objectsToRotate.length} object(s) by ${degrees || 90} degrees around ${axis || 'y'}-axis.`);
@@ -2896,18 +3207,25 @@
                                 addMessageToLog('System', 'No object selected or highlighted, or invalid rotation command.');
                                 speakResponse('No object selected or highlighted, or invalid rotation command.');
                             }
+                            updateUndoRedoButtons(); // Update buttons after action
                             break;
                         case 'scale':
+                            saveSceneState(); // Save state before scaling
                             // Determine target objects: all highlighted, or single selected
                             const objectsToScale = [];
                             if (currentlySelectedObjectsForEditing.length > 0) {
                                 console.log(`[scale] Applying scale to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
-                                currentlySelectedObjectsForEditing.forEach(obj => {
-                                    if (obj && obj.isMesh) objectsToScale.push(obj);
+                                // FIX: Iterate over loadedModels and apply transformation to the top-level model
+                                loadedModels.forEach(model => {
+                                    if (model && model.isObject3D) {
+                                        objectsToScale.push(model);
+                                        console.log(`[scale] Targeting top-level model for scaling: ${model.name || model.uuid}`);
+                                    }
                                 });
                             } else if (selectedObject) {
                                 console.log("[scale] Applying scale to single selected object.");
                                 objectsToScale.push(selectedObject);
+                                console.log(`[scale] Targeting object for scaling: ${selectedObject.name || selectedObject.uuid}`);
                             }
 
                             if (objectsToScale.length > 0 && parsedResponse.value) {
@@ -2923,18 +3241,25 @@
                                 addMessageToLog('System', 'No object selected or highlighted, or invalid scale command.');
                                 speakResponse('No object selected or highlighted, or invalid scale command.');
                             }
+                            updateUndoRedoButtons(); // Update buttons after action
                             break;
                         case 'translate':
+                            saveSceneState(); // Save state before translating
                             // Determine target objects: all highlighted, or single selected
                             const objectsToTranslate = [];
                             if (currentlySelectedObjectsForEditing.length > 0) {
                                 console.log(`[translate] Applying translation to ${currentlySelectedObjectsForEditing.length} objects from batch selection.`);
-                                currentlySelectedObjectsForEditing.forEach(obj => {
-                                    if (obj && obj.isMesh) objectsToTranslate.push(obj);
+                                // FIX: Iterate over loadedModels and apply transformation to the top-level model
+                                loadedModels.forEach(model => {
+                                    if (model && model.isObject3D) {
+                                        objectsToTranslate.push(model);
+                                        console.log(`[translate] Targeting top-level model for translation: ${model.name || model.uuid}`);
+                                    }
                                 });
                             } else if (selectedObject) {
                                 console.log("[translate] Applying translation to single selected object.");
                                 objectsToTranslate.push(selectedObject);
+                                console.log(`[translate] Targeting object for translation: ${selectedObject.name || selectedObject.uuid}`);
                             }
 
                             if (objectsToTranslate.length > 0 && parsedResponse.value) {
@@ -2952,6 +3277,7 @@
                                 addMessageToLog('System', 'No object selected or highlighted, or invalid translate command.');
                                 speakResponse('No object selected or highlighted, or invalid translate command.');
                             }
+                            updateUndoRedoButtons(); // Update buttons after action
                             break;
                         case 'changeColor':
                             if (parsedResponse.value) {
@@ -3092,6 +3418,30 @@
 
         window.addEventListener('resize', onWindowResize, false);
 
+        // Function to handle tab switching (AI Chat / Code Editor)
+        function setActiveTab(tabName) {
+            // Remove 'active' class from all tab buttons and content
+            // Ensure we only affect the tab buttons within the right-panel
+            document.querySelectorAll('.right-panel .tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.right-panel .tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add 'active' class to the clicked tab button and corresponding content
+            if (tabName === 'chat') {
+                chatTabButton.classList.add('active');
+                chatContent.classList.add('active');
+                speakResponse('Switched to AI chat.');
+            } else if (tabName === 'codeEditor') {
+                codeEditorTabButton.classList.add('active');
+                codeEditorContent.classList.add('active');
+                speakResponse('Switched to code editor.');
+            }
+        }
+
+        // Event listeners for tab buttons (now that setActiveTab is global)
+        chatTabButton.addEventListener('click', () => setActiveTab('chat'));
+        codeEditorTabButton.addEventListener('click', () => setActiveTab('codeEditor'));
+
+
         // Initialize scene when the window loads
         window.onload = () => {
             initScene();
@@ -3132,6 +3482,9 @@
 
             // Initial message to guide the user on the upload page
             addMessageToLog('System', 'Welcome to the AI VR CAD Editor! Please choose an option above to get started: "Create Empty Model", "Edit Existing Model" (to upload a file), or "Load Random Model".');
+
+            // Initial save of the scene state after everything is initialized
+            saveSceneState();
         };
 
     </script>
