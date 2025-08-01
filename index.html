@@ -943,25 +943,58 @@
             console.log("redoButton element:", document.getElementById('redoButton'));
             console.log("undoButton disabled:", document.getElementById('undoButton')?.disabled);
             console.log("redoButton disabled:", document.getElementById('redoButton')?.disabled);
+            console.log("Initial state - History length:", history.length, "Pointer:", historyPointer);
+            console.log("Objects in scene:", loadedModels.length);
 
             // Create a test object
+            console.log("Creating cube...");
             createPrimitive('cube');
 
             setTimeout(() => {
                 console.log("After creating cube:");
                 console.log("undoButton disabled:", document.getElementById('undoButton')?.disabled);
                 console.log("redoButton disabled:", document.getElementById('redoButton')?.disabled);
-                console.log("History length:", history.length);
-                console.log("History pointer:", historyPointer);
+                console.log("History length:", history.length, "Pointer:", historyPointer);
+                console.log("Objects in scene:", loadedModels.length);
 
-                // Try clicking undo button programmatically
-                const undoBtn = document.getElementById('undoButton');
-                if (undoBtn) {
-                    console.log("Clicking undo button programmatically...");
-                    undoBtn.click();
-                } else {
-                    console.error("Undo button not found!");
-                }
+                // Create another object
+                console.log("Creating sphere...");
+                createPrimitive('sphere');
+
+                setTimeout(() => {
+                    console.log("After creating sphere:");
+                    console.log("History length:", history.length, "Pointer:", historyPointer);
+                    console.log("Objects in scene:", loadedModels.length);
+
+                    // Try clicking undo button programmatically
+                    const undoBtn = document.getElementById('undoButton');
+                    if (undoBtn) {
+                        console.log("Clicking undo button programmatically...");
+                        undoBtn.click();
+
+                        setTimeout(() => {
+                            console.log("After undo:");
+                            console.log("History length:", history.length, "Pointer:", historyPointer);
+                            console.log("Objects in scene:", loadedModels.length);
+
+                            // Try redo
+                            const redoBtn = document.getElementById('redoButton');
+                            if (redoBtn) {
+                                console.log("Clicking redo button programmatically...");
+                                redoBtn.click();
+
+                                setTimeout(() => {
+                                    console.log("After redo:");
+                                    console.log("History length:", history.length, "Pointer:", historyPointer);
+                                    console.log("Objects in scene:", loadedModels.length);
+                                    console.log("=== Test Complete ===");
+                                }, 500);
+                            }
+                        }, 500);
+                    } else {
+                        console.error("Undo button not found!");
+                    }
+                }, 1000);
             }, 1000);
         };
 
@@ -1301,6 +1334,13 @@
 
         // Function to save the current state of the scene
         function saveSceneState() {
+            // For the very first save, save the state BEFORE the action
+            // This ensures undo goes back to the previous state, not empty
+            if (history.length === 0 && loadedModels.length > 0) {
+                // If this is the first save and we have objects, save the current state as baseline
+                console.log("[History] Saving first state as baseline");
+            }
+
             // Clear any redo history if a new action is performed
             if (historyPointer < history.length - 1) {
                 history = history.slice(0, historyPointer + 1);
@@ -1525,12 +1565,38 @@
         // Function to handle Undo
         function undo() {
             console.log(`[Undo] Attempting undo. Current pointer: ${historyPointer}, History length: ${history.length}`);
-            if (historyPointer > 0) {
-                historyPointer--;
-                console.log(`[Undo] Moving to history state ${historyPointer}`);
-                loadSceneState(history[historyPointer]);
-                addMessageToLog('System', `Undid last action. History state: ${historyPointer + 1}/${history.length}`);
-                speakResponse('Action undone.');
+            if (historyPointer >= 0 && history.length > 0) {
+                if (historyPointer > 0) {
+                    historyPointer--;
+                    console.log(`[Undo] Moving to history state ${historyPointer}`);
+                    loadSceneState(history[historyPointer]);
+                    addMessageToLog('System', `Undid last action. History state: ${historyPointer + 1}/${history.length}`);
+                    speakResponse('Action undone.');
+                } else {
+                    // If we're at the first state, clear everything (go to empty state)
+                    console.log(`[Undo] Going to empty state`);
+                    loadedModels.forEach(model => {
+                        scene.remove(model);
+                        model.traverse(child => {
+                            if (child.isMesh) {
+                                if (child.geometry) child.geometry.dispose();
+                                if (child.material) {
+                                    if (Array.isArray(child.material)) {
+                                        child.material.forEach(mat => mat.dispose());
+                                    } else {
+                                        child.material.dispose();
+                                    }
+                                }
+                            }
+                        });
+                    });
+                    loadedModels = [];
+                    clearSelection();
+                    clearAllHighlights();
+                    historyPointer = -1;
+                    addMessageToLog('System', 'Undid to empty scene.');
+                    speakResponse('Undid to empty scene.');
+                }
             } else {
                 console.log(`[Undo] No actions to undo`);
                 addMessageToLog('System', 'No more actions to undo.');
@@ -1548,6 +1614,13 @@
                 loadSceneState(history[historyPointer]);
                 addMessageToLog('System', `Redid action. History state: ${historyPointer + 1}/${history.length}`);
                 speakResponse('Action redone.');
+            } else if (historyPointer === -1 && history.length > 0) {
+                // Special case: if we're at empty state and have history, go to first state
+                historyPointer = 0;
+                console.log(`[Redo] Moving from empty state to first history state`);
+                loadSceneState(history[historyPointer]);
+                addMessageToLog('System', `Redid action. History state: ${historyPointer + 1}/${history.length}`);
+                speakResponse('Action redone.');
             } else {
                 console.log(`[Redo] No actions to redo`);
                 addMessageToLog('System', 'No more actions to redo.');
@@ -1559,13 +1632,22 @@
         // Function to update the disabled state of Undo/Redo buttons
         function updateUndoRedoButtons() {
             if (undoButton && redoButton) {
-                undoButton.disabled = historyPointer <= 0;
-                redoButton.disabled = historyPointer >= history.length - 1;
+                // Undo is available if we have history or are at a state > empty
+                undoButton.disabled = (historyPointer < 0 && history.length === 0);
+
+                // Redo is available if we can move forward in history or from empty to first state
+                redoButton.disabled = (historyPointer >= history.length - 1) && !(historyPointer === -1 && history.length > 0);
+
                 console.log(`[History] Buttons updated. Undo disabled: ${undoButton.disabled}, Redo disabled: ${redoButton.disabled}, History: ${historyPointer + 1}/${history.length}`);
 
                 // Update button titles for better user experience
-                undoButton.title = undoButton.disabled ? 'No actions to undo' : `Undo (${historyPointer} actions available)`;
-                redoButton.title = redoButton.disabled ? 'No actions to redo' : `Redo (${history.length - historyPointer - 1} actions available)`;
+                if (historyPointer === -1) {
+                    undoButton.title = 'No actions to undo';
+                    redoButton.title = history.length > 0 ? 'Redo to first action' : 'No actions to redo';
+                } else {
+                    undoButton.title = historyPointer >= 0 ? `Undo (${historyPointer + 1} actions available)` : 'No actions to undo';
+                    redoButton.title = historyPointer < history.length - 1 ? `Redo (${history.length - historyPointer - 1} actions available)` : 'No actions to redo';
+                }
             }
         }
 
@@ -3952,11 +4034,8 @@
             // Initial message to guide the user on the upload page
             addMessageToLog('System', 'Welcome to the AI VR CAD Editor! Please choose an option above to get started: "Create Empty Model", "Edit Existing Model" (to upload a file), or "Load Random Model".');
 
-            // Save initial state after everything is loaded
-            setTimeout(() => {
-                saveSceneState(); // Save initial state
-                console.log("[Init] Initial state saved for undo/redo");
-            }, 100);
+            // Don't save initial empty state - let first action create the baseline
+            console.log("[Init] Undo/redo system ready - first action will create baseline state");
         };
 
     </script>
