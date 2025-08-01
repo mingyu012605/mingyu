@@ -858,10 +858,9 @@
         let loadedModels = []; // This will now hold all top-level GLTF scenes
 
         // --- Undo/Redo History ---
-        let history = [];
-        let historyPointer = -1;
+        let undoStack = [];
+        let redoStack = [];
         const MAX_HISTORY_SIZE = 20; // Limit history size to prevent excessive memory usage
-        let saveStateTimeout = null; // For debouncing state saves
 
         // New scene and camera for the static view axes helper
         let viewAxesScene, viewAxesCamera, viewAxesRenderer;
@@ -935,6 +934,288 @@
         window.undo = undo; // Expose undo for testing
         window.redo = redo; // Expose redo for testing
         window.createPrimitive = createPrimitive; // Expose for testing
+        window.highlightAllModels = highlightAllModels; // Expose for testing
+        window.clearAllHighlights = clearAllHighlights; // Expose for testing
+        window.selectObject = selectObject; // Expose for testing
+        window.clearSelection = clearSelection; // Expose for testing
+
+        // Simple test to verify createPrimitive works
+        window.testCreateCube = function() {
+            console.log("=== TESTING CREATE CUBE ===");
+            console.log("Before create - Objects:", loadedModels.length);
+            console.log("Scene exists:", !!scene);
+            console.log("Camera exists:", !!camera);
+
+            try {
+                createPrimitive('cube');
+                console.log("✅ createPrimitive('cube') called successfully");
+
+                setTimeout(() => {
+                    console.log("After create - Objects:", loadedModels.length);
+                    console.log("Scene children:", scene.children.length);
+
+                    if (loadedModels.length > 0) {
+                        console.log("✅ SUCCESS: Cube created!");
+                        console.log("Cube details:", loadedModels[loadedModels.length - 1]);
+                    } else {
+                        console.error("❌ FAILED: No objects in loadedModels");
+                    }
+                }, 100);
+
+            } catch (error) {
+                console.error("❌ ERROR in createPrimitive:", error);
+            }
+        };
+
+        // Test the no-reset undo system
+        window.testNoReset = function() {
+            console.log("=== Testing NO RESET Undo System ===");
+
+            // Create first object
+            console.log("1. Creating cube...");
+            createPrimitive('cube');
+            console.log("   Objects:", loadedModels.length, "Undo stack:", undoStack.length);
+
+            setTimeout(() => {
+                // Create second object
+                console.log("2. Creating sphere...");
+                createPrimitive('sphere');
+                console.log("   Objects:", loadedModels.length, "Undo stack:", undoStack.length);
+
+                setTimeout(() => {
+                    // Test undo - should go to 1 object, NOT 0
+                    console.log("3. Testing undo...");
+                    undo();
+                    console.log("   After undo - Objects:", loadedModels.length, "Undo stack:", undoStack.length);
+
+                    if (loadedModels.length === 0) {
+                        console.error("❌ FAILED: Undo went to empty state!");
+                    } else {
+                        console.log("✅ SUCCESS: Undo kept objects, no reset!");
+                    }
+
+                    setTimeout(() => {
+                        // Test redo
+                        console.log("4. Testing redo...");
+                        redo();
+                        console.log("   After redo - Objects:", loadedModels.length, "Redo stack:", redoStack.length);
+                        console.log("=== Test Complete ===");
+                    }, 500);
+                }, 500);
+            }, 500);
+        };
+
+        // Comprehensive workflow test as requested
+        window.testWorkflow = function() {
+            console.log("=== COMPREHENSIVE WORKFLOW TEST ===");
+            console.log("Testing: createPrimitive → duplicate → move → undo → redo");
+
+            // Step 1: Add cube
+            console.log("1. Creating cube...");
+            createPrimitive('cube');
+
+            setTimeout(() => {
+                console.log(`   ✓ Cube created. Objects: ${loadedModels.length}, Undo stack: ${undoStack.length}`);
+
+                // Step 2: Add sphere
+                console.log("2. Creating sphere...");
+                createPrimitive('sphere');
+
+                setTimeout(() => {
+                    console.log(`   ✓ Sphere created. Objects: ${loadedModels.length}, Undo stack: ${undoStack.length}`);
+
+                    // Step 3: Duplicate selected object (sphere should be selected)
+                    console.log("3. Duplicating selected object...");
+                    if (selectedObject) {
+                        duplicateSelectedObject();
+                        setTimeout(() => {
+                            console.log(`   ✓ Object duplicated. Objects: ${loadedModels.length}, Undo stack: ${undoStack.length}`);
+
+                            // Step 4: Move selected object
+                            console.log("4. Moving selected object...");
+                            if (selectedObject) {
+                                selectedObject.position.x += 2;
+                                selectedObject.updateMatrixWorld(true);
+                                console.log(`   ✓ Object moved to x: ${selectedObject.position.x}`);
+                            }
+
+                            setTimeout(() => {
+                                // Step 5: Test undo
+                                console.log("5. Testing UNDO...");
+                                console.log(`   Before undo - Objects: ${loadedModels.length}, Camera pos: ${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
+
+                                undo();
+
+                                setTimeout(() => {
+                                    console.log(`   After undo - Objects: ${loadedModels.length}, Camera pos: ${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
+
+                                    // Check results
+                                    if (loadedModels.length === 0) {
+                                        console.error("   ❌ FAILED: Scene reset to empty!");
+                                    } else {
+                                        console.log("   ✅ SUCCESS: Objects preserved, no reset!");
+                                    }
+
+                                    // Step 6: Test redo
+                                    console.log("6. Testing REDO...");
+                                    redo();
+
+                                    setTimeout(() => {
+                                        console.log(`   After redo - Objects: ${loadedModels.length}, Camera pos: ${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
+
+                                        // Final verification
+                                        console.log("=== FINAL VERIFICATION ===");
+                                        console.log(`✓ Camera preserved: ${camera ? 'YES' : 'NO'}`);
+                                        console.log(`✓ Scene has lights: ${scene.children.filter(obj => obj.isLight).length > 0 ? 'YES' : 'NO'}`);
+                                        console.log(`✓ Grid visible: ${currentGridHelper && currentGridHelper.visible ? 'YES' : 'NO'}`);
+                                        console.log(`✓ Objects in scene: ${loadedModels.length}`);
+                                        console.log(`✓ Undo stack: ${undoStack.length}, Redo stack: ${redoStack.length}`);
+                                        console.log("=== WORKFLOW TEST COMPLETE ===");
+                                    }, 500);
+                                }, 500);
+                            }, 500);
+                        }, 500);
+                    } else {
+                        console.log("   No object selected for duplication, skipping...");
+                    }
+                }, 500);
+            }, 500);
+        };
+
+        // Simple button test function
+        window.testButtons = function() {
+            console.log("=== Testing Undo/Redo Buttons ===");
+
+            const undoBtn = document.getElementById('undoButton');
+            const redoBtn = document.getElementById('redoButton');
+
+            console.log("Undo button found:", !!undoBtn);
+            console.log("Redo button found:", !!redoBtn);
+            console.log("Undo button disabled:", undoBtn?.disabled);
+            console.log("Redo button disabled:", redoBtn?.disabled);
+
+            if (undoBtn) {
+                console.log("Undo button onclick:", undoBtn.onclick);
+                console.log("Undo button event listeners: (cannot inspect directly)");
+            }
+
+            if (redoBtn) {
+                console.log("Redo button onclick:", redoBtn.onclick);
+                console.log("Redo button event listeners: (cannot inspect directly)");
+            }
+
+            // Test if functions exist
+            console.log("undo function exists:", typeof undo === 'function');
+            console.log("redo function exists:", typeof redo === 'function');
+
+            // Test calling functions directly
+            console.log("Testing undo() function directly...");
+            try {
+                undo();
+                console.log("✅ undo() function works");
+            } catch (e) {
+                console.error("❌ undo() function error:", e);
+            }
+
+            console.log("Testing redo() function directly...");
+            try {
+                redo();
+                console.log("✅ redo() function works");
+            } catch (e) {
+                console.error("❌ redo() function error:", e);
+            }
+
+            return {
+                undoButtonExists: !!undoBtn,
+                redoButtonExists: !!redoBtn,
+                undoFunctionExists: typeof undo === 'function',
+                redoFunctionExists: typeof redo === 'function'
+            };
+        };
+
+        // Quick test for select all functionality
+        window.quickTestSelectAll = function() {
+            console.log("=== Quick Select All Test ===");
+
+            // Create objects if none exist
+            if (loadedModels.length === 0) {
+                createPrimitive('cube');
+                setTimeout(() => {
+                    createPrimitive('sphere');
+                    setTimeout(() => {
+                        console.log("Created test objects. Now testing select all...");
+                        highlightAllModels();
+                        console.log("Select all executed. Selected objects:", currentlySelectedObjectsForEditing.length);
+                    }, 500);
+                }, 500);
+            } else {
+                console.log("Using existing objects. Testing select all...");
+                highlightAllModels();
+                console.log("Select all executed. Selected objects:", currentlySelectedObjectsForEditing.length);
+            }
+        };
+
+        // Comprehensive diagnostic function
+        window.diagnoseSelection = function() {
+            console.log("=== COMPREHENSIVE SELECTION DIAGNOSTIC ===");
+
+            // Check basic variables
+            console.log("1. Basic State Check:");
+            console.log("   - scene exists:", !!scene);
+            console.log("   - camera exists:", !!camera);
+            console.log("   - renderer exists:", !!renderer);
+            console.log("   - raycaster exists:", !!raycaster);
+            console.log("   - mouse exists:", !!mouse);
+            console.log("   - transformControls exists:", !!transformControls);
+
+            console.log("2. Object State:");
+            console.log("   - loadedModels.length:", loadedModels.length);
+            console.log("   - selectedObject:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
+            console.log("   - currentlySelectedObjectsForEditing.length:", currentlySelectedObjectsForEditing.length);
+            console.log("   - originalMaterialProperties.size:", originalMaterialProperties.size);
+            console.log("   - allHighlightsOriginalMaterials.size:", allHighlightsOriginalMaterials.size);
+
+            console.log("3. Scene Analysis:");
+            if (scene) {
+                let meshCount = 0;
+                let visibleMeshCount = 0;
+                scene.traverse((obj) => {
+                    if (obj.isMesh) {
+                        meshCount++;
+                        if (obj.visible) visibleMeshCount++;
+                    }
+                });
+                console.log("   - Total meshes in scene:", meshCount);
+                console.log("   - Visible meshes in scene:", visibleMeshCount);
+            }
+
+            console.log("4. Function Tests:");
+            try {
+                console.log("   - highlightAllModels function exists:", typeof highlightAllModels === 'function');
+                console.log("   - clearAllHighlights function exists:", typeof clearAllHighlights === 'function');
+                console.log("   - selectObject function exists:", typeof selectObject === 'function');
+                console.log("   - clearSelection function exists:", typeof clearSelection === 'function');
+            } catch (e) {
+                console.error("   - Error checking functions:", e);
+            }
+
+            console.log("5. Event Listener Test:");
+            if (cadCanvas) {
+                console.log("   - cadCanvas exists:", !!cadCanvas);
+                console.log("   - cadCanvas has click listeners: checking...");
+                // Note: Can't easily check event listeners, but we can verify the element exists
+            }
+
+            console.log("=== DIAGNOSTIC COMPLETE ===");
+            console.log("If you see any 'false' or 'null' values above, that indicates the issue.");
+
+            return {
+                sceneReady: !!scene && !!camera && !!renderer,
+                selectionReady: !!raycaster && !!mouse,
+                objectsExist: loadedModels.length > 0,
+                functionsExist: typeof highlightAllModels === 'function'
+            };
+        };
 
         // Test undo/redo buttons specifically
         window.testUndoRedoButtons = function() {
@@ -996,6 +1277,47 @@
                     }
                 }, 1000);
             }, 1000);
+        };
+
+        // Test selection functionality
+        window.testSelection = function() {
+            console.log("=== Testing Selection Functionality ===");
+            console.log("Current selectedObject:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
+            console.log("Current select-all objects:", currentlySelectedObjectsForEditing.length);
+            console.log("Objects in scene:", loadedModels.length);
+
+            // Create some test objects
+            createPrimitive('cube');
+            setTimeout(() => {
+                createPrimitive('sphere');
+
+                setTimeout(() => {
+                    console.log("After creating objects:");
+                    console.log("Objects in scene:", loadedModels.length);
+                    console.log("Current selectedObject:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
+
+                    // Test select all
+                    console.log("Testing select all...");
+                    highlightAllModels();
+
+                    setTimeout(() => {
+                        console.log("After select all:");
+                        console.log("Select-all objects:", currentlySelectedObjectsForEditing.length);
+                        console.log("All highlights map size:", allHighlightsOriginalMaterials.size);
+
+                        // Test clear selection
+                        console.log("Testing clear all highlights...");
+                        clearAllHighlights();
+
+                        setTimeout(() => {
+                            console.log("After clear all:");
+                            console.log("Select-all objects:", currentlySelectedObjectsForEditing.length);
+                            console.log("All highlights map size:", allHighlightsOriginalMaterials.size);
+                            console.log("=== Selection Test Complete ===");
+                        }, 500);
+                    }, 500);
+                }, 500);
+            }, 500);
         };
 
         // Simple test for shape creation
@@ -1562,40 +1884,32 @@
             console.log("[History] Scene state loaded successfully.");
         }
 
-        // Function to handle Undo
+        // Simple undo function - NEVER GOES TO EMPTY
         function undo() {
-            console.log(`[Undo] Attempting undo. Current pointer: ${historyPointer}, History length: ${history.length}`);
-            if (historyPointer >= 0 && history.length > 0) {
-                if (historyPointer > 0) {
-                    historyPointer--;
-                    console.log(`[Undo] Moving to history state ${historyPointer}`);
-                    loadSceneState(history[historyPointer]);
-                    addMessageToLog('System', `Undid last action. History state: ${historyPointer + 1}/${history.length}`);
+            console.log(`[Undo] Attempting undo. Undo stack size: ${undoStack.length}`);
+
+            if (undoStack.length > 0) {
+                // Get previous state from undo stack
+                const previousState = undoStack.pop();
+
+                // Only proceed if previous state has objects (NEVER RESTORE EMPTY STATE)
+                if (previousState.length > 0) {
+                    // Save current state to redo stack (only if current state has objects)
+                    const currentState = getCurrentState();
+                    if (currentState.length > 0) {
+                        redoStack.push(currentState);
+                    }
+
+                    // Restore previous state
+                    restoreState(previousState);
+
+                    addMessageToLog('System', 'Action undone.');
                     speakResponse('Action undone.');
+                    console.log(`[Undo] Undone. Undo stack: ${undoStack.length}, Redo stack: ${redoStack.length}`);
                 } else {
-                    // If we're at the first state, clear everything (go to empty state)
-                    console.log(`[Undo] Going to empty state`);
-                    loadedModels.forEach(model => {
-                        scene.remove(model);
-                        model.traverse(child => {
-                            if (child.isMesh) {
-                                if (child.geometry) child.geometry.dispose();
-                                if (child.material) {
-                                    if (Array.isArray(child.material)) {
-                                        child.material.forEach(mat => mat.dispose());
-                                    } else {
-                                        child.material.dispose();
-                                    }
-                                }
-                            }
-                        });
-                    });
-                    loadedModels = [];
-                    clearSelection();
-                    clearAllHighlights();
-                    historyPointer = -1;
-                    addMessageToLog('System', 'Undid to empty scene.');
-                    speakResponse('Undid to empty scene.');
+                    console.log(`[Undo] Skipping empty state - never go to empty!`);
+                    addMessageToLog('System', 'No more actions to undo.');
+                    speakResponse('Nothing to undo.');
                 }
             } else {
                 console.log(`[Undo] No actions to undo`);
@@ -1605,22 +1919,33 @@
             updateUndoRedoButtons();
         }
 
-        // Function to handle Redo
+        // Simple redo function - NEVER GOES TO EMPTY
         function redo() {
-            console.log(`[Redo] Attempting redo. Current pointer: ${historyPointer}, History length: ${history.length}`);
-            if (historyPointer < history.length - 1) {
-                historyPointer++;
-                console.log(`[Redo] Moving to history state ${historyPointer}`);
-                loadSceneState(history[historyPointer]);
-                addMessageToLog('System', `Redid action. History state: ${historyPointer + 1}/${history.length}`);
-                speakResponse('Action redone.');
-            } else if (historyPointer === -1 && history.length > 0) {
-                // Special case: if we're at empty state and have history, go to first state
-                historyPointer = 0;
-                console.log(`[Redo] Moving from empty state to first history state`);
-                loadSceneState(history[historyPointer]);
-                addMessageToLog('System', `Redid action. History state: ${historyPointer + 1}/${history.length}`);
-                speakResponse('Action redone.');
+            console.log(`[Redo] Attempting redo. Redo stack size: ${redoStack.length}`);
+
+            if (redoStack.length > 0) {
+                // Get next state from redo stack
+                const nextState = redoStack.pop();
+
+                // Only proceed if next state has objects (NEVER RESTORE EMPTY STATE)
+                if (nextState.length > 0) {
+                    // Save current state to undo stack (only if current state has objects)
+                    const currentState = getCurrentState();
+                    if (currentState.length > 0) {
+                        undoStack.push(currentState);
+                    }
+
+                    // Restore next state
+                    restoreState(nextState);
+
+                    addMessageToLog('System', 'Action redone.');
+                    speakResponse('Action redone.');
+                    console.log(`[Redo] Redone. Undo stack: ${undoStack.length}, Redo stack: ${redoStack.length}`);
+                } else {
+                    console.log(`[Redo] Skipping empty state - never go to empty!`);
+                    addMessageToLog('System', 'No more actions to redo.');
+                    speakResponse('Nothing to redo.');
+                }
             } else {
                 console.log(`[Redo] No actions to redo`);
                 addMessageToLog('System', 'No more actions to redo.');
@@ -1632,23 +1957,162 @@
         // Function to update the disabled state of Undo/Redo buttons
         function updateUndoRedoButtons() {
             if (undoButton && redoButton) {
-                // Undo is available if we have history or are at a state > empty
-                undoButton.disabled = (historyPointer < 0 && history.length === 0);
+                undoButton.disabled = undoStack.length === 0;
+                redoButton.disabled = redoStack.length === 0;
 
-                // Redo is available if we can move forward in history or from empty to first state
-                redoButton.disabled = (historyPointer >= history.length - 1) && !(historyPointer === -1 && history.length > 0);
+                console.log(`[Buttons] Undo disabled: ${undoButton.disabled}, Redo disabled: ${redoButton.disabled}`);
+                console.log(`[Buttons] Undo stack: ${undoStack.length}, Redo stack: ${redoStack.length}`);
 
-                console.log(`[History] Buttons updated. Undo disabled: ${undoButton.disabled}, Redo disabled: ${redoButton.disabled}, History: ${historyPointer + 1}/${history.length}`);
-
-                // Update button titles for better user experience
-                if (historyPointer === -1) {
-                    undoButton.title = 'No actions to undo';
-                    redoButton.title = history.length > 0 ? 'Redo to first action' : 'No actions to redo';
-                } else {
-                    undoButton.title = historyPointer >= 0 ? `Undo (${historyPointer + 1} actions available)` : 'No actions to undo';
-                    redoButton.title = historyPointer < history.length - 1 ? `Redo (${history.length - historyPointer - 1} actions available)` : 'No actions to redo';
-                }
+                undoButton.title = undoButton.disabled ? 'No actions to undo' : `Undo (${undoStack.length} actions available)`;
+                redoButton.title = redoButton.disabled ? 'No actions to redo' : `Redo (${redoStack.length} actions available)`;
             }
+        }
+
+        // Get current scene state
+        function getCurrentState() {
+            const state = [];
+            loadedModels.forEach(model => {
+                const modelState = {
+                    name: model.name || 'Unnamed Model',
+                    uuid: model.uuid,
+                    position: { x: model.position.x, y: model.position.y, z: model.position.z },
+                    rotation: { x: model.rotation.x, y: model.rotation.y, z: model.rotation.z },
+                    scale: { x: model.scale.x, y: model.scale.y, z: model.scale.z },
+                    isPrimitive: model.userData.isPrimitive || false,
+                    primitiveType: model.userData.primitiveType || null,
+                    materials: []
+                };
+
+                model.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        const materials = Array.isArray(child.material) ? child.material : [child.material];
+                        materials.forEach(mat => {
+                            if (mat && mat.isMaterial) {
+                                modelState.materials.push({
+                                    uuid: child.uuid,
+                                    color: mat.color ? mat.color.getHex() : null
+                                });
+                            }
+                        });
+                    }
+                });
+
+                state.push(modelState);
+            });
+            return state;
+        }
+
+        // CORRECTED: Only remove mesh objects, preserve lights/camera/controls
+        function restoreState(state) {
+            console.log("[restoreState] Restoring state with", state.length, "objects");
+
+            // 1. ONLY remove mesh objects from scene (preserve lights, camera, grid, controls)
+            const meshesToRemove = scene.children.filter(obj =>
+                obj.isMesh &&
+                !obj.userData.isGridLabel &&
+                obj !== currentGridHelper &&
+                obj !== raycastDebugSphere
+            );
+
+            // Remove and dispose mesh objects properly
+            meshesToRemove.forEach(mesh => {
+                scene.remove(mesh);
+                // Dispose geometry and materials to prevent memory leaks
+                if (mesh.geometry) mesh.geometry.dispose();
+                if (mesh.material) {
+                    if (Array.isArray(mesh.material)) {
+                        mesh.material.forEach(mat => mat.dispose());
+                    } else {
+                        mesh.material.dispose();
+                    }
+                }
+            });
+
+            // Clear arrays and selections (but don't touch scene structure)
+            loadedModels = [];
+            clearSelection();
+            clearAllHighlights();
+
+            // 2. RECREATE objects from saved state
+            state.forEach(modelState => {
+                if (modelState.isPrimitive) {
+                    // Create base material
+                    let baseMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x1e90ff,
+                        metalness: 0.5,
+                        roughness: 0.5
+                    });
+
+                    let newObject;
+
+                    // Create geometry based on primitive type
+                    switch (modelState.primitiveType.toLowerCase()) {
+                        case 'box':
+                        case 'cube':
+                            newObject = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), baseMaterial);
+                            break;
+                        case 'sphere':
+                        case 'ball':
+                            newObject = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), baseMaterial);
+                            break;
+                        case 'cylinder':
+                        case 'tube':
+                            newObject = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 32), baseMaterial);
+                            break;
+                        case 'cone':
+                            newObject = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 32), baseMaterial);
+                            break;
+                        case 'pyramid':
+                            newObject = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1, 4), baseMaterial);
+                            break;
+                        case 'plane':
+                            newObject = new THREE.Mesh(
+                                new THREE.PlaneGeometry(10, 10),
+                                new THREE.MeshStandardMaterial({ color: 0xcccccc, side: THREE.DoubleSide })
+                            );
+                            break;
+                        case 'torus':
+                            newObject = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.2, 16, 100), baseMaterial);
+                            break;
+                        default:
+                            console.warn(`[restoreState] Unknown primitive type: ${modelState.primitiveType}`);
+                            return;
+                    }
+
+                    // 3. RESTORE all object properties
+                    newObject.name = modelState.name;
+                    newObject.uuid = modelState.uuid;
+
+                    // Restore transform properties
+                    newObject.position.set(modelState.position.x, modelState.position.y, modelState.position.z);
+                    newObject.rotation.set(modelState.rotation.x, modelState.rotation.y, modelState.rotation.z);
+                    newObject.scale.set(modelState.scale.x, modelState.scale.y, modelState.scale.z);
+
+                    // Restore userData
+                    newObject.userData.isPrimitive = true;
+                    newObject.userData.primitiveType = modelState.primitiveType;
+
+                    // 4. RESTORE material properties (colors)
+                    if (modelState.materials && modelState.materials.length > 0) {
+                        modelState.materials.forEach(matState => {
+                            if (matState.color !== null && newObject.material) {
+                                newObject.material.color.setHex(matState.color);
+                                newObject.material.needsUpdate = true;
+                                // Store as initial material for future color changes
+                                newObject.userData.initialMaterial = newObject.material.clone();
+                            }
+                        });
+                    }
+
+                    // 5. ADD to scene and update arrays
+                    scene.add(newObject);
+                    loadedModels.push(newObject);
+
+                    console.log(`[restoreState] Restored ${modelState.primitiveType}: ${newObject.name}`);
+                }
+            });
+
+            console.log(`[restoreState] Successfully restored ${loadedModels.length} objects`);
         }
 
         // --- Event Listeners for Undo/Redo Buttons ---
@@ -2773,7 +3237,13 @@
 
 
         function removeObject() {
-            saveSceneState(); // Save state before removing
+            // Only save state if we have objects (never save empty state)
+            if (loadedModels.length > 0) {
+                const currentState = getCurrentState();
+                undoStack.push(currentState);
+                redoStack = []; // Clear redo stack
+                console.log("[removeObject] Saved state with", loadedModels.length, "objects");
+            }
             if (selectedObject) {
                 const objectToRemoveName = selectedObject.name || "Unnamed Part";
                 const objectToRemoveUUID = selectedObject.uuid;
@@ -2825,7 +3295,13 @@
         }
 
         function duplicateSelectedObject() {
-            saveSceneState(); // Save state before duplicating
+            // Only save state if we have objects (never save empty state)
+            if (loadedModels.length > 0) {
+                const currentState = getCurrentState();
+                undoStack.push(currentState);
+                redoStack = []; // Clear redo stack
+                console.log("[duplicateSelectedObject] Saved state with", loadedModels.length, "objects");
+            }
             console.log("[duplicateSelectedObject] Attempting to duplicate selectedObject:", selectedObject ? selectedObject.name || selectedObject.uuid : 'null');
 
             if (!selectedObject) {
@@ -3478,7 +3954,13 @@
 
         // Function to change the color of the selected object
         function changeObjectColor(colorValue) {
-            saveSceneState(); // Save state before changing color
+            // Only save state if we have objects (never save empty state)
+            if (loadedModels.length > 0) {
+                const currentState = getCurrentState();
+                undoStack.push(currentState);
+                redoStack = []; // Clear redo stack
+                console.log("[changeObjectColor] Saved state with", loadedModels.length, "objects");
+            }
             const newColor = new THREE.Color(colorValue);
             let objectsToModify = [];
 
@@ -3559,7 +4041,15 @@
                 return;
             }
 
-            saveSceneState(); // Save state before creating primitive
+            // Only save state if we already have objects (don't save empty state)
+            if (loadedModels.length > 0) {
+                const currentState = getCurrentState();
+                undoStack.push(currentState);
+                redoStack = []; // Clear redo stack
+                console.log("[createPrimitive] Saved state with", loadedModels.length, "objects");
+            } else {
+                console.log("[createPrimitive] First object - not saving empty state");
+            }
             let geometry;
             let mesh;
             const material = new THREE.MeshStandardMaterial({ color: 0x1e90ff, metalness: 0.5, roughness: 0.5 });
@@ -4010,25 +4500,51 @@
                 changeObjectColor(color);
             });
 
-            // Set up undo/redo button event listeners
+            // Set up undo/redo button event listeners with retry mechanism
             console.log("[Init] Setting up undo/redo button listeners");
-            console.log("[Init] undoButton:", undoButton);
-            console.log("[Init] redoButton:", redoButton);
 
-            if (undoButton && redoButton) {
-                undoButton.addEventListener('click', function() {
-                    console.log("[UndoButton] Button clicked");
-                    undo();
-                });
-                redoButton.addEventListener('click', function() {
-                    console.log("[RedoButton] Button clicked");
-                    redo();
-                });
-                console.log("[Init] Undo/Redo button listeners added successfully");
-            } else {
-                console.error("[Init] Undo/Redo buttons not found!");
-                console.error("undoButton:", undoButton);
-                console.error("redoButton:", redoButton);
+            function setupUndoRedoButtons() {
+                const undoBtn = document.getElementById('undoButton');
+                const redoBtn = document.getElementById('redoButton');
+
+                console.log("[Init] undoButton found:", !!undoBtn);
+                console.log("[Init] redoButton found:", !!redoBtn);
+
+                if (undoBtn && redoBtn) {
+                    // Remove any existing listeners first
+                    undoBtn.removeEventListener('click', undo);
+                    redoBtn.removeEventListener('click', redo);
+
+                    // Add new listeners
+                    undoBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log("[UndoButton] Button clicked - calling undo()");
+                        undo();
+                    });
+
+                    redoBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log("[RedoButton] Button clicked - calling redo()");
+                        redo();
+                    });
+
+                    console.log("[Init] Undo/Redo button listeners added successfully");
+                    return true;
+                } else {
+                    console.error("[Init] Undo/Redo buttons not found!");
+                    console.error("undoButton element:", undoBtn);
+                    console.error("redoButton element:", redoBtn);
+                    return false;
+                }
+            }
+
+            // Try to setup buttons immediately
+            if (!setupUndoRedoButtons()) {
+                // If failed, try again after a short delay
+                setTimeout(() => {
+                    console.log("[Init] Retrying undo/redo button setup...");
+                    setupUndoRedoButtons();
+                }, 100);
             }
 
             // Initial message to guide the user on the upload page
