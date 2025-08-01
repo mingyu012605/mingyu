@@ -936,6 +936,35 @@
         window.redo = redo; // Expose redo for testing
         window.createPrimitive = createPrimitive; // Expose for testing
 
+        // Test undo/redo buttons specifically
+        window.testUndoRedoButtons = function() {
+            console.log("=== Testing Undo/Redo Buttons ===");
+            console.log("undoButton element:", document.getElementById('undoButton'));
+            console.log("redoButton element:", document.getElementById('redoButton'));
+            console.log("undoButton disabled:", document.getElementById('undoButton')?.disabled);
+            console.log("redoButton disabled:", document.getElementById('redoButton')?.disabled);
+
+            // Create a test object
+            createPrimitive('cube');
+
+            setTimeout(() => {
+                console.log("After creating cube:");
+                console.log("undoButton disabled:", document.getElementById('undoButton')?.disabled);
+                console.log("redoButton disabled:", document.getElementById('redoButton')?.disabled);
+                console.log("History length:", history.length);
+                console.log("History pointer:", historyPointer);
+
+                // Try clicking undo button programmatically
+                const undoBtn = document.getElementById('undoButton');
+                if (undoBtn) {
+                    console.log("Clicking undo button programmatically...");
+                    undoBtn.click();
+                } else {
+                    console.error("Undo button not found!");
+                }
+            }, 1000);
+        };
+
         // Simple test for shape creation
         window.testShapeCreation = function() {
             console.log("=== Testing Shape Creation ===");
@@ -1541,8 +1570,7 @@
         }
 
         // --- Event Listeners for Undo/Redo Buttons ---
-        undoButton.addEventListener('click', undo);
-        redoButton.addEventListener('click', redo);
+        // These will be set up in window.onload to ensure DOM is ready
 
         // --- Keyboard Shortcuts for Undo/Redo ---
         document.addEventListener('keydown', function(event) {
@@ -3899,6 +3927,27 @@
                 const color = objectColorPicker.value;
                 changeObjectColor(color);
             });
+
+            // Set up undo/redo button event listeners
+            console.log("[Init] Setting up undo/redo button listeners");
+            console.log("[Init] undoButton:", undoButton);
+            console.log("[Init] redoButton:", redoButton);
+
+            if (undoButton && redoButton) {
+                undoButton.addEventListener('click', function() {
+                    console.log("[UndoButton] Button clicked");
+                    undo();
+                });
+                redoButton.addEventListener('click', function() {
+                    console.log("[RedoButton] Button clicked");
+                    redo();
+                });
+                console.log("[Init] Undo/Redo button listeners added successfully");
+            } else {
+                console.error("[Init] Undo/Redo buttons not found!");
+                console.error("undoButton:", undoButton);
+                console.error("redoButton:", redoButton);
+            }
 
             // Initial message to guide the user on the upload page
             addMessageToLog('System', 'Welcome to the AI VR CAD Editor! Please choose an option above to get started: "Create Empty Model", "Edit Existing Model" (to upload a file), or "Load Random Model".');
