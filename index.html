@@ -935,6 +935,33 @@
         window.undo = undo; // Expose undo for testing
         window.redo = redo; // Expose redo for testing
         window.createPrimitive = createPrimitive; // Expose for testing
+
+        // Simple test for shape creation
+        window.testShapeCreation = function() {
+            console.log("=== Testing Shape Creation ===");
+            console.log(`Scene initialized: ${!!scene}`);
+            console.log(`Camera initialized: ${!!camera}`);
+            console.log(`Renderer initialized: ${!!renderer}`);
+            console.log(`Current objects in scene: ${scene ? scene.children.length : 'N/A'}`);
+            console.log(`Current loaded models: ${loadedModels.length}`);
+
+            console.log("Creating cube...");
+            createPrimitive('cube');
+
+            setTimeout(() => {
+                console.log("Creating sphere...");
+                createPrimitive('sphere');
+
+                setTimeout(() => {
+                    console.log("Creating ball (alias for sphere)...");
+                    createPrimitive('ball');
+
+                    console.log(`Final objects in scene: ${scene.children.length}`);
+                    console.log(`Final loaded models: ${loadedModels.length}`);
+                    console.log("=== Shape Creation Test Complete ===");
+                }, 500);
+            }, 500);
+        };
         window.testUndoRedo = function() {
             console.log("=== Testing Undo/Redo Functionality ===");
             console.log(`Initial state - History: ${history.length}, Pointer: ${historyPointer}`);
@@ -963,6 +990,240 @@
                     }, 1000);
                 }, 1000);
             }, 1000);
+        };
+
+        // Test all core functionality
+        window.testAllFeatures = function() {
+            console.log("=== Testing All Core Features ===");
+
+            // Test 1: Create primitives
+            console.log("1. Testing createPrimitive...");
+            createPrimitive('cube');
+
+            setTimeout(() => {
+                createPrimitive('sphere');
+
+                setTimeout(() => {
+                    // Test 2: Color change
+                    console.log("2. Testing color change...");
+                    if (selectedObject) {
+                        changeObjectColor('#ff0000');
+                    }
+
+                    setTimeout(() => {
+                        // Test 3: Duplicate
+                        console.log("3. Testing duplicate...");
+                        if (selectedObject) {
+                            duplicateSelectedObject();
+                        }
+
+                        setTimeout(() => {
+                            // Test 4: Move/Transform
+                            console.log("4. Testing movement...");
+                            if (selectedObject) {
+                                selectedObject.position.x += 2;
+                                selectedObject.updateMatrixWorld(true);
+                            }
+
+                            setTimeout(() => {
+                                // Test 5: Scale
+                                console.log("5. Testing scale...");
+                                if (selectedObject) {
+                                    selectedObject.scale.multiplyScalar(1.5);
+                                    selectedObject.updateMatrixWorld(true);
+                                }
+
+                                setTimeout(() => {
+                                    // Test 6: Delete
+                                    console.log("6. Testing delete...");
+                                    if (selectedObject) {
+                                        removeObject();
+                                    }
+
+                                    setTimeout(() => {
+                                        // Test 7: Undo/Redo
+                                        console.log("7. Testing undo/redo...");
+                                        undo();
+                                        setTimeout(() => {
+                                            redo();
+                                            console.log("=== All Tests Complete ===");
+                                            console.log(`Final state - History: ${history.length}, Pointer: ${historyPointer}`);
+                                            console.log(`Objects in scene: ${loadedModels.length}`);
+                                        }, 500);
+                                    }, 500);
+                                }, 500);
+                            }, 500);
+                        }, 500);
+                    }, 500);
+                }, 500);
+            }, 500);
+        };
+
+        // Comprehensive test of all individual features
+        window.testEverything = function() {
+            console.log("=== COMPREHENSIVE FEATURE TEST ===");
+
+            let testResults = {
+                createShape: false,
+                duplicate: false,
+                colorChange: false,
+                move: false,
+                scale: false,
+                rotate: false,
+                delete: false,
+                undo: false,
+                redo: false
+            };
+
+            // Test 1: Create shape
+            console.log("Testing: Create Shape");
+            try {
+                createPrimitive('cube');
+                testResults.createShape = true;
+                console.log("✅ Create Shape: PASSED");
+            } catch (e) {
+                console.log("❌ Create Shape: FAILED", e);
+            }
+
+            setTimeout(() => {
+                // Test 2: Duplicate
+                console.log("Testing: Duplicate");
+                try {
+                    if (selectedObject) {
+                        duplicateSelectedObject();
+                        testResults.duplicate = true;
+                        console.log("✅ Duplicate: PASSED");
+                    } else {
+                        console.log("❌ Duplicate: FAILED - No object selected");
+                    }
+                } catch (e) {
+                    console.log("❌ Duplicate: FAILED", e);
+                }
+
+                setTimeout(() => {
+                    // Test 3: Color change
+                    console.log("Testing: Color Change");
+                    try {
+                        if (selectedObject) {
+                            changeObjectColor('#00ff00');
+                            testResults.colorChange = true;
+                            console.log("✅ Color Change: PASSED");
+                        } else {
+                            console.log("❌ Color Change: FAILED - No object selected");
+                        }
+                    } catch (e) {
+                        console.log("❌ Color Change: FAILED", e);
+                    }
+
+                    setTimeout(() => {
+                        // Test 4: Move
+                        console.log("Testing: Move");
+                        try {
+                            if (selectedObject) {
+                                selectedObject.position.x += 3;
+                                selectedObject.updateMatrixWorld(true);
+                                testResults.move = true;
+                                console.log("✅ Move: PASSED");
+                            } else {
+                                console.log("❌ Move: FAILED - No object selected");
+                            }
+                        } catch (e) {
+                            console.log("❌ Move: FAILED", e);
+                        }
+
+                        setTimeout(() => {
+                            // Test 5: Scale
+                            console.log("Testing: Scale");
+                            try {
+                                if (selectedObject) {
+                                    selectedObject.scale.multiplyScalar(2);
+                                    selectedObject.updateMatrixWorld(true);
+                                    testResults.scale = true;
+                                    console.log("✅ Scale: PASSED");
+                                } else {
+                                    console.log("❌ Scale: FAILED - No object selected");
+                                }
+                            } catch (e) {
+                                console.log("❌ Scale: FAILED", e);
+                            }
+
+                            setTimeout(() => {
+                                // Test 6: Rotate
+                                console.log("Testing: Rotate");
+                                try {
+                                    if (selectedObject) {
+                                        selectedObject.rotation.y += Math.PI / 4;
+                                        selectedObject.updateMatrixWorld(true);
+                                        testResults.rotate = true;
+                                        console.log("✅ Rotate: PASSED");
+                                    } else {
+                                        console.log("❌ Rotate: FAILED - No object selected");
+                                    }
+                                } catch (e) {
+                                    console.log("❌ Rotate: FAILED", e);
+                                }
+
+                                setTimeout(() => {
+                                    // Test 7: Delete
+                                    console.log("Testing: Delete");
+                                    try {
+                                        if (selectedObject) {
+                                            removeObject();
+                                            testResults.delete = true;
+                                            console.log("✅ Delete: PASSED");
+                                        } else {
+                                            console.log("❌ Delete: FAILED - No object selected");
+                                        }
+                                    } catch (e) {
+                                        console.log("❌ Delete: FAILED", e);
+                                    }
+
+                                    setTimeout(() => {
+                                        // Test 8: Undo
+                                        console.log("Testing: Undo");
+                                        try {
+                                            undo();
+                                            testResults.undo = true;
+                                            console.log("✅ Undo: PASSED");
+                                        } catch (e) {
+                                            console.log("❌ Undo: FAILED", e);
+                                        }
+
+                                        setTimeout(() => {
+                                            // Test 9: Redo
+                                            console.log("Testing: Redo");
+                                            try {
+                                                redo();
+                                                testResults.redo = true;
+                                                console.log("✅ Redo: PASSED");
+                                            } catch (e) {
+                                                console.log("❌ Redo: FAILED", e);
+                                            }
+
+                                            // Final results
+                                            console.log("\n=== FINAL TEST RESULTS ===");
+                                            Object.keys(testResults).forEach(test => {
+                                                const status = testResults[test] ? "✅ PASSED" : "❌ FAILED";
+                                                console.log(`${test}: ${status}`);
+                                            });
+
+                                            const passedTests = Object.values(testResults).filter(result => result).length;
+                                            const totalTests = Object.keys(testResults).length;
+                                            console.log(`\nOverall: ${passedTests}/${totalTests} tests passed`);
+
+                                            if (passedTests === totalTests) {
+                                                console.log("🎉 ALL FEATURES WORKING CORRECTLY!");
+                                            } else {
+                                                console.log("⚠️ Some features need attention");
+                                            }
+                                        }, 500);
+                                    }, 500);
+                                }, 500);
+                            }, 500);
+                        }, 500);
+                    }, 500);
+                }, 500);
+            }, 500);
         };
 
         // --- Event Listeners for new buttons ---
@@ -1171,11 +1432,17 @@
                                     let restoredMaterial;
                                     // Try to match the original material type if possible
                                     if (materials[index].isMeshStandardMaterial) {
-                                        restoredMaterial = new THREE.MeshStandardMaterial();
+                                        restoredMaterial = new THREE.MeshStandardMaterial({
+                                            metalness: 0.5,
+                                            roughness: 0.5
+                                        });
                                     } else if (materials[index].isMeshBasicMaterial) {
                                         restoredMaterial = new THREE.MeshBasicMaterial();
                                     } else {
-                                        restoredMaterial = new THREE.Material(); // Fallback
+                                        restoredMaterial = new THREE.MeshStandardMaterial({
+                                            metalness: 0.5,
+                                            roughness: 0.5
+                                        }); // Default fallback
                                     }
 
                                     if (matState.color !== null) restoredMaterial.color.setHex(matState.color);
@@ -1750,10 +2017,10 @@
                 scene.add(transformControls);
                 transformControls.addEventListener('dragging-changed', function (event) {
                     controls.enabled = !event.value;
-                    // Save state when transform operation completes (debounced)
-                    if (!event.value && transformControls.object) {
-                        console.log("[TransformControls] Transform operation completed, saving state");
-                        saveSceneStateDebounced(300); // Short delay for transform operations
+                    // Save state when transform operation STARTS
+                    if (event.value && transformControls.object) {
+                        console.log("[TransformControls] Transform operation started, saving state");
+                        saveSceneState(); // Save state before transform begins
                     }
                 });
                 transformControls.addEventListener('objectChange', function () {
@@ -1813,8 +2080,7 @@
             console.log("[initScene] Three.js scene initialized.");
             animate();
 
-            // Save initial empty state for undo/redo functionality
-            saveSceneState();
+            // Initialize undo/redo buttons but don't save empty state yet
             updateUndoRedoButtons();
         }
 
@@ -2245,8 +2511,7 @@
                 addMessageToLog('System', `Selected: ${object.name || 'Unnamed Part'} (UUID: ${object.uuid})`);
                 speakResponse(`Selected ${object.name || 'a part'}.`);
 
-                // Save state when object is selected (user is about to potentially transform it)
-                saveSceneState();
+                // Don't save state on selection - save when actual changes happen
             } else {
                 console.log("[selectObject] No object provided for selection, clearing any existing selection.");
                 clearSelection(); // If no object is passed, clear selection
@@ -2537,7 +2802,7 @@
 
 
         function resetView() {
-            saveSceneState(); // Save state before resetting view
+            // Don't save state for view changes - this is just camera movement
             if (controls && camera && loadedModels.length > 0) {
                 const overallBbox = new THREE.Box3();
                 loadedModels.forEach(model => {
@@ -2609,10 +2874,7 @@
 
         function setTransformMode(mode) {
             if (transformControls) {
-                // Save state before changing transform mode (user is about to start transforming)
-                if (transformControls.object) {
-                    saveSceneState();
-                }
+                // Don't save state for mode changes - save when actual transform happens
                 transformControls.setMode(mode);
                 addMessageToLog('AI', `Transform mode set to ${mode}.`);
                 speakResponse(`Transform mode set to ${mode}.`);
@@ -3178,6 +3440,15 @@
 
         // Function to create a primitive shape
         function createPrimitive(type) {
+            console.log(`[createPrimitive] Creating ${type} shape`);
+
+            // Check if scene is initialized
+            if (!scene) {
+                console.error("[createPrimitive] Scene not initialized!");
+                addMessageToLog('System', 'Error: Scene not initialized. Please try again.');
+                return;
+            }
+
             saveSceneState(); // Save state before creating primitive
             let geometry;
             let mesh;
@@ -3241,8 +3512,15 @@
             mesh.position.copy(controls.target).add(positionOffset);
             mesh.position.y = 0.5; // Place it slightly above the grid
 
+            // Mark as primitive for undo/redo system
+            mesh.userData.isPrimitive = true;
+            mesh.userData.primitiveType = type;
+
             scene.add(mesh);
             loadedModels.push(mesh); // Add to our list of loaded models
+
+            console.log(`[createPrimitive] Successfully created ${type}. Scene objects: ${scene.children.length}, Loaded models: ${loadedModels.length}`);
+
             addMessageToLog('AI', `Created a ${type} model.`);
             speakResponse(`Created a ${type} model.`);
             selectObject(mesh); // Select the newly created object
@@ -3625,8 +3903,11 @@
             // Initial message to guide the user on the upload page
             addMessageToLog('System', 'Welcome to the AI VR CAD Editor! Please choose an option above to get started: "Create Empty Model", "Edit Existing Model" (to upload a file), or "Load Random Model".');
 
-            // Initial save of the scene state after everything is initialized
-            saveSceneState();
+            // Save initial state after everything is loaded
+            setTimeout(() => {
+                saveSceneState(); // Save initial state
+                console.log("[Init] Initial state saved for undo/redo");
+            }, 100);
         };
 
     </script>
